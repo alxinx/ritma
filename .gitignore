@@ -1,0 +1,5 @@
+# Ignorar archivo de entorno
+.env
+
+# Ignorar todo el contenido dentro de public/img/
+public/img/
