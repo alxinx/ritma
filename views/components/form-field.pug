@@ -1,0 +1,37 @@
+mixin formField(label, type, placeholder, vuPattern)
+  div(class="group relative")
+    label(class="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2 ml-1") #{label}
+    div(class="relative flex items-center")
+      input(
+        class="w-full bg-white/5 border-white/10 border-b-2 border-t-0 border-x-0 focus:border-primary focus:ring-0 transition-all text-white placeholder:text-white/20 h-14 px-4 font-medium tracking-wide"
+        type=type
+        placeholder=placeholder
+      )
+      if vuPattern === 3
+        div(class="absolute right-4 flex items-end gap-[2px] h-4")
+          div(class="vu-meter-item h-1 group-focus-within:h-3 transition-all duration-300")
+          div(class="vu-meter-item h-3 group-focus-within:h-1 transition-all duration-300")
+          div(class="vu-meter-item h-2 group-focus-within:h-4 transition-all duration-300")
+      if vuPattern === 2
+        div(class="absolute right-4 flex items-end gap-[2px] h-4")
+          div(class="vu-meter-item h-3 group-focus-within:h-4 transition-all duration-300")
+          div(class="vu-meter-item h-1 group-focus-within:h-2 transition-all duration-300")
+
+
+mixin formActions(primaryLabel, secondaryHref)
+  div(class="pt-6 flex flex-col gap-6")
+    button(
+      type="submit"
+      class="w-full bg-primary hover:brightness-110 text-background-dark h-16 rounded-lg font-montserrat font-bold text-sm tracking-[0.2em] transition-all transform hover:scale-[1.01] active:scale-[0.98] flex items-center justify-center gap-3 group relative overflow-hidden"
+    )
+      div(class="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none")
+      span #{primaryLabel}
+      span(class="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1") keyboard_double_arrow_right
+
+    div(class="text-center")
+      a(
+        href=secondaryHref
+        class="text-white/40 hover:text-primary text-[11px] font-bold uppercase tracking-widest transition-colors inline-flex items-center gap-2 group"
+      )
+        | ¿Ya tienes un código?
+        span(class="text-primary underline underline-offset-4 decoration-primary/30 group-hover:decoration-primary") Ingresar aquí

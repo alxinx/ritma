@@ -1,0 +1,33 @@
+main(class="flex-1 flex items-center justify-center px-4 py-16")
+        div(class="w-full max-w-[560px] bg-white/[0.02] border border-white/10 p-8 md:p-14 rounded-2xl glow-card backdrop-blur-xl relative overflow-hidden")
+          div(class="absolute top-0 left-0 w-full h-1 pixel-bg opacity-20")
+
+          div(class="flex flex-col items-center mb-12 text-center")
+            div(class="size-16 bg-primary/10 rounded-full flex items-center justify-center mb-6 border border-primary/30 shadow-[0_0_20px_rgba(201,218,43,0.1)]")
+              span(class="material-symbols-outlined text-primary text-4xl") electric_bolt
+            h1(class="text-white text-3xl md:text-4xl font-montserrat font-bold tracking-tight mb-4") SOLICITA TU ACCESO
+            p(class="text-white/50 font-roboto text-sm uppercase tracking-[0.1em] leading-relaxed max-w-sm")
+              | Únete a la red de infraestructura digital para DJs más avanzada de Latinoamérica.
+
+          form(class="space-y-6" onsubmit="return false")
+            // --- Inputs aquí (idénticos a HTML original, omitidos solo por brevedad visual)
+            +formField("Nombre Completo","text", "EJ. JULIÁN RIVERA",3)   
+            +formField( "Correo Electrónico", "email", "CORREO@EJEMPLO.COM",3)   
+            div(class="grid grid-cols-1 md:grid-cols-2 gap-6")
+                +formField("Ciudad","text","MEDELLÍN",2)
+                +formField("Pais","text",",COLOMBIA, CO",2)
+            +formField("WhatsApp","tel","+57 --- --- ----",2)
+
+            +formActions( "ENVIAR SOLICITUD", "/login" )
+
+          div(class="mt-12 flex justify-between items-center opacity-20")
+            div(class="flex gap-1")
+              div(class="h-[2px] w-6 bg-primary")
+              div(class="h-[2px] w-2 bg-primary")
+              div(class="h-[2px] w-1 bg-primary")
+            span(class="text-[8px] tracking-[0.3em] font-bold text-primary") RTM_v4.2_AUTH
+            div(class="flex gap-1")
+              div(class="h-[2px] w-1 bg-primary")
+              div(class="h-[2px] w-2 bg-primary")
+              div(class="h-[2px] w-6 bg-primary")
+            

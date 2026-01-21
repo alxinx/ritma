@@ -1,0 +1,54 @@
+header(class="relative pt-32 pb-20 overflow-hidden min-h-screen flex items-center")
+  div(class="absolute inset-0 pixel-grid opacity-20 pointer-events-none")
+  div(class="absolute top-1/4 -right-20 w-96 h-96 bg-ritma-purple/20 blur-[120px] rounded-full")
+  div(class="absolute bottom-1/4 -left-20 w-96 h-96 bg-ritma-blue/20 blur-[120px] rounded-full")
+
+  div(class="max-w-7xl mx-auto px-6 relative z-10 grid lg:grid-cols-2 gap-12 items-center")
+    div(class="space-y-8")
+      div(class="inline-flex items-center gap-2 px-3 py-1 rounded bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest")
+        span(class="animate-pulse-fast") ●
+        |  Live Now: Latino Tech Summit
+
+      h1(class="font-display font-extrabold text-5xl md:text-7xl leading-none text-slate-900 dark:text-white uppercase")
+        | La Plataforma 
+        span(class="text-primary italic") #1
+        |  para DJs con 
+        span(class="text-transparent bg-clip-text lightning-gradient") Swing Latino
+
+      p(class="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-xl font-body")
+        | Infraestructura digital diseñada específicamente para el ecosistema musical latinoamericano. Gestiona, distribuye y monetiza tu ritmo.
+
+      div(class="flex flex-wrap gap-4 pt-4")
+        a(
+          class="bg-primary hover:bg-opacity-90 text-black font-display font-extrabold py-4 px-10 rounded-sm text-lg transition-transform hover:scale-105 active:scale-95 shadow-xl shadow-primary/20"
+          href="/acceso/"
+        ) SOLICITA ACCESO YA!
+
+        a(
+          class="flex items-center gap-2 font-display font-bold py-4 px-8 border border-slate-300 dark:border-white/20 rounded-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+          href="#"
+        )
+          | VER DEMO 
+          span(class="material-icons-round") play_arrow
+
+    div(class="relative group")
+      div(class="absolute -inset-1 lightning-gradient opacity-30 blur-2xl group-hover:opacity-50 transition duration-1000")
+
+      div(class="relative bg-white dark:bg-surface-dark p-2 rounded shadow-2xl overflow-hidden border border-slate-200 dark:border-white/10")
+        img(
+          class="w-full h-auto grayscale-0 dark:grayscale-[0.5] group-hover:grayscale-0 transition-all duration-700"
+          src="/img/dj_latino_en_fiesta.webp"
+          alt="DJ performing at a nightclub"
+        )
+
+        div(class="absolute bottom-6 left-6 right-6 p-4 bg-black/60 backdrop-blur-md rounded border border-white/10 flex items-center justify-between")
+          div
+            p(class="text-[10px] uppercase tracking-tighter text-slate-300") Live Recording
+            p(class="font-display font-bold text-white") TECHNO TROPICAL VOL. 4
+
+          div(class="vu-meter")
+            div(class="vu-bar h-2 animate-bounce")
+            div(class="vu-bar h-5 animate-bounce" style="animation-delay: 0.1s")
+            div(class="vu-bar h-3 animate-bounce" style="animation-delay: 0.2s")
+            div(class="vu-bar h-6 animate-bounce" style="animation-delay: 0.3s")
+            div(class="vu-bar h-4 animate-bounce" style="animation-delay: 0.4s")

@@ -1,0 +1,25 @@
+include ./head.pug  
+block contenedor
+    // ================================================
+    // NAVBAR
+    // ================================================
+include ./navBar.pug
+main(class="flex-1 max-w-7xl mx-auto px-6 py-16 md:py-24")
+
+    // ================================================
+    // HERO / HEADER
+    // ================================================
+    include ../partials/system-section-header.pug
+    // ================================================
+    // SECCIONES 
+    // ================================================
+    include ../partials/modularCards.pug
+    include ../partials/techInfrastructure.pug
+    include ../partials/cta2.pug
+
+
+    // ================================================
+    // FOOTER (PENDIENTE)
+    include ./footer.pug
+    // ================================================
+    // footer

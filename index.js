@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 
-import adminRoutes from "./routes/adminRoutes.js";
+import pageRoutes from "./routes/pageRoutes.js";
 
 dotenv.config()
 const  app = express();
@@ -10,7 +10,9 @@ const  app = express();
 app.set("view engine", "pug")
 app.set("views", "./views/")
 
-app.use("/admin", adminRoutes);
+
+app.use("/", pageRoutes)
+//app.use("/admin", adminRoutes);
 
 
 
