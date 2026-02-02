@@ -23,15 +23,52 @@ const acceso =(req,res)=>{
     res.status(200).render('../views/layout/acceso',{
         tituloPagina : "RITMA | La Plataforma #1 para DJs"
     })
-
 }
+
+
+const accesoPost =(req,res)=>{
+    res.status(200).render('../views/layout/accesoAfter',{
+        tituloPagina : "RITMA | La Plataforma #1 para DJs"
+    })
+}
+
+
+const trendingTracks =(req,res)=>{
+    res.status(200).render('../views/layout/trending-tracks',{
+        tituloPagina : "RITMA | Trending Tracks Detallado"
+    })
+}
+
+
+const trendingVideos =(req,res)=>{
+    res.status(200).render('../views/layout/trending-videos',{
+        tituloPagina : "RITMA | La Plataforma #1 para DJs"
+    })
+}
+
+
+const profileTrack =(req,res)=>{
+    res.status(200).render('../views/layout/profile-Track',{
+        tituloPagina : "Perfil"
+    })
+}
+
+
+
+
+
+
 
 
 export {
     home,
     vision,
     estructura,
-    acceso
+    acceso, 
+    accesoPost,
+    trendingTracks,
+    trendingVideos,
+    profileTrack
 }
 
 

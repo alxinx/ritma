@@ -9,7 +9,7 @@ main(class="flex-1 flex items-center justify-center px-4 py-16")
             p(class="text-white/50 font-roboto text-sm uppercase tracking-[0.1em] leading-relaxed max-w-sm")
               | Únete a la red de infraestructura digital para DJs más avanzada de Latinoamérica.
 
-          form(class="space-y-6" onsubmit="return false")
+          form(class="space-y-6" method="post" onsubmit="return true")
             // --- Inputs aquí (idénticos a HTML original, omitidos solo por brevedad visual)
             +formField("Nombre Completo","text", "EJ. JULIÁN RIVERA",3)   
             +formField( "Correo Electrónico", "email", "CORREO@EJEMPLO.COM",3)   

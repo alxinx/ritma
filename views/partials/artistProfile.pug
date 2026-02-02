@@ -1,0 +1,36 @@
+
+div(class="absolute inset-0 pixel-grid opacity-5 pointer-events-none")
+
+div(class="flex flex-col lg:flex-row min-h-screen")
+
+  // ───────────── ASIDE / ARTIST ─────────────
+  aside(
+    class="w-full lg:w-2/5 xl:w-[45%] relative overflow-hidden h-[50vh] lg:h-auto border-r border-white/10"
+  )
+    img(
+      src="/img/artistas/ryan-castro.webp"
+      alt="Ryan Castro"
+      class="absolute inset-0 w-full h-full object-cover"
+    )
+
+    div(class="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent")
+    div(class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent")
+
+    div(class="absolute bottom-12 left-12 z-10")
+      div(
+        class="mb-4 inline-block bg-primary px-3 py-1 text-black font-display font-black text-[10px] uppercase tracking-widest"
+      ) Featured Artist
+      h2(
+        class="font-display font-black text-6xl xl:text-8xl uppercase leading-none tracking-tighter"
+      )
+        | Ryan
+        br
+        span(class="text-primary italic") Castro
+
+    div(class="absolute top-12 left-12 flex flex-col gap-2")
+      div(class="sidebar-line w-1 h-32 opacity-50")
+      span(
+        class="text-[10px] font-mono rotate-90 origin-left translate-x-3 translate-y-4 text-slate-500 tracking-[0.3em]"
+      ) ARTIST_PROFILE_098
+
+  include ./bodyTrack.pug
