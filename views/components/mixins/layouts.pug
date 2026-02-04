@@ -1,0 +1,21 @@
+//- GRID SISTEM: Organiza el contenido en columnas responsivas
+mixin ritmaGrid(cols=2, gap=8)
+  div(class=`grid grid-cols-1 md:grid-cols-${cols} gap-${gap} w-full`)
+    if block
+      block
+
+//- MODULAR CARD: El contenedor base para tus módulos de control
+mixin ritmaCard(title, subtitle)
+  div(class="modular-card group")
+    //- Decoración técnica de esquina
+    div(class="absolute top-0 right-0 size-8 border-t-2 border-r-2 border-primary/20 group-hover:border-primary transition-colors duration-500 rounded-tr-lg")
+    
+    if title
+      div(class="mb-6")
+        h4(class="text-white tracking-[0.3em]") #{title}
+        if subtitle
+          p(class="text-[9px] uppercase text-white/40 mt-1") #{subtitle}
+    
+    div(class="relative z-10")
+      if block
+        block

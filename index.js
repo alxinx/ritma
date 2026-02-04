@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 
 import pageRoutes from "./routes/pageRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config()
 const  app = express();
@@ -12,7 +13,7 @@ app.set("views", "./views/")
 
 
 app.use("/", pageRoutes)
-//app.use("/admin", adminRoutes);
+app.use("/app", adminRoutes);
 
 
 

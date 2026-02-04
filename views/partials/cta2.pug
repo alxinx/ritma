@@ -1,8 +1,32 @@
-div(class="flex flex-col items-center border-t border-white/10 pt-20")
-    h3(class="font-heading text-2xl font-bold mb-8 uppercase tracking-[0.2em] text-center")
-      | ¿Listo para elevar tu estándar?
-    button(class="bg-primary hover:bg-[#b5c526] text-black px-12 py-5 rounded font-black text-lg tracking-[0.2em] transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 group shadow-[0_0_30px_rgba(201,218,43,0.3)]")
-      | SOLICITA TU ACCESO
-      span(class="material-symbols-outlined transition-transform group-hover:translate-x-2 font-bold") arrow_forward
-    p(class="mt-8 text-white/30 text-xs font-bold uppercase tracking-widest")
-      | Cupos limitados por región geográfica
+// ==========================================
+// SECTION: FINAL CTA (SYSTEM ACTIVATION)
+// ==========================================
+div(class="flex flex-col items-center border-t border-white/5 pt-32 pb-20 relative overflow-hidden")
+    //- Decoración de radar de fondo (Contexto geográfico)
+    div(class="absolute -bottom-20 flex items-center justify-center opacity-10 pointer-events-none")
+      div(class="size-64 border border-primary rounded-full animate-ping absolute")
+      div(class="size-96 border border-primary/40 rounded-full animate-pulse absolute")
+
+    div(class="relative z-10 text-center")
+      h3(class="font-display text-2xl md:text-3xl font-black mb-10 uppercase tracking-[0.3em] text-white leading-none")
+        | ¿Listo para elevar 
+        span(class="text-primary italic") tu estándar?
+
+      //- Botón de Acción Principal (Estilo High-Contrast)
+      a(
+        href="/acceso/"
+        class="bg-primary hover:bg-white text-black px-12 py-6 rounded-sm font-display font-black text-xl tracking-[0.2em] transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-4 group shadow-[0_20px_50px_rgba(201,218,43,0.2)] mx-auto w-fit"
+      )
+        | SOLICITA TU ACCESO
+        span(class="material-symbols-outlined transition-transform group-hover:translate-x-2 font-black") arrow_forward
+
+      //- Footer de sección con metadatos
+      div(class="mt-12 space-y-4")
+        p(class="text-primary/60 text-[10px] font-bold uppercase tracking-[0.5em] animate-pulse")
+          | // STATUS: WAITING_FOR_INPUT
+        
+        p(class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] max-w-xs mx-auto leading-relaxed")
+          | Cupos limitados por región geográfica para garantizar ancho de banda óptimo.
+
+    //- Visual de Nodos (Opcional)
+    div(class="mt-20 opacity-20 group cursor-default")

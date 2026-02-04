@@ -1,0 +1,133 @@
+//- ========================================================================
+//- RITMA UI COMPONENTS LIBRARY (TAILWIND V4 & CSS CUSTOM CLASSES)
+//- ========================================================================
+
+//- 1. INPUT TÉCNICO (ID, NAME, TYPE, LABEL, REQUIRED, PLACEHOLDER, ICON)
+mixin ritmaInput(id, name, type='text', label, required=false, placeholder, icon='search')
+  div(class="flex flex-col gap-1 w-full group")
+    if label
+      label(for=id class="subTittle text-primary") #{label}
+    div(class="ritma-input-container")
+      input(
+        id=id 
+        name=name 
+        type=type
+        required=required
+        placeholder=placeholder 
+        class="ritma-input-field text"
+      )
+      if icon
+        span(class="material-symbols-outlined ritma-input-icon") #{icon}
+
+//- 2. INPUT CON PREFIJO (ID, NAME, TYPE, LABEL, PREFIX, REQUIRED, PLACEHOLDER)
+mixin ritmaInputPrefix(id, name, type='text', label, prefix, required=false, placeholder)
+  div(class="flex flex-col gap-1 w-full mt-3 group")
+    if label
+      label(for=id class="subTittle") #{label}
+    div(class="ritma-input-container")
+      //- Usamos tus clases de contenedor y borde de identidad
+      div(class="h-full px-4 flex items-center bg-white/5 border-y border-l border-white/10 rounded-l-sm text-[10px] font-bold text-primary tracking-widest uppercase border-r border-r-white/5 h-12") #{prefix}
+      input(
+        id=id 
+        name=name 
+        type=type
+        required=required
+        placeholder=placeholder 
+        class="ritma-input rounded-l-none border-l-0"
+      )
+
+//- 3. CAMPO CON VU-METER (ID, NAME, TYPE, LABEL, REQUIRED, PLACEHOLDER, VU)
+mixin formField(id, name, type='text', label, required=false, placeholder, vuPattern)
+  div(class="group relative w-full")
+    if label
+      label(for=id) #{label}
+    div(class="relative flex items-center")
+      input(
+        id=id
+        name=name
+        type=type
+        placeholder=placeholder
+        required=required
+        class="w-full bg-white/5 border-white/10 border-b-2 border-t-0 border-x-0 focus:border-primary focus:ring-0 transition-all text-white placeholder:text-white/20 h-14 px-4 font-medium tracking-wide outline-none"
+      )
+      if vuPattern
+        div(class="absolute right-4 flex items-end gap-[2px] h-4 pointer-events-none")
+          - let bars = vuPattern === 3 ? [1, 3, 2] : [3, 1]
+          each h in bars
+            div(class=`w-1 bg-primary/20 group-focus-within:bg-primary transition-all duration-300 h-${h} group-focus-within:h-${h+1}`)
+
+//- 4. CUSTOM SELECT (ID, NAME, LABEL, ACTIVEOPTION, OPTIONS)
+mixin customSelect(id, name, label, activeOption, options = [])
+  div(class="relative w-full group" id=`select-container-${id}`)
+    input(type="hidden" id=id name=name value=(options.find(o => o.selected) ? options.find(o => o.selected).value : ""))
+    if label
+      label(class="mb-1 block") #{label}
+    button(type="button" class="ritma-select-trigger flex items-center justify-between")
+      span(class="current-selection") #{activeOption}
+    
+    div(class="options-container hidden group-focus-within:block")
+      each opt in options
+        div(
+          class="ritma-option"
+          onclick=`document.getElementById('${id}').value = '${opt.value}'; this.closest('.group').querySelector('.current-selection').innerText = '${opt.label}'`
+        ) 
+          span(class="acordeonTitulo") #{opt.label}
+          if opt.selected
+            div(class="option-led")
+
+//- 5. FILE UPLOAD (ID, NAME, REQUIRED, TITLE, SUBTITLE)
+mixin fileUpload(id, name, required=false, title, subtitle)
+  div(class="w-full group")
+    input(type="file" id=id name=name required=required class="hidden" multiple)
+    label(for=id class="upload-zone")
+      div(class="upload-scan-lines")
+      span(class="material-symbols-outlined text-4xl upload-icon-pulse mb-4") cloud_upload
+      div(class="text-center relative z-10")
+        h4 #{title}
+        p(class="text-[10px] text-white/40 uppercase tracking-widest mt-2") #{subtitle}
+
+//- 6. SWITCH (ID, NAME, LABEL, CHECKED)
+mixin ritmaSwitch(id, name, label, checked=false)
+  label(for=id class="group flex items-center justify-between w-full cursor-pointer py-2")
+    span(class="acordeonTitulo text-white/60 group-hover:text-primary transition-colors") #{label}
+    input(
+      type="checkbox" 
+      id=id 
+      name=name 
+      checked=checked 
+      class="ritma-switch-input"
+    )
+
+//- 7. BOTONES DE ACCIÓN (PRIMARYLABEL, SECONDARYHREF)
+mixin formActions(primaryLabel, secondaryHref)
+  div(class="pt-6 flex flex-col gap-6 w-full")
+    button(type="submit" class="btn-green w-full h-16 group relative overflow-hidden")
+      div(class="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700")
+      span(class="text-black") #{primaryLabel}
+      span(class="material-symbols-outlined text-black transition-transform group-hover:translate-x-1") keyboard_double_arrow_right
+    if secondaryHref === 'solicitar'
+      div(class="text-center")
+        a(href="../acceso/" class="text-white/40 hover:text-primary text-[10px] font-bold uppercase tracking-widest transition-colors inline-flex items-center gap-2 group")
+          | ¿Quieres solicitar acceso?
+          span(class="text-primary underline underline-offset-4 decoration-primary/30 group-hover:decoration-primary") Ingresar aquí
+    
+    else if secondaryHref === 'olvido'
+      div(class="text-center")
+        a(href="/auth/forgot" class="text-white/40 hover:text-primary text-[10px] font-bold uppercase tracking-widest transition-colors inline-flex items-center gap-2 group")
+          span(class="text-primary underline underline-offset-4 decoration-primary/30 group-hover:decoration-primary") ¿Olvidaste la contraseña?
+    
+    else if secondaryHref === 'ambos'
+      div(class="text-center")
+        a(href="/app/forgot" class="text-white/40 hover:text-primary text-[10px] font-bold uppercase tracking-widest transition-colors inline-flex items-center gap-2 group")
+          span(class="text-primary underline underline-offset-4 decoration-primary/30 group-hover:decoration-primary") ¿Olvidaste la contraseña?
+      div(class="text-center")
+        a(href="../acceso" class="")
+          span(class="text-ritma-orange underline underline-offset-4 decoration-primary/30 group-hover:decoration-primary") Solicitar Acceso
+
+
+//- 8. SYSTEM LOG (TYPE, MESSAGE)
+mixin systemLog(type, message)
+  div(class=`font-mono text-[9px] py-2 px-3 border-l-2 mb-1 flex items-center gap-2 animate-in fade-in slide-in-from-left-4 ${type === 'error' ? 'border-ritma-red bg-ritma-red/5 text-ritma-red' : 'border-primary bg-primary/5 text-primary'}`)
+    span(class="opacity-50") [#{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}]
+    span(class="font-bold uppercase") #{type} //
+    span #{message}

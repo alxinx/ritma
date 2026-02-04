@@ -17,21 +17,20 @@ main(class="flex-1 flex items-center justify-center px-4 py-20 bg-background-dar
         div(class="decorationUp")
         div(class="flex flex-col items-center mb-4 text-center relative z-10")
             //- Icono con efecto de pulso
-            div(class="size-16 bg-primary/10 rounded-sm flex items-center justify-center mb-3 border border-primary/20  shadow-[0_0_30px_rgba(201,218,43,0.1)] group")
-                span(class="material-symbols-outlined text-primary text-8xl animate-pulse") fingerprint
+            div(class="size-16 bg-primary/10 rounded-sm flex items-center justify-center border border-primary/20  shadow-[0_0_30px_rgba(201,218,43,0.1)] group")
+                span(class="material-symbols-outlined text-primary text-4xl animate-pulse") lock
             
-            h1.text-primary.mt-10 HOLA
+            h3.text-primary.mt-5 recuperar password
 
             p.subTittle
-                | Ingresa con tu usuario y contraseña
+                | Ingrese el email con el que se registró,  de vuelta le enviaremos un email de confirmación y recuperación de contraseña.
 
         form(class="space-y-6 relative z-10" method="post" action="")
             +ritmaInput("email", "email", "email", "Email:", true, "email@dj.com", "alternate_email")
 
-            +ritmaInput("password", "password", "password", "Contraseña:", true, "••••••••", "lock")
 
              
-            +formActions("Acceder", "ambos")
+            +formActions("Recuperar")
             
         
         

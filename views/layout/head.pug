@@ -2,103 +2,17 @@ html(class="dark" lang="es")
   head
     meta(charset="utf-8")
     meta(name="viewport" content="width=device-width, initial-scale=1.0")
-    link(rel="shortcut-icon", href="./img/favicon.ico")
+    link(rel="shortcut-icon" href="/img/favicon.ico")
+    
+    //- Archivo procesado por Tailwind v4
+    link(rel="stylesheet" href="/css/output.css")
+    
     title #{tituloPagina}
 
-    link(
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Roboto:wght@400;500&display=swap"
-    )
-    link(
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
-    )
-
-    link(
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-    )
-
-
-
-    script(src="https://cdn.tailwindcss.com?plugins=forms,typography")
-
-    script.
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              primary: "#C9DA2B",
-              "background-light": "#F8F9FA",
-              "background-dark": "#000000",
-              "surface-dark": "#1A1A1A",
-              "ritma-purple": "#A462A7",
-              "ritma-blue": "#4F74B8",
-              "ritma-cyan": "#57C5D3",
-              "ritma-orange": "#FFC857",
-              "ritma-red": "#FF4D4D"
-            },
-            fontFamily: {
-              display: ["Montserrat", "sans-serif"],
-              body: ["Roboto", "sans-serif"],
-            },
-            borderRadius: {
-              "DEFAULT": "0.25rem",
-              "lg": "0.5rem",
-              "xl": "0.75rem",
-              "full": "9999px"
-            },
-          },
-        },
-      };
-
-    style.
-      .vu-meter-item {
-        width: 3px;
-        background-color: var(--primary-color);
-        margin-right: 2px;
-        border-radius: 0.5px;
-        opacity: 0.4;
-      }
-      .glow-card { box-shadow: 0 0 40px rgba(201, 218, 43, 0.05); }
-      .bg-pattern {
-        background-image: radial-gradient(circle at 2px 2px, #1a1a1a 1px, transparent 0);
-        background-size: 30px 30px;
-      } 
-      .pixel-grid {
-        background-image: radial-gradient(circle, #333 1px, transparent 1px);
-        background-size: 30px 30px;
-      }
-      .lightning-gradient {
-        background: linear-gradient(135deg, #FFC857 0%, #A462A7 100%);
-      }
-
-      @layer utilities {
-            .pixel-grid {
-                background-image: radial-gradient(circle, #222 1px, transparent 1px);
-                background-size: 20px 20px;
-            }
-            .waveform-bg {
-                background: linear-gradient(90deg, #C9DA2B 0%, #57C5D3 100%);
-                mask-image: url("data:image/svg+xml,%3Csvg width='400' height='40' viewBox='0 0 400 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 20 L5 10 L10 30 L15 15 L20 25 L25 5 L30 35 L35 20 L40 10 L45 30 L50 20 L55 10 L60 30 L65 15 L70 25 L75 5 L80 35 L85 20 L90 10 L95 30 L100 20 L105 10 L110 30 L115 15 L120 25 L125 5 L130 35 L135 20 L140 10 L145 30 L150 20 L155 10 L160 30 L165 15 L170 25 L175 5 L180 35 L185 20 L190 10 L195 30 L200 20 L205 10 L210 30 L215 15 L220 25 L225 5 L230 35 L235 20 L240 10 L245 30 L250 20 L255 10 L260 30 L265 15 L270 25 L275 5 L280 35 L285 20 L290 10 L295 30 L300 20 L305 10 L310 30 L315 15 L320 25 L325 5 L330 35 L335 20 L340 10 L345 30 L350 20 L355 10 L360 30 L365 15 L370 25 L375 5 L380 35 L385 20 L390 10 L395 30 L400 20' stroke='black' stroke-width='2' fill='none'/%3E%3C/svg%3E");
-                mask-repeat: repeat-x;
-                mask-size: cover;
-            }
-            .vu-bar-active {
-                background: linear-gradient(to top, #C9DA2B, #FF4D4D);
-            }
-            .waveform-massive {
-                mask-image: url("data:image/svg+xml,%3Csvg width='800' height='100' viewBox='0 0 800 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 L10 20 L20 80 L30 40 L40 60 L50 10 L60 90 L70 50 L80 30 L90 70 L100 50 L110 20 L120 80 L130 40 L140 60 L150 10 L160 90 L170 50 L180 30 L190 70 L200 50 L210 20 L220 80 L230 40 L240 60 L250 10 L260 90 L270 50 L280 30 L290 70 L300 50 L310 20 L320 80 L330 40 L340 60 L350 10 L360 90 L370 50 L380 30 L390 70 L400 50 L410 20 L420 80 L430 40 L440 60 L450 10 L460 90 L470 50 L480 30 L490 70 L500 50 L510 20 L520 80 L530 40 L540 60 L550 10 L560 90 L570 50 L580 30 L590 70 L600 50 L610 20 L620 80 L630 40 L640 60 L650 10 L660 90 L670 50 L680 30 L690 70 L700 50 L710 20 L720 80 L730 40 L740 60 L750 10 L760 90 L770 50 L780 30 L790 70 L800 50' stroke='black' stroke-width='4' fill='none'/%3E%3C/svg%3E");
-                mask-repeat: repeat-x;
-                mask-size: cover;
-            }
-            .glow-primary {
-                text-shadow: 0 0 10px rgba(201, 218, 43, 0.5);
-            }
-            .sidebar-line {
-                background: linear-gradient(to bottom, #C9DA2B 0%, transparent 100%);
-            }
-        }
-        web application/stitch/projects/2894222325946068441/screens/374e3ab6b8cf4619b01352eccec83ecb
-body(class="font-body transition-colors duration-300 bg-background-light dark:bg-background-dark text-slate-900 dark:text-white overflow-x-hidden")
+    //- Fuentes y Iconos
+    link(rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Roboto:wght@400;500&display=swap")
+    link(rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round")
+    link(rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap")
+    
+  //- Body optimizado: Sin clases de modo claro, fondo negro puro y texto blanco
+  body(class="font-body transition-colors duration-300 bg-background-dark text-white overflow-x-hidden selection:bg-primary selection:text-black")

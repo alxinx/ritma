@@ -1,20 +1,21 @@
-include ./head.pug  
+include ../layout/head.pug
+include ../components/mixins/form-field.pug
+include ../components/mixins/layouts.pug
 block contenedor
     // ================================================
     // NAVBAR
     // ================================================
-include ./navBar.pug
+//include ./navBar.pug
 main(class="flex-1 max-w-7xl mx-auto px-6 py-16 md:py-24")
     //==============================================
     // SECCIONES 
     // ================================================
-    include ../components/mixins/form-field.pug
-    include ../partials/acceso.pug
+    
         
 
 
     // ================================================
     // FOOTER (PENDIENTE)
-    include ./footer.pug
+    //include ./footer.pug
     // ================================================
     // footer

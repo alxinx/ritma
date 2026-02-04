@@ -1,61 +1,69 @@
-div(class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20")
+div(class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24")
 
-    // CARD 01
-    div(class="modular-card group")
-      div(class="flex justify-between items-start mb-10")
-        div(class="size-12 bg-primary/10 rounded flex items-center justify-center border border-primary/20 group-hover:bg-primary group-hover:text-black transition-colors")
-          span(class="material-symbols-outlined text-2xl") vpn_key
-        div(class="flex items-end gap-1 h-6 vu-meter-anim opacity-40")
-          div(class="h-2")
-          div(class="h-4")
-          div(class="h-6")
-          div(class="h-3")
+  //- CARD 01: Acceso
+  div(class="bg-surface-dark/50 p-8 border border-white/5 rounded-sm relative group hover:border-primary/30 transition-all duration-500 overflow-hidden" id="struct-access")
+    //- Efecto de fondo al hacer hover
+    div(class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity")
+    
+    div(class="flex justify-between items-start mb-12 relative z-10")
+      div(class="size-12 bg-primary/10 rounded-sm flex items-center justify-center border border-primary/20 group-hover:bg-primary group-hover:text-black transition-all duration-300 shadow-[0_0_15px_rgba(201,218,43,0.1)] group-hover:shadow-primary/20")
+        span(class="material-symbols-outlined text-2xl") vpn_key
+      
+      //- VU Meter estático/animado lateral
+      div(class="flex items-end gap-1 h-6 opacity-30 group-hover:opacity-100 transition-opacity")
+        each h in [2, 4, 6, 3]
+          div(class=`w-1 bg-primary` style=`height: ${h * 4}px`)
 
-      h3(class="font-heading text-xl font-bold mb-4 tracking-tight uppercase") Acceso Exclusivo
-      p(class="text-white/50 text-sm leading-relaxed mb-6")
+    div(class="relative z-10")
+      h3(class="font-display text-xl font-extrabold mb-4 tracking-tighter uppercase text-white") Acceso Exclusivo
+      p(class="text-slate-400 text-sm leading-relaxed mb-8 font-body")
         | Comunidad privada de alto nivel. Solo mediante código de invitación garantizamos que la calidad del contenido y el soporte técnico se mantengan en estándares de élite.
-      div(class="flex items-center gap-2 text-primary text-[10px] font-bold tracking-widest uppercase")
+      
+      div(class="flex items-center gap-2 text-primary text-[10px] font-bold tracking-[0.2em] uppercase bg-black/40 w-fit px-3 py-1 rounded-full border border-primary/10")
         span INVITE_ONLY_v2
-        div(class="h-1 w-1 bg-primary rounded-full")
+        div(class="size-1 bg-primary rounded-full animate-pulse")
         span ENCRYPTED
 
-    // CARD 02
-    div(class="modular-card group relative overflow-hidden")
-      div(class="absolute top-0 right-0 p-4 opacity-10")
-        span(class="material-symbols-outlined text-8xl") database
+  //- CARD 02: Librería
+  div(class="bg-surface-dark/50 p-8 border border-white/5 rounded-sm relative group hover:border-primary/30 transition-all duration-500 overflow-hidden" id="struct-library")
+    //- Icono gigante de fondo (Watermark)
+    div(class="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity")
+      span(class="material-symbols-outlined text-[120px]") database
 
-      div(class="flex justify-between items-start mb-10")
-        div(class="size-12 bg-primary/10 rounded flex items-center justify-center border border-primary/20 group-hover:bg-primary group-hover:text-black transition-colors")
-          span(class="material-symbols-outlined text-2xl") library_music
-        div(class="flex items-end gap-1 h-6 vu-meter-anim opacity-40")
-          div(class="h-5")
-          div(class="h-2")
-          div(class="h-4")
-          div(class="h-6")
+    div(class="flex justify-between items-start mb-12 relative z-10")
+      div(class="size-12 bg-primary/10 rounded-sm flex items-center justify-center border border-primary/20 group-hover:bg-primary group-hover:text-black transition-all duration-300 shadow-[0_0_15px_rgba(201,218,43,0.1)] group-hover:shadow-primary/20")
+        span(class="material-symbols-outlined text-2xl") library_music
+      
+      div(class="flex items-end gap-1 h-6 opacity-30 group-hover:opacity-100 transition-opacity")
+        each h in [5, 2, 4, 6]
+          div(class=`w-1 bg-primary` style=`height: ${h * 4}px`)
 
-      h3(class="font-heading text-xl font-bold mb-4 tracking-tight uppercase") Librería Masiva
-      p(class="text-white/50 text-sm leading-relaxed mb-6")
+    div(class="relative z-10")
+      h3(class="font-display text-xl font-extrabold mb-4 tracking-tighter uppercase text-white") Librería Masiva
+      p(class="text-slate-400 text-sm leading-relaxed mb-8 font-body")
         | Acceso instantáneo a +10 Terabytes de contenido curado: Mixes exclusivos, tracks remasterizados y videos musicales en alta resolución con actualización diaria.
-      div(class="flex items-center gap-2 text-primary text-[10px] font-bold tracking-widest uppercase")
+      
+      div(class="flex items-center gap-2 text-primary text-[10px] font-bold tracking-[0.2em] uppercase bg-black/40 w-fit px-3 py-1 rounded-full border border-primary/10")
         span 10TB+ CLOUD
-        div(class="h-1 w-1 bg-primary rounded-full")
+        div(class="size-1 bg-primary rounded-full animate-pulse")
         span DAILY_UPDATE
 
-    // CARD 03
-    div(class="modular-card group")
-      div(class="flex justify-between items-start mb-10")
-        div(class="size-12 bg-primary/10 rounded flex items-center justify-center border border-primary/20 group-hover:bg-primary group-hover:text-black transition-colors")
-          span(class="material-symbols-outlined text-2xl") downloading
-        div(class="flex items-end gap-1 h-6 vu-meter-anim opacity-40")
-          div(class="h-1")
-          div(class="h-6")
-          div(class="h-3")
-          div(class="h-5")
+  //- CARD 03: Descargas
+  div(class="bg-surface-dark/50 p-8 border border-white/5 rounded-sm relative group hover:border-primary/30 transition-all duration-500 overflow-hidden" id="struct-downloads")
+    div(class="flex justify-between items-start mb-12 relative z-10")
+      div(class="size-12 bg-primary/10 rounded-sm flex items-center justify-center border border-primary/20 group-hover:bg-primary group-hover:text-black transition-all duration-300 shadow-[0_0_15px_rgba(201,218,43,0.1)] group-hover:shadow-primary/20")
+        span(class="material-symbols-outlined text-2xl") downloading
+      
+      div(class="flex items-end gap-1 h-6 opacity-30 group-hover:opacity-100 transition-opacity")
+        each h in [1, 6, 3, 5]
+          div(class=`w-1 bg-primary` style=`height: ${h * 4}px`)
 
-      h3(class="font-heading text-xl font-bold mb-4 tracking-tight uppercase") Descargas Inteligentes
-      p(class="text-white/50 text-sm leading-relaxed mb-6")
+    div(class="relative z-10")
+      h3(class="font-display text-xl font-extrabold mb-4 tracking-tighter uppercase text-white") Descargas Inteligentes
+      p(class="text-slate-400 text-sm leading-relaxed mb-8 font-body")
         | Optimiza tu almacenamiento local. Visualiza, escucha y descarga solo lo que necesitas para tu set. Nuestra tecnología de streaming previo ahorra hasta un 80% de espacio en disco.
-      div(class="flex items-center gap-2 text-primary text-[10px] font-bold tracking-widest uppercase")
+      
+      div(class="flex items-center gap-2 text-primary text-[10px] font-bold tracking-[0.2em] uppercase bg-black/40 w-fit px-3 py-1 rounded-full border border-primary/10")
         span STORAGE_SAVER
-        div(class="h-1 w-1 bg-primary rounded-full")
+        div(class="size-1 bg-primary rounded-full animate-pulse")
         span SMART_SYNC

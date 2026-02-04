@@ -1,56 +1,69 @@
-// ================================
-// SECTION: SYSTEM COMMUNITY
-// ================================
-section(class="py-24 overflow-hidden bg-background-dark" id="system-community")
-  div(class="max-w-7xl mx-auto px-6")
+// ==========================================
+// SECTION: SYSTEM COMMUNITY (NETWORK GRID)
+// ==========================================
+section(class="py-24 overflow-hidden bg-background-dark relative" id="system-community")
+  //- Elemento decorativo de red
+  div(class="absolute inset-0 pixel-grid opacity-10 pointer-events-none")
 
-    div(class="flex flex-col lg:flex-row gap-12 items-center")
+  div(class="max-w-7xl mx-auto px-6 relative z-10")
+    div(class="flex flex-col lg:flex-row gap-16 items-center")
 
       // ----------------------------
       // BLOQUE: TEXTO + MÉTRICAS
       // ----------------------------
-      div(class="lg:w-1/2 space-y-8")
+      div(class="lg:w-1/2 space-y-10")
+        div(class="space-y-4")
+          div(class="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-primary/10 border border-primary/20")
+            span(class="size-1.5 bg-primary rounded-full animate-ping")
+            span(class="text-[10px] font-bold text-primary uppercase tracking-[0.2em]") Network Status: Active
 
-        h2(class="font-display font-extrabold text-4xl md:text-5xl uppercase leading-tight")
-          | HECHO POR 
-          span(class="text-primary") DJs
-          | , PARA EL 
-          span(class="text-transparent bg-clip-text lightning-gradient") SWING
-          |  LATINO
+          h2(class="font-display font-black text-4xl md:text-6xl uppercase leading-[0.9] text-white tracking-tighter")
+            | HECHO POR 
+            span(class="text-primary") DJs
+            | , PARA EL 
+            br
+            span(class="text-transparent bg-clip-text lightning-gradient inline-block") SWING LATINO
 
-        p(class="text-lg text-slate-400")
-          | Nuestra comunidad no solo usa la plataforma, la construye. Integramos talento de Medellín, Ciudad de México, Bogotá, Buenos Aires y São Paulo para crear una red de soporte sin precedentes.
+        p(class="text-lg text-slate-400 font-body leading-relaxed max-w-xl")
+          | Nuestra comunidad no solo usa la plataforma, la construye. Integramos talento de los principales hubs creativos de la región para crear una red de soporte sin precedentes.
 
-        div(class="grid grid-cols-2 gap-8 pt-4")
-          div
-            p(class="text-4xl font-display font-black text-white") 50K+
-            p(class="text-xs uppercase tracking-widest text-primary font-bold") DJs Activos
-          div
-            p(class="text-4xl font-display font-black text-white") 12
-            p(class="text-xs uppercase tracking-widest text-primary font-bold") Países
+        //- Métricas con estilo de contador digital
+        div(class="grid grid-cols-2 gap-12 pt-6 border-t border-white/5")
+          div(class="group")
+            p(class="text-5xl font-display font-black text-white group-hover:text-primary transition-colors") 50K+
+            p(class="text-[10px] uppercase tracking-[0.3em] text-primary/60 font-bold mt-2") DJs Activos
+          div(class="group")
+            p(class="text-5xl font-display font-black text-white group-hover:text-primary transition-colors") 12
+            p(class="text-[10px] uppercase tracking-[0.3em] text-primary/60 font-bold mt-2") Países Conectados
 
       // ----------------------------
       // BLOQUE: VISUAL / COMUNIDAD
       // ----------------------------
-      div(class="lg:w-1/2 grid grid-cols-2 gap-4")
+      div(class="lg:w-1/2 grid grid-cols-2 gap-6")
+        
+        //- Columna 1
+        div(class="space-y-6")
+          div(class="group relative overflow-hidden rounded-sm border border-white/10 shadow-2xl")
+            img(
+              class="w-full h-auto grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700 ease-out"
+              src="/img/dj_latino_mezclando.webp"
+              alt="High energy crowd at a nightclub"
+            )
+            div(class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity")
 
-        div(class="space-y-4")
-          img(
-            class="rounded grayscale hover:grayscale-0 transition-all duration-500 border border-white/10"
-            src="/img/dj_latino_mezclando.webp"
-            alt="High energy crowd at a nightclub"
-          )
+          div(class="bg-primary/10 p-6 border-l-2 border-primary group hover:bg-primary/20 transition-all")
+            p(class="text-[10px] font-bold text-primary uppercase tracking-[0.3em] mb-2") Node: Community Hub
+            p(class="text-lg font-display font-bold text-white leading-tight uppercase") LATAM TECH SESSIONS
 
-          div(class="bg-primary/20 p-4 border border-primary/30")
-            p(class="text-[10px] font-bold text-primary uppercase tracking-tighter") Community Hub
-            p(class="text-sm font-bold") LATAM TECH SESSIONS
+        //- Columna 2 (Desplazada)
+        div(class="space-y-6 pt-12")
+          div(class="bg-ritma-purple/10 p-8 border-r-2 border-ritma-purple group flex flex-col items-center justify-center text-center hover:bg-ritma-purple/20 transition-all aspect-square")
+            span(class="material-symbols-outlined text-6xl text-ritma-purple group-hover:scale-125 transition-transform duration-500") equalizer
+            p(class="text-[10px] font-bold text-ritma-purple uppercase tracking-[0.2em] mt-4") Real-time Audio Engine
 
-        div(class="space-y-4 pt-8")
-          div(class="bg-ritma-purple/20 p-4 border border-ritma-purple/30 aspect-square flex items-center justify-center")
-            span(class="material-icons-round text-5xl text-ritma-purple") equalizer
-
-          img(
-            class="rounded grayscale hover:grayscale-0 transition-all duration-500 border border-white/10"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAx3ji9XncmKHFn6dZtMnPwenBKi60oNKUOKFI__WJDye-EreKcJVcRCJseJ425R-EM-N20J05-D2qk4MCOaSPSRymyfv88AVOW1xJcmrSCdp0lAO5L493b3HOkJcYYse7RQejYSO_IjruTgB9Pe0HBydkKPlZR89zu6eEZvc3dc7IzT-74gJI6QEL_RKyUL0EB1GCvdz6CfqgmK5dbNOmdYDb5D_Sap02-Vyj5FRJJV6lxe1PL_8bxiORVGX6t8OfX_7Js0RpQxXw"
-            alt="DJ in neon lighting"
-          )
+          div(class="group relative overflow-hidden rounded-sm border border-white/10 shadow-2xl")
+            img(
+              class="w-full h-auto grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700 ease-out"
+              src="/img/dj_latino_mezclando.webp"
+              alt="DJ in neon lighting"
+            )

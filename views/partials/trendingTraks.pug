@@ -1,173 +1,67 @@
-section(
-  class="py-24 bg-slate-50 dark:bg-zinc-900/30"
-)
-  div(
-    class="max-w-7xl mx-auto px-6"
-  )
+section(class="py-24 bg-background-dark relative")
+  //- Decoración sutil de fondo
+  div(class="absolute top-0 left-1/4 w-64 h-64 bg-primary/5 blur-[120px] pointer-events-none")
+  
+  div(class="max-w-7xl mx-auto px-6 relative z-10")
 
-    div(
-      class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6"
-    )
+    div(class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6")
       div
-        h2(
-          class="font-display font-extrabold text-4xl uppercase mb-4"
-        )
+        h2(class="font-display font-extrabold text-4xl uppercase mb-2 text-white")
           | Trending 
-          span(class="text-ritma-cyan") Tracks
+          span(class="text-primary") Tracks
 
-        p(
-          class="text-slate-500 dark:text-slate-400 max-w-md"
-        )
+        p(class="text-slate-400 max-w-md font-body")
           | Lo más sonado en las pistas de Latinoamérica esta semana.
 
-      a(
-        class="text-primary font-bold flex items-center gap-2 hover:underline"
-        href="/trending-tracks"
-      )
+      a(class="text-primary font-display font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:gap-4 transition-all" href="/trending-tracks")
         | VER TODAS 
-        span(class="material-icons-round") arrow_forward
+        span(class="material-icons-round") east
 
-    div(
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-    )
+    div(class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8")
 
-      // -------- Track 01 --------
-      div(
-        class="group bg-white dark:bg-surface-dark p-5 rounded-sm border border-slate-200 dark:border-white/5 hover:border-primary/50 transition-all duration-300"
-      )
-        div(
-          class="flex items-center gap-4 mb-6"
-        )
-          div(
-            class="w-16 h-16 bg-ritma-orange rounded-sm flex items-center justify-center text-black font-black text-2xl"
-          ) 01
+      //- Definimos los tracks en un array para evitar repetir código y errores
+      - 
+        const trending = [
+          { id: '01', title: 'PERREO FUTURISTA', artist: 'DJ ELÉCTRICO', bpm: '128', color: 'bg-ritma-orange', progress: 'w-2/3' },
+          { id: '02', title: 'SALSA TECH CORE', artist: 'RITMA LABS', bpm: '132', color: 'bg-ritma-purple', progress: 'w-1/2' },
+          { id: '03', title: 'CUMBIA GALÁCTICA', artist: 'SONIDO 3000', bpm: '124', color: 'bg-ritma-blue', progress: 'w-3/4' }
+        ]
 
-          div
-            h3(
-              class="font-display font-bold text-lg leading-tight"
-            ) PERREO FUTURISTA
+      each track in trending
+        div(class="group bg-surface-dark p-6 rounded-sm border border-white/5 hover:border-primary/30 transition-all duration-500 relative overflow-hidden")
+          //- Efecto de resplandor al fondo al hacer hover
+          div(class=`absolute -right-4 -top-4 w-24 h-24 ${track.color} opacity-0 group-hover:opacity-10 blur-3xl transition-opacity`)
+          
+          div(class="flex items-center gap-4 mb-6 relative z-10")
+            div(class=`w-16 h-16 ${track.color} rounded-sm flex items-center justify-center text-black font-display font-black text-2xl shadow-lg`)
+              | #{track.id}
 
-            p(
-              class="text-sm text-ritma-cyan"
-            ) DJ ELÉCTRICO
+            div
+              h3(class="font-display font-bold text-lg leading-tight text-white group-hover:text-primary transition-colors")
+                | #{track.title}
+              p(class="text-xs uppercase tracking-widest text-slate-500 mt-1")
+                | #{track.artist}
 
-        div(
-          class="h-12 flex items-center gap-[2px]"
-        )
-          div(
-            class="w-full bg-slate-200 dark:bg-white/10 h-1 rounded-full relative overflow-hidden"
-          )
-            div(
-              class="absolute inset-0 bg-primary w-2/3"
-            )
+          //- Visualizador de Onda / Progreso
+          div(class="space-y-3 relative z-10")
+            div(class="h-8 waveform-bg opacity-30 group-hover:opacity-60 transition-opacity")
+            
+            div(class="flex items-center gap-3")
+              div(class="flex-1 bg-white/5 h-[2px] rounded-full overflow-hidden")
+                div(class=`h-full bg-primary ${track.progress} group-hover:shadow-[0_0_8px_#C9DA2B] transition-all`)
+              
+              span(class="text-[10px] text-slate-500 font-mono") 03:45
 
-          span(
-            class="text-[10px] text-slate-400 font-mono"
-          ) 03:45
+          //- Footer de la tarjeta
+          div(class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center")
+            div(class="flex items-center gap-2")
+              span(class="text-[10px] text-primary font-bold tracking-tighter") BPM
+              span(class="text-sm font-display font-bold text-white") #{track.bpm}
 
-        div(
-          class="mt-4 flex justify-between items-center text-xs text-slate-400 uppercase tracking-widest font-bold"
-        )
-          span 128 BPM
-
-          div(class="flex gap-4")
-            span(
-              class="material-icons-round text-sm cursor-pointer hover:text-white"
-            ) favorite_border
-            span(
-              class="material-icons-round text-sm cursor-pointer hover:text-white"
-            ) share
-
-      // -------- Track 02 --------
-      div(
-        class="group bg-white dark:bg-surface-dark p-5 rounded-sm border border-slate-200 dark:border-white/5 hover:border-primary/50 transition-all duration-300"
-      )
-        div(
-          class="flex items-center gap-4 mb-6"
-        )
-          div(
-            class="w-16 h-16 bg-ritma-purple rounded-sm flex items-center justify-center text-black font-black text-2xl"
-          ) 02
-
-          div
-            h3(
-              class="font-display font-bold text-lg leading-tight"
-            ) SALSA TECH CORE
-
-            p(
-              class="text-sm text-ritma-purple"
-            ) RITMA LABS
-
-        div(
-          class="h-12 flex items-center gap-[2px]"
-        )
-          div(
-            class="w-full bg-slate-200 dark:bg-white/10 h-1 rounded-full relative overflow-hidden"
-          )
-            div(
-              class="absolute inset-0 bg-primary w-1/2"
-            )
-
-          span(
-            class="text-[10px] text-slate-400 font-mono"
-          ) 04:12
-
-        div(
-          class="mt-4 flex justify-between items-center text-xs text-slate-400 uppercase tracking-widest font-bold"
-        )
-          span 132 BPM
-
-          div(class="flex gap-4")
-            span(
-              class="material-icons-round text-sm cursor-pointer hover:text-white"
-            ) favorite_border
-            span(
-              class="material-icons-round text-sm cursor-pointer hover:text-white"
-            ) share
-
-      // -------- Track 03 --------
-      div(
-        class="group bg-white dark:bg-surface-dark p-5 rounded-sm border border-slate-200 dark:border-white/5 hover:border-primary/50 transition-all duration-300"
-      )
-        div(
-          class="flex items-center gap-4 mb-6"
-        )
-          div(
-            class="w-16 h-16 bg-ritma-blue rounded-sm flex items-center justify-center text-black font-black text-2xl"
-          ) 03
-
-          div
-            h3(
-              class="font-display font-bold text-lg leading-tight"
-            ) CUMBIA GALÁCTICA
-
-            p(
-              class="text-sm text-ritma-blue"
-            ) SONIDO 3000
-
-        div(
-          class="h-12 flex items-center gap-[2px]"
-        )
-          div(
-            class="w-full bg-slate-200 dark:bg-white/10 h-1 rounded-full relative overflow-hidden"
-          )
-            div(
-              class="absolute inset-0 bg-primary w-3/4"
-            )
-
-          span(
-            class="text-[10px] text-slate-400 font-mono"
-          ) 05:20
-
-        div(
-          class="mt-4 flex justify-between items-center text-xs text-slate-400 uppercase tracking-widest font-bold"
-        )
-          span 124 BPM
-
-          div(class="flex gap-4")
-            span(
-              class="material-icons-round text-sm cursor-pointer hover:text-white"
-            ) favorite_border
-            span(
-              class="material-icons-round text-sm cursor-pointer hover:text-white"
-            ) share
+            div(class="flex gap-4 text-slate-500")
+              button(class="hover:text-primary transition-colors")
+                span(class="material-icons-round text-lg") favorite_border
+              button(class="hover:text-primary transition-colors")
+                span(class="material-icons-round text-lg") share
+              button(class="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center hover:bg-primary hover:text-black transition-all")
+                span(class="material-icons-round text-sm") play_arrow

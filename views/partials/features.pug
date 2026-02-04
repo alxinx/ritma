@@ -1,70 +1,60 @@
-section(
-  class="py-24 border-t border-slate-200 dark:border-white/5"
-)
-  div(
-    class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-slate-200 dark:bg-white/5 border border-slate-200 dark:border-white/5"
-  )
+section(class="py-24 bg-background-dark relative overflow-hidden")
+  //- Fondo técnico con pixel grid
+  div(class="absolute inset-0 pixel-grid opacity-10 pointer-events-none")
+  
+  div(class="max-w-7xl mx-auto px-6 relative z-10")
+    //- Contenedor de Grid con bordes finos estilo "Bento"
+    div(class="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-white/5 border border-white/5")
 
-    div(
-      class="bg-white dark:bg-background-dark p-8 group"
-    )
-      span(
-        class="material-icons-round text-4xl text-primary mb-6"
-      ) storage
+      //- Card 01: Almacenamiento
+      div(class="bg-background-dark p-10 group relative overflow-hidden transition-all hover:bg-surface-dark")
+        //- Resplandor de hover sutil
+        div(class="absolute -right-10 -top-10 w-32 h-32 bg-primary/5 blur-3xl group-hover:opacity-100 opacity-0 transition-opacity")
+        
+        span(class="material-symbols-outlined text-5xl text-primary mb-8 block group-hover:scale-110 transition-transform origin-left") storage
 
-      h4(
-        class="font-display font-bold text-xl mb-3 uppercase tracking-tight"
-      ) ALMACENAMIENTO DJ
+        h4(class="font-display font-bold text-lg mb-4 uppercase tracking-tighter text-white") 
+          | Almacenamiento 
+          span(class="text-primary italic") DJ
 
-      p(
-        class="text-sm text-slate-500 dark:text-slate-400"
-      )
-        | Nube optimizada para archivos de audio lossless con backups automáticos.
+        p(class="text-xs leading-relaxed text-slate-400 font-body")
+          | Nube optimizada para archivos de audio lossless con backups automáticos y baja latencia.
 
-    div(
-      class="bg-white dark:bg-background-dark p-8 group"
-    )
-      span(
-        class="material-icons-round text-4xl text-ritma-cyan mb-6"
-      ) sync
+      //- Card 02: Sync Latino
+      div(class="bg-background-dark p-10 group relative overflow-hidden transition-all hover:bg-surface-dark")
+        div(class="absolute -right-10 -top-10 w-32 h-32 bg-ritma-cyan/5 blur-3xl group-hover:opacity-100 opacity-0 transition-opacity")
+        
+        span(class="material-symbols-outlined text-5xl text-ritma-cyan mb-8 block group-hover:rotate-90 transition-transform duration-700") sync
 
-      h4(
-        class="font-display font-bold text-xl mb-3 uppercase tracking-tight"
-      ) SYNC LATINO
+        h4(class="font-display font-bold text-lg mb-4 uppercase tracking-tighter text-white") 
+          | Sync 
+          span(class="text-ritma-cyan italic") Latino
 
-      p(
-        class="text-sm text-slate-500 dark:text-slate-400"
-      )
-        | Algoritmos especializados en patrones rítmicos complejos del Caribe y el Sur.
+        p(class="text-xs leading-relaxed text-slate-400 font-body")
+          | Algoritmos especializados en patrones rítmicos complejos del Caribe y el Cono Sur.
 
-    div(
-      class="bg-white dark:bg-background-dark p-8 group"
-    )
-      span(
-        class="material-icons-round text-4xl text-ritma-purple mb-6"
-      ) monetization_on
+      //- Card 03: Monetización
+      div(class="bg-background-dark p-10 group relative overflow-hidden transition-all hover:bg-surface-dark")
+        div(class="absolute -right-10 -top-10 w-32 h-32 bg-ritma-purple/5 blur-3xl group-hover:opacity-100 opacity-0 transition-opacity")
+        
+        span(class="material-symbols-outlined text-5xl text-ritma-purple mb-8 block group-hover:translate-y-[-4px] transition-transform") payments
 
-      h4(
-        class="font-display font-bold text-xl mb-3 uppercase tracking-tight"
-      ) MONETIZA TU SWING
+        h4(class="font-display font-bold text-lg mb-4 uppercase tracking-tighter text-white") 
+          | Monetiza 
+          span(class="text-ritma-purple italic") tu Swing
 
-      p(
-        class="text-sm text-slate-500 dark:text-slate-400"
-      )
-        | Distribución directa a plataformas y cobro de regalías sin intermediarios.
+        p(class="text-xs leading-relaxed text-slate-400 font-body")
+          | Distribución directa a plataformas y cobro de regalías sin intermediarios abusivos.
 
-    div(
-      class="bg-white dark:bg-background-dark p-8 group"
-    )
-      span(
-        class="material-icons-round text-4xl text-ritma-orange mb-6"
-      ) groups
+      //- Card 04: Comunidad
+      div(class="bg-background-dark p-10 group relative overflow-hidden transition-all hover:bg-surface-dark")
+        div(class="absolute -right-10 -top-10 w-32 h-32 bg-ritma-orange/5 blur-3xl group-hover:opacity-100 opacity-0 transition-opacity")
+        
+        span(class="material-symbols-outlined text-5xl text-ritma-orange mb-8 block group-hover:scale-110 transition-transform origin-left") dynamic_feed
 
-      h4(
-        class="font-display font-bold text-xl mb-3 uppercase tracking-tight"
-      ) COMUNIDAD EXCLUSIVA
+        h4(class="font-display font-bold text-lg mb-4 uppercase tracking-tighter text-white") 
+          | Comunidad 
+          span(class="text-ritma-orange italic") VIP
 
-      p(
-        class="text-sm text-slate-500 dark:text-slate-400"
-      )
-        | Conecta con los DJs más influyentes de la región en nuestra red privada.
+        p(class="text-xs leading-relaxed text-slate-400 font-body")
+          | Conecta con los productores y DJs más influyentes de la región en nuestra red privada.

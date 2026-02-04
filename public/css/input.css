@@ -1,2 +1,425 @@
-@import "tailwindcss"
+@import "tailwindcss";
 
+@theme {
+  /* Identidad RITMA */
+  --color-primary: #C9DA2B;
+  --color-background-light: #F8F9FA;
+  --color-background-dark: #000000;
+  --color-surface-dark: #1A1A1A;
+
+  --color-ritma-purple: #A462A7;
+  --color-ritma-blue: #4F74B8;
+  --color-ritma-cyan: #57C5D3;
+  --color-ritma-orange: #FFC857;
+  --color-ritma-red: #FF4D4D;
+
+  --font-display: "Montserrat", sans-serif;
+  --font-body: "Roboto", sans-serif;
+
+  --radius-default: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+
+  --animate-bounce-fast: bounce 0.4s infinite;
+  
+  /* Animación de escaneo para las imágenes de artistas */
+  @keyframes scan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(1000%); }
+  }
+  --animate-scan: scan 3s linear infinite;
+}
+
+/* Forzamos Dark Mode */
+:root {
+  color-scheme: dark;
+  background-color: var(--color-background-dark);
+  color: white;
+}
+
+@layer utilities {
+  /* Gradiente Lightning optimizado */
+  .lightning-gradient {
+    background: linear-gradient(135deg, var(--color-ritma-orange) 0%, var(--color-ritma-purple) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Grid de pixeles técnica */
+  .pixel-grid {
+    background-image: radial-gradient(circle, #222 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Waveforms usando tus máscaras SVG */
+  .waveform-bg {
+    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-ritma-cyan) 100%);
+    mask-image: url("data:image/svg+xml,%3Csvg width='400' height='40' viewBox='0 0 400 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 20 L5 10 L10 30 L15 15 L20 25 L25 5 L30 35 L35 20 L40 10 L45 30 L50 20 L55 10 L60 30 L65 15 L70 25 L75 5 L80 35 L85 20 L90 10 L95 30 L100 20 L105 10 L110 30 L115 15 L120 25 L125 5 L130 35 L135 20 L140 10 L145 30 L150 20 L155 10 L160 30 L165 15 L170 25 L175 5 L180 35 L185 20 L190 10 L195 30 L200 20 L205 10 L210 30 L215 15 L220 25 L225 5 L230 35 L235 20 L240 10 L245 30 L250 20 L255 10 L260 30 L265 15 L270 25 L275 5 L280 35 L285 20 L290 10 L295 30 L300 20 L305 10 L310 30 L315 15 L320 25 L325 5 L330 35 L335 20 L340 10 L345 30 L350 20 L355 10 L360 30 L365 15 L370 25 L375 5 L380 35 L385 20 L390 10 L395 30 L400 20' stroke='black' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+    mask-repeat: repeat-x;
+    mask-size: cover;
+  }
+
+  .glow-primary {
+    text-shadow: 0 0 10px rgba(201, 218, 43, 0.5);
+  }
+
+  .vu-bar-active {
+    background: linear-gradient(to top, var(--color-primary), var(--color-ritma-red));
+  }
+
+
+  .checkbox-ritma-glow {
+    @apply appearance-none size-2 rounded-md border-2 border-white/10 bg-white/5 
+           relative cursor-pointer transition-all duration-300;
+  }
+
+  /* Estado Activo: El Glow que buscabas */
+  .checkbox-ritma-glow:checked {
+    @apply bg-primary border-primary;
+    box-shadow: 0 0 20px 2px rgba(201, 218, 43, 0.6);
+  }
+
+  /* El Checkmark negro interno */
+  .checkbox-ritma-glow:checked::after {
+    content: "";
+    @apply absolute inset-0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background-size: 70%;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .ritma-switch-input {
+    @apply appearance-none w-12 h-6 rounded-full border-2 border-white/10 bg-white/5 
+           relative cursor-pointer transition-all duration-300;
+  }
+
+  /* El círculo interno (Toggle) */
+  .ritma-switch-input::after {
+    content: "";
+    @apply absolute top-1 left-1 size-3 bg-white/20 rounded-full transition-all duration-300;
+  }
+
+  /* Estado Activo: Cuerpo iluminado */
+  .ritma-switch-input:checked {
+    @apply bg-primary border-primary;
+    box-shadow: 0 0 15px rgba(201, 218, 43, 0.4);
+  }
+
+  /* Estado Activo: Toggle se mueve y cambia a negro */
+  .ritma-switch-input:checked::after {
+    @apply left-7 bg-black shadow-none;
+    /* En la v4 podemos usar translate-x si prefieres, pero left es más compatible con este layout */
+  }
+
+  /* Variación: Glow Blanco en el círculo al estar activo (Opcional, estilo Pro) */
+  .ritma-switch-input:checked:hover::after {
+    @apply bg-white;
+    box-shadow: 0 0 8px white;
+  }
+
+
+  .ritma-input-container {
+    @apply relative flex items-center w-full;
+  }
+
+  .ritma-input-field {
+    @apply w-full bg-black/40 border border-white/10 px-4 py-3 pr-12
+           rounded-sm font-display text-[11px] font-bold uppercase tracking-[0.2em] 
+           text-white placeholder:text-slate-600 transition-all duration-300 outline-none;
+  }
+
+  /* Estado Focus: El brillo perimetral */
+  .ritma-input-field:focus {
+    @apply border-primary/50 bg-black/60 shadow-[0_0_20px_rgba(201,218,43,0.1)];
+  }
+
+  /* El icono a la derecha */
+  .ritma-input-icon {
+    @apply absolute right-4 text-slate-500 transition-all duration-300 pointer-events-none;
+  }
+
+  /* Cuando el input tiene foco, el icono se enciende */
+  .ritma-input-field:focus + .ritma-input-icon {
+    @apply text-primary scale-110;
+    filter: drop-shadow(0 0 5px rgba(201, 218, 43, 0.5));
+  }
+
+
+
+  .ritma-input-container:focus-within div {
+    @apply border-primary/30 text-white transition-all;
+    box-shadow: -10px 0 20px rgba(201, 218, 43, 0.05);
+  }
+  
+  .ritma-input-container:focus-within input {
+    @apply border-primary/50 bg-black/60;
+    box-shadow: 10px 0 20px rgba(201, 218, 43, 0.1);
+  }
+
+
+
+  /* Hover sutil antes de marcar */
+  .checkbox-ritma-glow:hover:not(:checked) {
+    @apply border-primary/40 bg-primary/10;
+  }
+
+
+  .ritma-select-trigger {
+    @apply appearance-none w-full bg-black/40 border border-primary/40 px-4 py-3 
+           rounded-sm font-display text-[11px] font-bold uppercase tracking-[0.2em] 
+           text-white cursor-pointer transition-all duration-300 outline-none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23C9DA2B' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+  }
+
+  /* Estado al abrir/enfocar: Glow perimetral */
+  .ritma-select-trigger:focus {
+    @apply border-primary ring-1 ring-primary/20 bg-black/60;
+    box-shadow: 0 0 20px rgba(201, 218, 43, 0.15);
+  }
+
+  /* Estilizar las opciones (Limitado por el OS, pero mejorado) */
+  .ritma-select-trigger option {
+    @apply bg-surface-dark text-white py-4 font-body;
+  }
+
+  .options-container {
+    @apply absolute top-full left-0 w-full mt-1 bg-surface-dark border border-primary/20 
+           shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-xl z-50 overflow-hidden;
+  }
+
+  /* Cada opción individual */
+  .ritma-option {
+    @apply flex items-center justify-between px-4 py-3 cursor-pointer 
+           border-b border-white/5 transition-all duration-200;
+  }
+
+  /* Estado Hover: El "Highlight" de cabina */
+  .ritma-option:hover {
+    @apply bg-primary/10 text-primary;
+    box-shadow: inset 4px 0 0 var(--color-primary);
+  }
+
+  /* Indicador de selección activa */
+  .ritma-option.selected {
+    @apply bg-primary text-black font-black;
+  }
+
+  /* El pequeño punto LED para opciones activas */
+  .option-led {
+    @apply size-1.5 rounded-full bg-primary shadow-[0_0_8px_#C9DA2B];
+  }
+
+  input {
+    @apply w-full bg-surface-dark border border-white/20 rounded-lg px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-white/20
+  }
+
+  input.error {
+   @apply  border border-red-500/50 outline-none focus:border-red-500 transition-all text-red-500/80
+  }
+
+
+  .upload-zone {
+    @apply relative border-2 border-dashed border-white/10 bg-white/[0.02] 
+           rounded-sm p-12 transition-all duration-500 cursor-pointer
+           flex flex-col items-center justify-center gap-4 overflow-hidden;
+  }
+
+  /* Estado al arrastrar archivo (Drag Over) */
+  .upload-zone.drag-active {
+    @apply border-primary bg-primary/5 shadow-[0_0_40px_rgba(201,218,43,0.1)];
+  }
+
+  /* Efecto de líneas de escaneo de fondo */
+  .upload-scan-lines {
+    background: linear-gradient(to bottom, transparent 50%, rgba(201, 218, 43, 0.03) 50%);
+    background-size: 100% 4px;
+    @apply absolute inset-0 pointer-events-none;
+  }
+
+  /* Animación de pulso para el icono */
+  .upload-icon-pulse {
+    @apply text-primary/40 group-hover:text-primary transition-colors duration-500;
+    filter: drop-shadow(0 0 10px rgba(201, 218, 43, 0));
+  }
+  
+  .upload-zone:hover .upload-icon-pulse {
+    filter: drop-shadow(0 0 10px rgba(201, 218, 43, 0.5));
+  }
+  
+
+  button  {
+    @apply  hover:bg-white  font-bold py-4 px-8 rounded uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer hover:text-black
+  }
+
+  button.btn-green {
+    @apply bg-primary hover:bg-white text-black 
+  }
+
+  button.btn-small {
+    @apply py-2 px-4 rounded uppercase text-[10px] tracking-wider
+  }
+
+  button.btn-ghost {
+    @apply border border-white/20 hover:border-primary hover:text-black text-white font-bold py-4 px-8 rounded uppercase tracking-wider transition-all flex items-center justify-center gap-2
+  }
+
+  button.btn-danger {
+    @apply bg-red-500 hover:bg-red-600 text-white font-bold   uppercase flex items-center justify-center gap-2
+  }
+
+}
+
+@layer components {
+  /* Estandarización de títulos */
+  h1 {
+    @apply font-display  text-5xl uppercase leading-none tracking-tighter;
+  }
+
+  h2 {
+    @apply  font-display text-4xl uppercase leading-none;
+  }
+
+  h3 {
+    @apply  font-display text-2xl uppercase leading-none;
+  }
+
+  h4 {
+    @apply  font-display text-xs uppercase leading-none;
+  }
+
+
+  span {
+    @apply text-primary font-mono text-sm
+  }
+  span.acordeonTitulo {
+    @apply text-xs font-bold uppercase tracking-widest
+  }
+
+  span.tag-green {
+    @apply text-[10px] uppercase font-bold text-primary tracking-widest bg-primary/10 px-2 py-1 rounded
+  }
+
+  span.tag-red {
+    @apply text-[10px] uppercase font-bold text-ritma-red tracking-widest bg-primary/10 px-2 py-1 rounded
+  }
+
+  span.tag-orange {
+    @apply text-[10px] uppercase font-bold text-ritma-orange tracking-widest bg-primary/10 px-2 py-1 rounded
+  }
+
+   span.subTittle {
+    @apply text-white/40 font-bold tracking-widest
+   }
+
+  p {
+    @apply font-body text-xl leading-relaxed text-white/90;
+  }
+
+  p.subTittle {
+    @apply text-white/40 text-xs uppercase font-bold mb-6 tracking-widest;
+  }
+
+  p.text {
+    @apply font-body text-sm mt-2 text-white/60 leading-loose;
+  }
+
+  .tabla {
+    @apply mt-12 border-b border-white/10 flex gap-8
+  }
+  .tablatittles {
+    @apply pb-4 text-white/40 hover:text-white font-bold text-xs uppercase tracking-widest cursor-pointer transition-colors
+  }
+
+  .tablatittles.active {
+    @apply pb-4 border-b-2 border-primary text-primary font-bold text-xs uppercase tracking-widest flex items-center gap-2
+  }
+
+  table {
+    @apply w-full text-left
+  }
+  thead{
+    @apply bg-white/5
+  }
+
+  th {
+    @apply px-6 py-4 text-[10px] uppercase font-bold text-white/40 tracking-widest
+  }
+
+  td {
+    @apply px-6 py-4 font-bold text-sm
+  }
+
+  tbody {
+    @apply divide-y divide-white/5
+  }
+
+
+
+  /*********forms ***********/
+  label{
+    @apply block text-[10px] uppercase font-bold text-white/40 mb-2 tracking-widest
+  }
+
+  label:active {
+    @apply block text-[10px] uppercase font-bold text-primary mb-2 tracking-widest
+  }
+
+  label.error{
+    @apply block text-[10px] uppercase font-bold text-red-500 mb-2 tracking-widest
+  }
+
+
+  
+
+.paginadornumerico {
+    @apply size-8 flex items-center justify-center rounded bg-primary text-black font-bold text-xs cursor-pointer 
+}
+.paginadornumerico:hover {
+    @apply bg-primary/80 text-white
+}
+
+  .card {
+    @apply  bg-surface-dark p-8 rounded-xl border border-white/5
+  }
+
+
+  .cuadro {
+    @apply px-4 py-2 border border-primary text-primary font-bold text-xs uppercase tracking-widest rounded
+  }
+  .modular-card {
+    @apply bg-surface-dark border border-white/5 p-8 relative overflow-hidden transition-all duration-300;
+  }
+
+  .aspect-video {
+    @apply aspect-video w-full rounded-lg mb-4 bg-black flex items-center justify-center group-hover:scale-[1.02] transition-transform duration-500
+  }
+
+  .acordeonStyle {
+    @apply bg-surface-dark border border-white/5 p-4 rounded-lg
+  }
+
+  .acordeonStyle.disabled {
+    @apply   bg-surface-dark border border-white/5 p-4 rounded-lg flex justify-between items-center opacity-60
+  }
+
+  .ritma-range {
+    @apply appearance-none w-full h-1 bg-white/10 rounded-full outline-none cursor-pointer;
+  }
+  .ritma-range::-webkit-slider-thumb {
+    @apply appearance-none size-4 bg-primary rounded-full border-2 border-black shadow-[0_0_10px_#C9DA2B] transition-transform active:scale-125;
+  }
+}
+
+
+.cardLogin {
+    @apply w-full max-w-[560px] bg-surface-dark/60 border border-white/10 p-8 md:p-14 rounded-sm backdrop-blur-2xl relative overflow-hidden shadow-2xl
+}
+
+.decorationUp {
+    @apply absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-50
+}

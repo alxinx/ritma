@@ -1,205 +1,76 @@
 section(class="max-w-7xl mx-auto px-6 relative z-10")
   div(class="flex flex-col gap-4")
 
-    // ───────────── TRACK 01 ─────────────
-    div(
-      class="group relative flex flex-col lg:flex-row items-center gap-6 p-1 bg-surface-dark border border-white/10 hover:border-primary/50 transition-all"
-    )
-      div(class="relative w-full lg:w-48 h-48 flex-shrink-0 overflow-hidden")
-        img(
-          src="/img/artistas/ryan-castro.webp"
-          alt="Track Cover"
-          class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
-        )
-        div(
-          class="absolute top-2 left-2 w-10 h-10 bg-primary flex items-center justify-center text-black font-display font-black text-xl border border-black/20"
-        ) 01
-        div(class="absolute bottom-2 right-2 flex gap-1 items-end h-8")
-          div(class="w-1 bg-primary h-3")
-          div(class="w-1 bg-primary h-6")
-          div(class="w-1 bg-primary h-4")
-          div(class="w-1 bg-primary h-7")
+    //- Definimos los tracks en un array para evitar repetir 300 líneas de código
+    - 
+      const tracks = [
+        { id: '01', title: 'La Villa', artist: 'Ryan Castro', bpm: '128', key: 'Am', time: '03:45', progress: 'w-2/3', color: 'primary', img: '/img/artistas/ryan-castro.webp' },
+        { id: '02', title: 'Salsa Tech Core', artist: 'Ritma Labs', bpm: '132', key: 'Gm', time: '04:12', progress: 'w-1/2', color: 'ritma-purple', img: '/img/artistas/ritma-labs.webp' },
+        { id: '03', title: 'Cumbia Galáctica', artist: 'Sonido 3000', bpm: '124', key: 'C#', time: '05:20', progress: 'w-3/4', color: 'ritma-blue', img: '/img/artistas/sonido-3000.webp' }
+      ]
 
-      div(class="flex-grow w-full py-4 px-4 lg:px-0")
-        div(
-          class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4"
-        )
-          div
-            h2(
-              class="font-display font-bold text-2xl uppercase tracking-tight group-hover:text-primary transition-colors"
-            ) La Villa
-            p(
-              class="text-ritma-cyan font-display font-bold text-sm tracking-widest uppercase"
-            ) Ryan Castro
-
-          div(
-            class="flex gap-6 mt-4 md:mt-0 font-body text-[11px] text-slate-400 uppercase tracking-widest"
+    each track in tracks
+      div(class=`group relative flex flex-col lg:flex-row items-center gap-6 p-1 bg-surface-dark border border-white/10 hover:border-${track.color}/50 transition-all duration-500`)
+        
+        //- Cover Art & ID
+        div(class="relative w-full lg:w-48 h-48 flex-shrink-0 overflow-hidden")
+          img(
+            src=track.img
+            alt=track.title
+            class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
           )
-            div(class="flex flex-col")
-              span(class="text-slate-500") BPM
-              span(class="text-white font-bold") 128
-            div(class="flex flex-col")
-              span(class="text-slate-500") KEY
-              span(class="text-white font-bold") Am
-            div(class="flex flex-col")
-              span(class="text-slate-500") DURATION
-              span(class="text-white font-bold") 03:45
+          div(class=`absolute top-0 left-0 w-10 h-10 bg-${track.color} flex items-center justify-center text-black font-display font-black text-xl`) 
+            | #{track.id}
+          
+          //- Visualizer decorativo
+          div(class="absolute bottom-2 right-2 flex gap-1 items-end h-8 opacity-60")
+            each val in [3, 6, 4, 7]
+              div(class=`w-1 bg-${track.color}` style=`height: ${val * 4}px`)
 
-        div(class="relative h-16 w-full bg-white/5 rounded-sm overflow-hidden mb-4")
-          div(class="absolute inset-0 waveform-bg opacity-40")
-          div(class="absolute inset-0 waveform-bg w-2/3")
-
-      div(class="w-full lg:w-64 flex lg:flex-col gap-2 p-4")
-        button(
-          class="flex-grow bg-primary hover:bg-primary/90 text-black font-display font-extrabold text-xs py-4 uppercase tracking-tighter flex items-center justify-center gap-2"
-        )
-          span(class="material-symbols-outlined text-sm") download
-          | DOWNLOAD
-        button(
-          class="flex-grow border border-white/20 hover:bg-white/10 text-white font-display font-bold text-xs py-4 uppercase tracking-tighter flex items-center justify-center gap-2"
-        )
-          span(class="material-symbols-outlined text-sm") play_circle
-          | PLAY
-        
-     
-        a(href="/trending-tracks/perreo-futurista" class="flex-grow border border-white/20 hover:bg-white/10 text-white font-display font-bold text-xs py-4 uppercase tracking-tighter flex items-center justify-center gap-2") 
-            span(class="material-symbols-outlined text-sm") face_right
-            | VER MAS
-
-    // ───────────── TRACK 02 ─────────────
-    div(
-    class="group relative flex flex-col lg:flex-row items-center gap-6 p-1 bg-surface-dark border border-white/10 hover:border-ritma-purple/50 transition-all"
-    )
-        div(class="relative w-full lg:w-48 h-48 flex-shrink-0 overflow-hidden")
-            img(
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCa8J0ghub-DX0DKUyKTOKgXulbacr_Jltk8ThRMPd7I8fjgI-tmXe1Uq9jVmaZWdPXggezbq_f_5IvypyEowW15DfSGg8qVtyeDxkIH8LquGwVG7g67gjuOlLXNSClsSRHZ6ufhf6ig8gArzdRYo7_Loos1gh9_2J77DrK5NhCqE-PkpRPCXz1rSr1FVBnzvrG23aO28BD9VTk7AFpsSoPFMBii_hg5L45tnYUUfx1LeQjt2jkkG5C5YbMR5czVcCBNGZF-_1rWoA"
-            alt="Track Cover"
-            class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
-            )
-            div(
-            class="absolute top-2 left-2 w-10 h-10 bg-ritma-purple flex items-center justify-center text-black font-display font-black text-xl border border-black/20"
-            ) 02
-            div(class="absolute bottom-2 right-2 flex gap-1 items-end h-8")
-                div(class="w-1 bg-ritma-purple h-2")
-                div(class="w-1 bg-ritma-purple h-4")
-                div(class="w-1 bg-ritma-purple h-8")
-                div(class="w-1 bg-ritma-purple h-5")
-        
+        //- Track Info & Waveform
         div(class="flex-grow w-full py-4 px-4 lg:px-0")
-            div(class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4")
-                div
-            h2(
-            class="font-display font-bold text-2xl uppercase tracking-tight group-hover:text-ritma-purple transition-colors"
-            ) Salsa Tech Core
-            p(
-            class="text-ritma-purple font-display font-bold text-sm tracking-widest uppercase"
-            ) Ritma Labs
-
-            div(class="flex gap-6 mt-4 md:mt-0 font-body text-[11px] text-slate-400 uppercase tracking-widest")
-                div(class="flex flex-col")
-                    span(class="text-slate-500") BPM
-                    span(class="text-white font-bold") 132
-                div(class="flex flex-col")
-                    span(class="text-slate-500") KEY
-                    span(class="text-white font-bold") Gm
-                div(class="flex flex-col")
-                    span(class="text-slate-500") DURATION
-                    span(class="text-white font-bold") 04:12
-
-            div(class="relative h-16 w-full bg-white/5 rounded-sm overflow-hidden mb-4")
-                div(class="absolute inset-0 waveform-bg opacity-40")
-                div(
-                    class="absolute inset-0 waveform-bg w-1/2"
-                    style="filter: hue-rotate(240deg)"
-                )
-        div(class="w-full lg:w-64 flex lg:flex-col gap-2 p-4")
-            button( class="flex-grow bg-primary hover:bg-primary/90 text-black font-display font-extrabold text-xs py-4 uppercase tracking-tighter flex items-center justify-center gap-2")
-                span(class="material-symbols-outlined text-sm") download
-                | DOWNLOAD
-            button(class="flex-grow border border-white/20 hover:bg-white/10 text-white font-display font-bold text-xs py-4 uppercase tracking-tighter flex items-center justify-center gap-2")
-                span(class="material-symbols-outlined text-sm") play_circle
-                | Play
-            
-            a(href="/trending-tracks/salsa-tech-core" class="flex-grow border border-white/20 hover:bg-white/10 text-white font-display font-bold text-xs py-4 uppercase tracking-tighter flex items-center justify-center gap-2") 
-                span(class="material-symbols-outlined text-sm") face_right
-                | VER MAS
-
-    // ───────────── TRACK 03 ─────────────
-    div(
-    class="group relative flex flex-col lg:flex-row items-center gap-6 p-1 bg-surface-dark border border-white/10 hover:border-ritma-blue/50 transition-all"
-    )
-        div(class="relative w-full lg:w-48 h-48 flex-shrink-0 overflow-hidden")
-            img(
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCa8J0ghub-DX0DKUyKTOKgXulbacr_Jltk8ThRMPd7I8fjgI-tmXe1Uq9jVmaZWdPXggezbq_f_5IvypyEowW15DfSGg8qVtyeDxkIH8LquGwVG7g67gjuOlLXNSClsSRHZ6ufhf6ig8gArzdRYo7_Loos1gh9_2J77DrK5NhCqE-PkpRPCXz1rSr1FVBnzvrG23aO28BD9VTk7AFpsSoPFMBii_hg5L45tnYUUfx1LeQjt2jkkG5C5YbMR5czVcCBNGZF-_1rWoA"
-            alt="Track Cover"
-            class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
-            )
-            div(
-            class="absolute top-2 left-2 w-10 h-10 bg-ritma-blue flex items-center justify-center text-black font-display font-black text-xl border border-black/20"
-            ) 03
-            div(class="absolute bottom-2 right-2 flex gap-1 items-end h-8")
-                div(class="w-1 bg-ritma-blue h-5")
-                div(class="w-1 bg-ritma-blue h-2")
-                div(class="w-1 bg-ritma-blue h-6")
-                div(class="w-1 bg-ritma-blue h-3")
-        
-        div(class="flex-grow w-full py-4 px-4 lg:px-0")
-            div(class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4")
-
+          div(class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6")
             div
-                h2(
-                class="font-display font-bold text-2xl uppercase tracking-tight group-hover:text-ritma-blue transition-colors"
-                ) Cumbia Galáctica
-                p(
-                class="text-ritma-blue font-display font-bold text-sm tracking-widest uppercase"
-                ) Sonido 3000
+              h2(class=`font-display font-bold text-2xl uppercase tracking-tighter group-hover:text-${track.color} transition-colors`) 
+                | #{track.title}
+              p(class=`text-${track.color} font-display font-bold text-xs tracking-[0.3em] uppercase mt-1`) 
+                | #{track.artist}
 
-            div(
-                class="flex gap-6 mt-4 md:mt-0 font-body text-[11px] text-slate-400 uppercase tracking-widest"
-            )
-                div(class="flex flex-col")
-                span(class="text-slate-500") BPM
-                span(class="text-white font-bold") 124
-                div(class="flex flex-col")
-                span(class="text-slate-500") KEY
-                span(class="text-white font-bold") C#
-                div(class="flex flex-col")
-                span(class="text-slate-500") DURATION
-                span(class="text-white font-bold") 05:20
-            div(class="relative h-16 w-full bg-white/5 rounded-sm overflow-hidden mb-4")
-                div(class="absolute inset-0 waveform-bg opacity-40")
-                    div(
-                        class="absolute inset-0 waveform-bg w-3/4"
-                        style="filter: hue-rotate(180deg)"
-                    )
-       
+            //- Metadata Grid
+            div(class="flex gap-8 mt-6 md:mt-0 font-display text-[10px] uppercase tracking-widest")
+              div(class="flex flex-col border-l border-white/10 pl-4")
+                span(class="text-slate-500 mb-1") BPM
+                span(class="text-white font-black text-sm") #{track.bpm}
+              div(class="flex flex-col border-l border-white/10 pl-4")
+                span(class="text-slate-500 mb-1") Key
+                span(class="text-white font-black text-sm") #{track.key}
+              div(class="flex flex-col border-l border-white/10 pl-4")
+                span(class="text-slate-500 mb-1") Time
+                span(class="text-white font-black text-sm") #{track.time}
+
+          //- Waveform Progress
+          div(class="relative h-14 w-full bg-white/5 rounded-sm overflow-hidden group/wave cursor-pointer")
+            div(class="absolute inset-0 waveform-bg opacity-20")
+            div(class=`absolute inset-0 waveform-bg ${track.progress} group-hover:opacity-80 transition-opacity`)
+              //- El hue-rotate dinámico según el color del track
+              div(class=`absolute inset-0 bg-${track.color}/20`)
+
+        //- Action Buttons
         div(class="w-full lg:w-64 flex lg:flex-col gap-2 p-4")
-            button(
-            class="flex-grow bg-primary hover:bg-primary/90 text-black font-display font-extrabold text-xs py-4 uppercase tracking-tighter flex items-center justify-center gap-2"
-            )
-                span(class="material-symbols-outlined text-sm") download
-                | DOWNLOAD
-            button(
-            class="flex-grow border border-white/20 hover:bg-white/10 text-white font-display font-bold text-xs py-4 uppercase tracking-tighter flex items-center justify-center gap-2"
-            )
-                span(class="material-symbols-outlined text-sm") play_circle
-                | PLAY
-            
-            a(href="/trending-tracks/cumbia-galactica" class="flex-grow border border-white/20 hover:bg-white/10 text-white font-display font-bold text-xs py-4 uppercase tracking-tighter flex items-center justify-center gap-2") 
-                span(class="material-symbols-outlined text-sm") face_right
-                | VER MAS
+          button(class=`flex-grow bg-${track.color} hover:brightness-110 text-black font-display font-black text-[10px] py-4 uppercase tracking-widest transition-all`)
+            span(class="material-symbols-outlined text-sm align-middle mr-2") download
+            | DOWNLOAD
+          
+          button(class="flex-grow border border-white/10 hover:bg-white/5 text-white font-display font-bold text-[10px] py-4 uppercase tracking-widest transition-all")
+            span(class="material-symbols-outlined text-sm align-middle mr-2") play_arrow
+            | PREVIEW
+          
+          a(href=`/trending-tracks/perreo-futurista` class="flex-grow border border-white/10 hover:bg-white/5 text-white font-display font-bold text-[10px] py-4 uppercase tracking-widest transition-all text-center")
+            span(class="material-symbols-outlined text-sm align-middle mr-2") settings_input_component
+            | DETAILS
 
-
-
-
-
-
-
-
-    // ───────────── LOAD MORE ─────────────
-    div(class="mt-8 flex justify-center")
-      button(
-        class="group flex flex-col items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-slate-500 hover:text-primary transition-colors"
-      )
-        span Cargar más Sonido
-        span(class="material-symbols-outlined animate-bounce") expand_more
+    //- Load More
+    div(class="mt-12 flex justify-center")
+      button(class="group flex flex-col items-center gap-3 text-[10px] font-bold uppercase tracking-[0.5em] text-slate-500 hover:text-primary transition-all")
+        span SCANNING MORE FREQUENCIES
+        span(class="material-symbols-outlined animate-bounce text-primary") keyboard_double_arrow_down

@@ -1,34 +1,46 @@
 header(class="relative pt-40 pb-32 overflow-hidden bg-background-dark")
+  //- Fondo técnico con pixel grid
   div(class="absolute inset-0 pixel-grid opacity-20 pointer-events-none")
+  
+  //- Decoración de ambiente (Glow sutil)
+  div(class="absolute top-0 right-0 w-1/2 h-full bg-primary/5 blur-[120px] pointer-events-none")
 
   div(class="max-w-7xl mx-auto px-6 relative z-10")
+    //- Indicador de sección
     div(class="flex items-center gap-4 mb-8")
-      div(class="h-px w-12 bg-primary")
-      span(class="text-primary font-display font-bold uppercase tracking-[0.3em] text-sm")
+      div(class="h-px w-12 bg-primary shadow-[0_0_10px_#C9DA2B]")
+      span(class="text-primary font-display font-bold uppercase tracking-[0.3em] text-xs md:text-sm")
         | Nuestra Historia
 
-    h1(class="font-display font-extrabold text-6xl md:text-8xl leading-none uppercase mb-12")
+    //- Título Principal con kerning ajustado
+    h1(class="font-display font-extrabold text-6xl md:text-7xl leading-[1] uppercase mb-12 text-white tracking-tighter")
       | NUESTRA
       br
-      span(class="text-primary italic") VISIÓN
+      span(class="text-primary italic inline-block hover:translate-x-4 transition-transform duration-700") VISIÓN
 
-    div(class="grid lg:grid-cols-2 gap-12")
-      p(class="text-2xl md:text-3xl font-body leading-tight text-slate-300")
+    div(class="grid lg:grid-cols-2 gap-16 items-start")
+      //- Manifiesto
+      p(class="text-1xs md:text-2xl   font-body leading-normal  text-slate-400 tracking-tight")
         | Nos convertiremos en la 
-        span(class="text-white font-bold")
+        span(class="text-white font-bold glow-primary")
           | plataforma de soporte multimedia más importante de Latinoamérica
         | , impulsando la infraestructura digital que define el futuro de la cultura de club.
 
-      div(class="flex flex-col justify-end space-y-4")
-        div(class="vu-meter h-12 mb-4")
-          div(class="vu-bar h-8")
-          div(class="vu-bar h-12")
-          div(class="vu-bar h-6")
-          div(class="vu-bar h-10")
-          div(class="vu-bar h-4")
-          div(class="vu-bar h-9")
-          div(class="vu-bar h-12")
-          div(class="vu-bar h-7")
+      //- Lado derecho: VU Meter y contexto
+      div(class="flex flex-col space-y-8")
+        //- VU Meter dinámico usando tus clases CSS
+        div(class="flex items-end gap-1.5 h-16 mb-4")
+          each val, index in [8, 12, 6, 10, 4, 9, 12, 7, 11, 5]
+            div(
+              class="vu-meter-item vu-bar-active animate-bounce" 
+              style=`animation-delay: 0.${index}s; height: ${val * 5}px; opacity: 1; width: 4px;`
+            )
 
-        p(class="text-slate-400 max-w-md")
-          | Desde el 2025, RITMA nace para cerrar la brecha técnica en la región, proporcionando herramientas de grado profesional para los arquitectos del ritmo latino.
+        div(class="space-y-6 border-l border-white/10 pl-8")
+          p(class="text-slate-400 max-w-md leading-relaxed")
+            | Desde el 2025, RITMA nace para cerrar la brecha técnica en la región, proporcionando herramientas de grado profesional para los arquitectos del ritmo latino.
+          
+          div(class="flex items-center gap-4 text-[10px] font-bold tracking-[0.4em] text-primary uppercase")
+            span EST. 2025 
+            span(class="text-white/20") //
+            span LATAM INFRASTRUCTURE

@@ -1,36 +1,54 @@
-
 div(class="absolute inset-0 pixel-grid opacity-5 pointer-events-none")
 
-div(class="flex flex-col lg:flex-row min-h-screen")
+div(class="flex flex-col lg:flex-row min-h-screen bg-background-dark")
 
-  // ───────────── ASIDE / ARTIST ─────────────
+  // ───────────── ASIDE / ARTIST PROFILE ─────────────
   aside(
-    class="w-full lg:w-2/5 xl:w-[45%] relative overflow-hidden h-[50vh] lg:h-auto border-r border-white/10"
+    class="w-full lg:w-2/5 xl:w-[45%] relative overflow-hidden h-[60vh] lg:h-screen border-r border-white/10 group"
   )
+    //- Imagen con efecto de zoom sutil en hover
     img(
       src="/img/artistas/ryan-castro.webp"
       alt="Ryan Castro"
-      class="absolute inset-0 w-full h-full object-cover"
+      class="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000 ease-out"
     )
 
-    div(class="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent")
+    //- Overlays de Profundidad
+    div(class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent")
     div(class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent")
+    
+    //- Efecto de escaneo láser (Línea que baja)
+    div(class="absolute top-0 left-0 w-full h-[2px] bg-primary/20 shadow-[0_0_15px_#C9DA2B] animate-scan pointer-events-none")
 
-    div(class="absolute bottom-12 left-12 z-10")
+    //- Artist Meta Data (Vertical Sidebar)
+    div(class="absolute top-12 left-8 flex flex-col items-start gap-4 z-20")
+      div(class="w-px h-24 bg-gradient-to-b from-primary to-transparent opacity-50")
+      span(
+        class="text-[10px] font-display font-bold rotate-90 origin-left translate-x-[7px] translate-y-2 text-primary/60 tracking-[0.5em] uppercase whitespace-nowrap"
+      ) FILE_ID: RYN-CSTR-2026
+
+    //- Artist Branding
+    div(class="absolute bottom-16 left-12 z-20 max-w-sm")
       div(
-        class="mb-4 inline-block bg-primary px-3 py-1 text-black font-display font-black text-[10px] uppercase tracking-widest"
-      ) Featured Artist
+        class="mb-6 inline-flex items-center gap-2 bg-primary/10 border border-primary/30 px-4 py-1.5 text-primary font-display font-bold text-[9px] uppercase tracking-[0.3em] rounded-sm backdrop-blur-md"
+      ) 
+        span(class="size-1.5 bg-primary rounded-full animate-pulse")
+        | Featured Latin Talent
+      
       h2(
-        class="font-display font-black text-6xl xl:text-8xl uppercase leading-none tracking-tighter"
+        class="font-display font-black text-7xl xl:text-9xl uppercase leading-[0.8] tracking-tighter text-white"
       )
         | Ryan
         br
-        span(class="text-primary italic") Castro
+        span(class="text-primary italic hover:glow-primary transition-all") Castro
 
-    div(class="absolute top-12 left-12 flex flex-col gap-2")
-      div(class="sidebar-line w-1 h-32 opacity-50")
-      span(
-        class="text-[10px] font-mono rotate-90 origin-left translate-x-3 translate-y-4 text-slate-500 tracking-[0.3em]"
-      ) ARTIST_PROFILE_098
+    //- Social / Links Overlay (Sutil)
+    div(class="absolute bottom-16 right-8 hidden lg:flex flex-col gap-4 z-20")
+      each icon in ['share', 'verified', 'explicit']
+        div(class="size-10 rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:text-primary hover:border-primary/50 transition-all cursor-pointer backdrop-blur-sm")
+          span(class="material-symbols-outlined text-xl") #{icon}
 
+  // ───────────── MAIN CONTENT / TRACKS ─────────────
+  //- Se asume que bodyTrack.pug contiene la información técnica, 
+  //- formas de onda y tabla de tracks que ya optimizamos.
   include ./bodyTrack.pug

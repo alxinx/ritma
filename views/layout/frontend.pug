@@ -1,0 +1,120 @@
+include ./head.pug  
+//- Asumiendo que tus mixins están en este archivo o uno similar
+include ../components/mixins/form-field.pug
+include ../components/mixins/layouts.pug
+
+block contenedor
+    div(class="flex min-h-screen")
+      // Sidebar Navigation
+      aside(class="w-72 fixed h-screen border-r border-white/10 bg-background-dark hidden lg:flex flex-col p-6 z-50")
+        div(class="flex items-center gap-3 mb-12")
+          div(class="size-10 bg-primary flex items-center justify-center rounded")
+            span(class="material-symbols-outlined text-black font-bold") graphic_eq
+          div
+            h1(class="text-white text-xl font-bold tracking-tighter uppercase leading-none") RITMA
+            p(class="text-primary/60 text-[10px] uppercase tracking-widest font-bold") Infrastructure v1.0
+    
+        nav(class="space-y-1")
+          each item in [{i:'text_fields', t:'Tipografía', h:'#typography', a:true}, {i:'input', t:'Forms & Inputs', h:'#forms'}, {i:'radio_button_checked', t:'Buttons', h:'#buttons'}, {i:'category', t:'Components', h:'#components'}, {i:'monitoring', t:'Icons & Data', h:'#data'}, {i:'notifications', t:'Feedback', h:'#feedback'}, {i:'grid_view', t:'Layout', h:'#layout'}]
+            a(class=`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${item.a ? 'bg-primary/10 text-primary border border-primary/20' : 'text-white/60 hover:text-white hover:bg-white/5'}` href=item.h)
+              span(class="material-symbols-outlined text-xl") #{item.i}
+              span(class="text-sm font-medium") #{item.t}
+    
+        div(class="mt-auto pt-6 border-t border-white/10")
+          div(class="flex items-center gap-3 px-4 py-2")
+            div(class="size-8 rounded-full bg-cover bg-center border border-primary/30" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBOJAMNNEoPQw3mrRXCPA36uZTJ3QVcfMgSZR7PlHWoFEKvllsWwmgOEsvUQjUb7fJTF6s4RwCuMN7-md0lClozuHOLhKZA1d0UAX1hzIojWuQNefrpIODE4Z8cavMYpgB-nvgWyQxHayxoh8gbEtSBWbB0WYxQJ3qHeCUBZ8xm788KjDG7E737HyTqYnjgIZVBzkEeApsyE-C3Xpwl3bev8yCBy1i0QoA6FFMZlp3uC8--QW8HsHGXi-Sh0wdisJI5rs_K4yrWPfc')")
+            div(class="flex flex-col")
+              p(class="text-xs font-bold") LATAM_OPERATOR
+              p(class="text-[10px] text-white/40 uppercase") Admin Access
+    
+      // Main Content
+      main(class="flex-1 lg:ml-72 bg-background-dark min-h-screen")
+        header(class="p-8 border-b border-white/10 bg-surface-dark/50 sticky top-0 backdrop-blur-md z-40")
+          div(class="max-w-5xl mx-auto flex justify-between items-end")
+            div
+              h1.font-black Design System
+              p.subTittle A high-performance UI kit for Latin American electronic music platforms.
+            div(class="hidden md:block")
+              div(class="cuadro") Production Ready
+    
+        div(class="max-w-5xl mx-auto px-8 pb-32")
+          
+          // Section 1: Typography
+          section(class="py-20 border-b border-white/5" id="typography")
+            div(class="flex items-center gap-4 mb-12")
+              span(class="text-primary font-mono") 01.
+              h3 Tipografia
+            div(class="grid grid-cols-1 md:grid-cols-3 gap-8")
+              div(class="col-span-1 space-y-4")
+                h1 H1 Heading
+                h2 H2 Heading
+                h3 H3 Heading
+                h4 H4 Heading
+              div(class="col-span-2 card flex flex-col gap-4")
+                p.subTittle Bloque de texto con clase .subTittle
+                p.text Este es un bloque de texto descriptivo usando la clase .text para cuerpos de lectura técnica.
+    
+          // Section 2: Forms & Inputs
+          section(class="py-20 border-b border-white/5" id="forms")
+            div(class="flex items-center gap-4 mb-12")
+              span(class="text-primary font-mono") 02.
+              h3 Forms & Inputs
+    
+            div(class="grid grid-cols-1 md:grid-cols-2 gap-12")
+              div(class="space-y-6")
+                //- Usando ritmaInput (ID, NAME, TYPE, LABEL, REQ, PLACEHOLDER, ICON)
+                +ritmaInput("email-field", "user_email", "email", "Email Address", true, "dj.operator@ritma.lat", "mail")
+                
+                //- Usando formField (Fader style con VU)
+                +formField("bpm-master", "master_bpm", "number", "Master Tempo Control", false, "128", 3)
+                
+                //- Usando ritmaInputPrefix
+                +ritmaInputPrefix("ig-link", "social_ig", "text", "Instagram Profile", "instagram.com/", false, "ritma.music")
+
+                //- Usando customSelect
+                +customSelect("fx-chain", "effect_id", "Selector de Efectos", "Reverb Digital", [
+                    {label: "Delay Analógico", value: "fx_01"},
+                    {label: "Reverb Digital", value: "fx_02", selected: true},
+                    {label: "Flanger Latam", value: "fx_03"}
+                ])
+
+              div(class="space-y-8")
+                div(class="grid grid-cols-2 gap-8")
+                  div(class="space-y-4")
+                    label Switches
+                    +ritmaSwitch("sw-1", "sync_active", "Auto-Sync", true)
+                    +ritmaSwitch("sw-2", "limit_active", "Limiter")
+                  
+                  div(class="space-y-4")
+                    label Checkboxes
+                    div(class="flex gap-4")
+                      input(type="checkbox" class="checkbox-ritma-glow" checked)
+                      input(type="checkbox" class="checkbox-ritma-glow")
+                
+                div(class="space-y-4")
+                  label File Analysis
+                  +fileUpload("audio-drop", "track_upload", true, "Ingresa el audio", "Análisis de BPM y Key automático")
+
+          // Section 3: Buttons
+          section(class="py-20 border-b border-white/5" id="buttons")
+            div(class="flex items-center gap-4 mb-12")
+              span(class="text-primary font-mono") 03.
+              h3 Buttons
+            div(class="grid grid-cols-1 md:grid-cols-2 gap-6")
+              +formActions("Sincronizar Nodes", "/auth/login")
+              div(class="flex gap-4 items-center")
+                button(class="btn-ghost") btn-ghost
+                button(class="btn-danger btn-small") btn-danger small
+
+          // Section 4: Feedback & Logs
+          section(class="py-20 border-b border-white/5" id="feedback")
+          
+            div(class="flex items-center gap-4 mb-12")
+              span(class="text-primary font-mono") 04.
+              h3 System Feedback
+            div(class="space-y-2 max-w-2xl")
+              +systemLog("info", "Conexión establecida con SP-CORE-01")
+              +systemLog("error", "Fallo crítico en el nodo BA-NODE-7: Timeout")
+              +systemLog("info", "Iniciando protocolo de redundancia...")
+
+    include ./footer.pug

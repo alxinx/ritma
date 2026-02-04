@@ -58,9 +58,18 @@ const profileTrack =(req,res)=>{
 
 
 
+//BORRAR ANTES DE  DESPLEGAR! 
 
+
+//BASES DE FRONTEND. 
+const frontend  = (req, res)=>{
+     res.status(200).render('../views/layout/frontend',{
+        tituloPagina : "FRONTEND"
+    })
+}
 
 export {
+    frontend,
     home,
     vision,
     estructura,

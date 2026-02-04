@@ -1,17 +1,34 @@
-nav(class="fixed w-full z-50 border-b border-slate-200 dark:border-white/10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md")
-      div(class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between")
-        div(class="flex items-center gap-3")
-          div(class="w-40 relative")
-            a(href="/") 
-              img(
-                src="/img/logos/logo_horizontal_transparente.png"
-                alt="RITMA Logo"
-                class="w-full h-full object-contain"
-              )
-        div(class="hidden md:flex items-center gap-8 font-medium uppercase text-xs tracking-widest")
-          a(href="/" class="hover:text-primary transition-colors") Home
-          a(href="/vision/" class="hover:text-primary transition-colors") Nuestra Visión
-          a(href="/acceso/" class="hover:text-primary transition-colors") Solicita Acceso
-          a(href="/estructura/" class="hover:text-primary transition-colors") Estructura
+nav(class="fixed w-full z-50 border-b border-white/10 bg-background-dark/80 backdrop-blur-md")
+  div(class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between")
+    //- Contenedor del Logo
+    div(class="flex items-center gap-3")
+      div(class="w-40 relative")
+        a(href="/" class="block hover:opacity-80 transition-opacity") 
+          img(
+            src="/img/logos/logo_horizontal_transparente.png"
+            alt="RITMA Logo"
+            class="w-full h-auto object-contain"
+          )
+    
+    //- Menú de Navegación
+    div(class="hidden md:flex items-center gap-10")
+      div(class="flex items-center gap-8 font-display font-bold uppercase text-[10px] tracking-[0.2em] text-slate-400")
+        a(href="/" class="hover:text-primary transition-colors") Home
+        a(href="/vision/" class="hover:text-primary transition-colors") Nuestra Visión
+        a(href="/estructura/" class="hover:text-primary transition-colors") Estructura
+        a(href="/acceso/" class="hover:text-primary transition-colors") Solicita Acceso
 
-       
+      //- Separador sutil
+      div(class="h-4 w-[1px] bg-white/10")
+
+      //- Botón de Acción / Login
+      a(
+        href="/login" 
+        class="group flex items-center gap-2 font-display font-extrabold uppercase text-[10px] tracking-widest text-white border border-white/20 px-4 py-2 rounded-sm hover:bg-primary hover:text-black hover:border-primary transition-all"
+      )
+        span(class="material-icons-round text-sm") lock
+        | Acceder
+
+    //- Botón Mobile (Solo icono por ahora)
+    button(class="md:hidden text-white")
+      span(class="material-icons-round text-3xl") menu

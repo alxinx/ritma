@@ -1,43 +1,66 @@
-div(class="bg-white/[0.02] border border-white/5 rounded-2xl p-8 md:p-12 mb-20 relative overflow-hidden")
-    div(class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center")
+// ==========================================
+// SECTION: INFRAESTRUCTURA TÉCNICA (CORE)
+// ==========================================
+section(class="bg-surface-dark/40 border border-white/5 rounded-sm p-8 md:p-16 mb-24 relative overflow-hidden group")
+  //- Efecto de iluminación sutil al fondo
+  div(class="absolute -top-24 -left-24 size-96 bg-primary/5 blur-[100px] pointer-events-none")
+  
+  div(class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10")
 
-      div
-        h2(class="font-heading text-3xl font-bold mb-6 tracking-tight") INFRAESTRUCTURA TÉCNICA
+    //- Columna 1: Especificaciones
+    div
+      div(class="flex items-center gap-3 mb-8")
+        div(class="size-2 bg-primary animate-pulse shadow-[0_0_8px_#C9DA2B]")
+        h2(class="font-display text-3xl font-black tracking-tighter text-white uppercase") 
+          | Infraestructura 
+          span(class="text-primary") Técnica
 
-        div(class="space-y-6")
-          div(class="flex gap-4")
-            div(class="text-primary")
-              span(class="material-symbols-outlined") network_check
-            div
-              h4(class="font-bold text-sm uppercase tracking-wider mb-1") Nodos Globales
-              p(class="text-white/40 text-sm") Servidores de ultra-baja latencia distribuidos estratégicamente en LATAM.
+      div(class="space-y-10")
+        //- Item 01
+        div(class="flex gap-6 group/item")
+          div(class="text-primary transition-transform group-hover/item:scale-110")
+            span(class="material-symbols-outlined text-3xl") network_check
+          div
+            h4(class="font-display font-bold text-sm uppercase tracking-[0.2em] text-white mb-2") Nodos Globales
+            p(class="text-slate-400 text-sm leading-relaxed max-w-sm") 
+              | Servidores de ultra-baja latencia distribuidos estratégicamente en los principales puntos de intercambio de LATAM.
 
-          div(class="flex gap-4")
-            div(class="text-primary")
-              span(class="material-symbols-outlined") security
-            div
-              h4(class="font-bold text-sm uppercase tracking-wider mb-1") Protección de Datos
-              p(class="text-white/40 text-sm") Encriptación de punto a punto en cada descarga y transacción.
+        //- Item 02
+        div(class="flex gap-6 group/item")
+          div(class="text-primary transition-transform group-hover/item:scale-110")
+            span(class="material-symbols-outlined text-3xl") security
+          div
+            h4(class="font-display font-bold text-sm uppercase tracking-[0.2em] text-white mb-2") Protección de Datos
+            p(class="text-slate-400 text-sm leading-relaxed max-w-sm") 
+              | Encriptación de punto a punto (P2P) en cada descarga y transacción, asegurando la integridad de tu librería.
 
-          div(class="flex gap-4")
-            div(class="text-primary")
-              span(class="material-symbols-outlined") analytics
-            div
-              h4(class="font-bold text-sm uppercase tracking-wider mb-1") Metadatos Extendidos
-              p(class="text-white/40 text-sm") Tracks analizados con BPM, Key y Cue Points listos para Serato/Rekordbox.
+        //- Item 03
+        div(class="flex gap-6 group/item")
+          div(class="text-primary transition-transform group-hover/item:scale-110")
+            span(class="material-symbols-outlined text-3xl") analytics
+          div
+            h4(class="font-display font-bold text-sm uppercase tracking-[0.2em] text-white mb-2") Metadatos Extendidos
+            p(class="text-slate-400 text-sm leading-relaxed max-w-sm") 
+              | Tracks analizados con precisión quirúrgica: BPM, Key y Cue Points listos para integración inmediata con Serato y Rekordbox.
 
-      div(class="relative")
-        div(class="flex items-end justify-center gap-1.5 h-48 opacity-20")
-          div(class="w-2 bg-primary rounded-full h-1/4")
-          div(class="w-2 bg-primary rounded-full h-1/2")
-          div(class="w-2 bg-primary rounded-full h-3/4")
-          div(class="w-2 bg-primary rounded-full h-full")
-          div(class="w-2 bg-primary rounded-full h-2/3")
-          div(class="w-2 bg-primary rounded-full h-5/6")
-          div(class="w-2 bg-primary rounded-full h-1/3")
-          div(class="w-2 bg-primary rounded-full h-4/5")
-          div(class="w-2 bg-primary rounded-full h-1/4")
+    //- Columna 2: Visualizador Central (System Monitor)
+    div(class="relative p-8 rounded-sm bg-black/40 border border-white/5")
+      //- Decoración: Líneas de coordenadas
+      div(class="absolute inset-0 opacity-10 pointer-events-none")
+        div(class="absolute top-1/2 left-0 w-full h-px bg-white/20")
+        div(class="absolute top-0 left-1/2 w-px h-full bg-white/20")
 
-        div(class="absolute inset-0 flex items-center justify-center")
-          div(class="text-primary/20 scale-[4]")
-            span(class="material-symbols-outlined text-9xl") bolt
+      div(class="flex items-end justify-center gap-2 h-56 relative z-10")
+        - const bars = [25, 50, 75, 100, 65, 85, 35, 80, 25, 45, 90]
+        each h, i in bars
+          div(
+            class="w-3 bg-primary/20 rounded-t-sm relative group-hover:bg-primary/40 transition-all duration-500 overflow-hidden" 
+            style=`height: ${h}%`
+          )
+            //- Efecto de "escaneo" interno en las barras
+            div(class="absolute inset-0 bg-primary/60 animate-shimmer" style=`animation-delay: ${i * 0.1}s`)
+
+      //- Icono Bolt Central con Glow
+      div(class="absolute inset-0 flex items-center justify-center")
+        div(class="text-primary opacity-10 group-hover:opacity-30 transition-opacity duration-700")
+          span(class="material-symbols-outlined text-[160px] blur-sm") bolt
