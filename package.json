@@ -2,22 +2,29 @@
   "name": "base",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js",
-    "css": "npx @tailwindcss/cli -i ./public/css/input.css -o ./public/css/output.css --watch"  },
+    "css": "npx @tailwindcss/cli -i ./public/css/input.css -o ./public/css/output.css --watch"
+  },
   "author": "Codream",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "@tailwindcss/cli": "^4.1.6",
+    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
+    "csrf": "^3.1.0",
+    "csurf": "^1.11.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.3",
     "mailer": "^0.6.7",
-    "mysql2": "^3.14.1",
+    "mysql2": "^3.16.3",
     "nodemon": "^3.1.10",
     "pug": "^3.0.3",
+    "sequelize": "^6.37.7",
     "webpack": "^5.104.1"
   },
   "devDependencies": {

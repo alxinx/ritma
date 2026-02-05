@@ -1,17 +1,16 @@
+import {Usuarios} from '../models/index.js'
+import {generarJwt} from '../helpers/genToken.js'
+import redirection from '../helpers/redirection.js'
+import dotenv from "dotenv";
 
-const adminLogin = (req, res)=>{
-    res.render( "./auth/login", {
-        tituloPagina : "Login"
-    } )
-}
+dotenv.config();
 
-const adminForgot = (req, res)=>{
-    res.render( "./auth/forgot", {
-        tituloPagina : "Recuperar Contraseña"
-    } )
+const dashboard = (req, res)=>{
+    res.json({
+        msg : "Panel Admin"
+    })
 }
 
 export {
-    adminLogin,
-    adminForgot,
+    dashboard
 }
