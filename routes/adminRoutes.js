@@ -4,12 +4,7 @@ const routes = express.Router();
 
 
 
-
-
-
-
 //PANEL CONTROLLERS
-
 routes.get("/", dashboard)
 
 

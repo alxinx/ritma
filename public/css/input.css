@@ -27,7 +27,18 @@
     0% { transform: translateY(-100%); }
     100% { transform: translateY(1000%); }
   }
+
+  @keyframes shrink {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
   --animate-scan: scan 3s linear infinite;
+  
 }
 
 /* Forzamos Dark Mode */

@@ -1,6 +1,11 @@
+import {validationResult } from "express-validator";
 import {Usuarios} from '../models/index.js'
 import {generarJwt} from '../helpers/genToken.js'
 import redirection from '../helpers/redirection.js'
+import crypto from "crypto"
+import nodemailer from "nodemailer"
+import {mailRecovery} from '../helpers/mailRecovery.js'
+
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -27,6 +32,31 @@ const adminForgot = (req, res)=>{
     } )
 }
 
+const sendRecovery = (req, res)=>{
+    res.render( "./auth/showRecovery", {
+        tituloPagina : "Recuperar Contraseña"
+    } )
+}
+
+//RECUPERAR CONTRASENÑAS
+const recovery = (req, res)=>{
+    try {
+        const {token} = req.params
+        if(!token){
+            return res.redirect("/app/");
+        }
+
+        res.render( "./auth/recovery", {
+                tituloPagina : "Recuperar Contraseña",
+                token
+            } )
+
+    } catch (error) {
+        console.error("Error en recovery controller:", error);
+        return res.status(500).send("Error interno del servidor");
+    }
+}
+
 
 const dashboard = (req, res)=>{
     res.json({mensaje : "Dashboard  Administrador"})
@@ -48,20 +78,28 @@ const loginPost = async (req, res)=>{
         where : {emailUsuario : email}
             })
 
-        if (!usuario) {
-            return res.status(404).json({ msg: "El usuario no existe" });
+       if (!usuario) {
+            //return res.status(404).json({ msg: "El usuario no existe" });
+            res.status(401).render( "./auth/login", {
+                    tituloPagina : "Login",
+                    mensaje : '❌ El usuario no existe'
+                    } )
         }
         //Compruebo que la contraseña sea correcta
         const passwordCorrecto = await usuario.checkPassword(password);
+        if (passwordCorrecto === false) {
+            //return res.status(404).json({ msg: "Passwowd incorrecto" });
 
-        if (!passwordCorrecto) {
-            return res.status(401).json({ msg: "Contraseña incorrecta" });
+            return res.status(401).render( "./auth/login", {
+                     tituloPagina : "Login",
+                     mensaje : '❌ Contraseña Incorrecta'
+                     } )
+            
         }
 
         //GENERO EN JWT
         const tkn = generarJwt({id : usuario.idUsuario, name : usuario.nombreUsuario, rol : usuario.permisos});
         const urlRedireccion = redirection(usuario.permisos);
-        console.log(tkn)
         return res.cookie('_token', tkn, {
             httpOnly : true,
             secure : process.env.COOKIE_SECURE === 'true',
@@ -73,6 +111,120 @@ const loginPost = async (req, res)=>{
         throw new Error('Error en server')
     }
 }
+
+
+
+
+//RECUPERAR CONTRASEÑA
+
+const postRecovery = async (req, res)=>{
+    //Valido si lo que me pasó el frontend es confiable 😑
+     const errores = validationResult(req);
+     if (!errores.isEmpty()) {
+        
+        return  res.status(401).render('./auth/forgot',{
+                tituloPagina : "Recuperar Contraseña",
+                errores: errores.array().reduce((acc, err) => ({ ...acc, [err.path]: err.msg }), {}) 
+        })
+     }
+
+
+   //Validamos la existencia del email
+   try {
+
+    const { email} = req.body
+
+    //VERIFICO QUE ESE EMAIL EXISTA:
+    const usuario = await Usuarios.findOne({where : {emailUsuario:email}})
+
+    console.log(usuario)
+    if(!usuario){
+        return  res.status(201).render('./auth/forgot',{
+                tituloPagina : "Recuperar Contraseña",
+                mensaje: 'Te enviamos un email para que recuperes tu contraseña, revisa en spam en caso que no esté en la bandeja de entrada' 
+        })
+    }
+
+    //generamos un token de confirmación y se lo asigno al usuario.
+
+    const token = crypto.randomBytes(20).toString('hex');
+    usuario.token = token;
+    usuario.expiracion = Date.now() + 3600000; // 1 hora 
+    await usuario.save();
+
+    //Envio el email de confirmacion
+    mailRecovery(usuario)
+
+    //Retorno a un mensaje
+    return res.redirect('/app/sendRecovery')
+   
+
+
+   } catch (error) {
+        console.error("Error en postRecovery:", error);
+        res.status(500).render('app/forgot', {
+            tituloPagina: "Recuperar Contraseña",
+            error: "Hubo un error interno, intenta más tarde."
+        });
+   }
+
+}
+
+
+const resetPassword = async (req, res)=>{
+    //Valido si lo que me pasó el frontend es confiable 😑
+
+     const errores = validationResult(req);
+     if (!errores.isEmpty()) {
+        
+        return  res.status(401).render('/app/forgot',{
+                tituloPagina : "Recuperar Contraseña",
+                errores: errores.array().reduce((acc, err) => ({ ...acc, [err.path]: err.msg }), {}) 
+        })
+     }
+
+     try {
+
+        const {password, token}= req.body
+
+        const usuario = await Usuarios.findOne({ 
+            token: token,
+            expiracion: { $gt: Date.now() } 
+        });
+
+
+        if (!usuario) {
+            // Si no hay usuario o el token expiró, enviamos al login o error
+            return res.render('/app/', {
+                tituloPagina: "Recuperar Contraseña",
+                error: "El enlace es inválido o ha expirado. Solicita uno nuevo."
+            });
+        }
+
+        //Actualizo 
+
+        usuario.password = password; 
+        usuario.token = null;
+        usuario.expiracion = null;
+        await usuario.save();
+
+        return res.redirect('/app/?reset=success');
+
+
+
+        
+     } catch (error) {
+            console.error("Error en postRecovery:", error);
+            res.status(500).render('auth/forgot', {
+                tituloPagina: "Recuperar Contraseña",
+                error: "Hubo un error interno, intenta más tarde."
+            })
+     }
+
+}
+
+
+
 
 
 //*******************🚨🚨🚨🚨DELETE BEFORE DEPLOY🚨🚨🚨🚨🚨🚨 */
@@ -97,6 +249,10 @@ const newAdmin = async (req, res)=>{
 export {
     adminLogin,
     adminForgot,
+    recovery,
+    postRecovery,
+    sendRecovery,
+    resetPassword,
     loginPost,
     dashboard,
     register, // DELETE BEFORE DEPLOY 

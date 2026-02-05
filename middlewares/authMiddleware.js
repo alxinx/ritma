@@ -42,7 +42,7 @@ const verificarRol = (...rolesPermitidos) => {
             
             // Si es USUARIO intentando entrar a ADMIN -> Mándalo a su tienda
             if (req.rol === 'USUARIO') {
-                return res.redirect('/user/');
+                return res.redirect(process.env.USER_LINK);
             }
             
             // Si es ADMIN intentando entrar a TIENDA (Opcional, a veces los admin pueden ver todo)

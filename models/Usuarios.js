@@ -30,6 +30,15 @@ const Usuarios =  db.define('USUARIOS', {
     permisos : {
         type : DataTypes.ENUM('ADMIN', 'USUARIO'),
         defaultValue : 'ADMIN'
+    },
+    token : {
+        type : DataTypes.STRING,
+        allowNull : true,
+        defaultValue : null
+    },
+    expiracion: {
+        type: DataTypes.DATE,
+        allowNull: true, 
     }
 },
 {

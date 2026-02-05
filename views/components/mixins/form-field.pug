@@ -3,7 +3,7 @@
 //- ========================================================================
 
 //- 1. INPUT TÉCNICO (ID, NAME, TYPE, LABEL, REQUIRED, PLACEHOLDER, ICON)
-mixin ritmaInput(id, name, type='text', label, required=false, placeholder, icon='search')
+mixin ritmaInput(id, name, type='text', label, required=false, placeholder, icon='search' , autocompleteType = 'off' )
   div(class="flex flex-col gap-1 w-full group")
     if label
       label(for=id class="subTittle text-primary") #{label}
@@ -13,7 +13,8 @@ mixin ritmaInput(id, name, type='text', label, required=false, placeholder, icon
         name=name 
         type=type
         required=required
-        placeholder=placeholder 
+        placeholder=placeholder
+        autocomplete=autocompleteType
         class="ritma-input-field text"
       )
       if icon
@@ -124,6 +125,14 @@ mixin formActions(primaryLabel, secondaryHref)
         a(href="../acceso" class="")
           span(class="text-ritma-orange underline underline-offset-4 decoration-primary/30 group-hover:decoration-primary") Solicitar Acceso
 
+mixin btnSubmit(id, name, label, icon)
+  div(class="pt-6 flex flex-col gap-6 w-full")
+    button(type="submit" id=id name=name class="btn-green w-full h-16 group relative overflow-hidden")
+      div(class="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700")
+      span(class="text-black") #{label}
+      span(class="material-symbols-outlined text-black transition-transform group-hover:translate-x-1") #{icon}
+    
+
 
 //- 8. SYSTEM LOG (TYPE, MESSAGE)
 mixin systemLog(type, message)
@@ -131,3 +140,40 @@ mixin systemLog(type, message)
     span(class="opacity-50") [#{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}]
     span(class="font-bold uppercase") #{type} //
     span #{message}
+
+
+    //- Parámetros: MESSAGE, TITLE
+mixin alertSuccess(title="SYSTEM_OK", message)
+  div(class="relative overflow-hidden bg-surface-dark border-l-4 border-primary p-5 shadow-[0_0_30px_rgba(201,218,43,0.1)] animate-in slide-in-from-right-10")
+    div(class="absolute top-0 right-0 p-1 opacity-10")
+      span(class="material-symbols-outlined text-4xl") check_circle
+    div(class="flex items-start gap-4")
+      div(class="size-8 bg-primary/20 flex items-center justify-center rounded-sm")
+        span(class="material-symbols-outlined text-primary font-bold") done_all
+      div
+        h4(class="text-primary font-black tracking-[0.2em] mb-1") #{title}
+        p(class="text-[11px] text-white/70 font-mono leading-tight uppercase") #{message}
+    //- Barra de progreso de auto-cierre
+    div(class="absolute bottom-0 left-0 h-[1px] bg-primary w-full origin-left animate-[shrink_5s_linear_forwards]")
+
+//- Parámetros: MESSAGE, TITLE
+mixin alertError(title="CRITICAL_FAILURE", message)
+  div(class="relative overflow-hidden bg-surface-dark border-l-4 border-ritma-red p-5 shadow-[0_0_30px_rgba(255,77,77,0.15)] animate-in shake")
+    div(class="absolute top-0 right-0 p-1 opacity-10")
+      span(class="material-symbols-outlined text-4xl") dangerous
+    div(class="flex items-start gap-4")
+      div(class="size-8 bg-ritma-red/20 flex items-center justify-center rounded-sm")
+        span(class="material-symbols-outlined text-ritma-red font-bold animate-pulse") priority_high
+      div
+        h4(class="text-ritma-red font-black tracking-[0.2em] mb-1") #{title}
+        p(class="text-[11px] text-white/70 font-mono leading-tight uppercase") #{message}
+
+//- Parámetros: MESSAGE, TITLE
+mixin alertWarning(title="SYSTEM_WARNING", message)
+  div(class="relative overflow-hidden bg-surface-dark border-l-4 border-ritma-orange p-5 shadow-[0_0_30px_rgba(255,200,87,0.1)]")
+    div(class="flex items-start gap-4")
+      div(class="size-8 bg-ritma-orange/20 flex items-center justify-center rounded-sm")
+        span(class="material-symbols-outlined text-ritma-orange font-bold") warning
+      div
+        h4(class="text-ritma-orange font-black tracking-[0.2em] mb-1") #{title}
+        p(class="text-[11px] text-white/70 font-mono leading-tight uppercase") #{message}

@@ -4,8 +4,11 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 
 import db from "./config/bd.js";
+
+
 import pageRoutes from "./routes/pageRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import clientRoutes from "./routes/clientRoutes.js"
 import loginRoutes from "./routes/loginRoutes.js";
 
 
@@ -68,11 +71,16 @@ app.use((req, res, next) => {
 app.use("/", pageRoutes);
 app.use("/app", loginRoutes);
 
+
+
+//INGRESO A ADMINISTRADORES
 app.use("/app/dash/",rutaProtegida, verificarRol('ADMIN'), adminRoutes);
 
 
+app.use("/ritmaap/",rutaProtegida, verificarRol('USUARIO'), clientRoutes);
 
-//routes.get("/admin", rutaProtegida, verificarRol('ADMIN'), dashboard)
+
+
 
 
 
