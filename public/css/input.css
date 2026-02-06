@@ -57,6 +57,15 @@
     color: transparent;
   }
 
+
+  .neon-card {
+            box-shadow: 0 0 20px rgba(201, 218, 43, 0.03);
+            border: 1px solid #1A1A1A;
+        }
+        .neon-card:hover {
+            border-color: rgba(201, 218, 43, 0.3);
+            box-shadow: 0 0 25px rgba(201, 218, 43, 0.08);
+        }
   /* Grid de pixeles técnica */
   .pixel-grid {
     background-image: radial-gradient(circle, #222 1px, transparent 1px);
@@ -157,6 +166,9 @@
     filter: drop-shadow(0 0 5px rgba(201, 218, 43, 0.5));
   }
 
+ 
+
+  
 
 
   .ritma-input-container:focus-within div {
@@ -263,6 +275,14 @@
   }
   
 
+  .bg-grid {
+    background-image: 
+        linear-gradient(to right, rgba(201, 218, 43, 0.1) 1px, transparent 1px),
+        linear-gradient(to bottom, #1A1A1A 1px, transparent 1px);
+    background-size: 100px 100px;
+}
+
+
   button  {
     @apply  hover:bg-white  font-bold py-4 px-8 rounded uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer hover:text-black
   }
@@ -368,6 +388,10 @@
   tbody {
     @apply divide-y divide-white/5
   }
+
+
+
+
 
 
 

@@ -202,7 +202,6 @@ const resetPassword = async (req, res)=>{
         }
 
         //Actualizo 
-
         usuario.password = password; 
         usuario.token = null;
         usuario.expiracion = null;
@@ -223,6 +222,12 @@ const resetPassword = async (req, res)=>{
 
 }
 
+
+
+const logout = (req, res) => {
+    return res.clearCookie('_token').redirect('/');
+
+}
 
 
 
@@ -255,6 +260,7 @@ export {
     resetPassword,
     loginPost,
     dashboard,
+    logout,
     register, // DELETE BEFORE DEPLOY 
     newAdmin // DELETE BEFORE DEPLOY 🚨🚨
 }

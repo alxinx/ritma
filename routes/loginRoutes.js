@@ -1,7 +1,7 @@
 import express from "express";
 import {emailValidation, checkPasswords} from '../middlewares/validationFields.js'
 
-import {adminLogin, adminForgot,  recovery, postRecovery, resetPassword,sendRecovery, register, newAdmin, loginPost} from '../controllers/loginControllers.js';
+import {adminLogin, adminForgot,  recovery, postRecovery, resetPassword,sendRecovery, register, newAdmin, loginPost, logout} from '../controllers/loginControllers.js';
 //import {rutaProtegida,verificarRol} from "../middlewares/authMiddleware.js"
 const routes = express.Router();
 
@@ -19,7 +19,7 @@ routes.get("/recovery/:token", recovery)
 routes.post("/recovery/:token", checkPasswords, resetPassword)
 routes.post("/forgot/", emailValidation, postRecovery)
 
-
+routes.post("/logout", logout)
 
 //PANEL CONTROLLERS
 

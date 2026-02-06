@@ -6,16 +6,19 @@ block contenedor
     // NAVBAR
     // ================================================
 //include ./navBar.pug
-main(class="flex-1 max-w-7xl mx-auto px-6 py-16 md:py-24")
-    //==============================================
-    // SECCIONES 
-    // ================================================
-    
-        
+div(class="flex min-h-screen")
+    //-MENU LATERAL
+    include layout/leftMenu.pug
+    main(class="flex-1 lg:ml-72 bg-background-dark min-h-screen")
+        // HEADER 
+        include layout/headerAdmin.pug
 
+        //BODY
+        div(class="max-w-5xl mx-auto px-8 pb-32")   
+         
+                
+        //FOOTER
+       
 
-    // ================================================
-    // FOOTER (PENDIENTE)
-    //include ./footer.pug
     // ================================================
     // footer
