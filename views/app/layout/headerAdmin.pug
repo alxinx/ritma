@@ -1,7 +1,37 @@
-header(class="p-8 border-b border-white/10 bg-surface-dark/50 sticky top-0 backdrop-blur-md z-40")
-    div(class="max-w-5xl mx-auto flex justify-self-auto items-end")
-      div
-        h3=tituloPagina
-        p.subTittle=subtitulo
-    //-   div(class="hidden md:block")
-    //-     div(class="cuadro") Production Ready
+header(class="h-20 glass-header  sticky top-0 flex items-center justify-between px-10 z-50")
+  div(class="flex flex-col")
+    h3=tituloPagina
+    span.subtitulo=subtitulo
+
+  div(class="flex items-center gap-8")
+    div(class="flex gap-4")
+      
+      
+      button(class="relative text-gray-400 hover:text-primary transition-colors p-2 glass-card rounded-xl" id="userMenuBtn")
+        span(class="material-symbols-outlined") settings_suggest
+
+        // Submenú
+        div(id="userMenu" class="absolute right-0 w-44 card hidden flex-col z-100")
+          a( href="/perfil" class=" text-sm text-gray-300 hover:text-primary hover:bg-white/5 transition-colors" ) Editar perfil
+          
+
+        
+          
+
+
+
+
+
+      button(class="text-gray-400 b hover:text-primary transition-colors p-2 glass-card rounded-xl")
+        span(class="material-symbols-outlined text-primary") check_circle_unread
+
+    div(class="h-8 w-px bg-white/10")
+
+    //MIDO LA SALUD DEL SERVIDOR DE DESCARGAS
+    div(class="flex items-center gap-4")
+      div(class="text-right")
+        p(class="text-[10px] font-bold text-ritma-purple uppercase tracking-tighter") Servidor de Descargas
+        p(class="text-[10px] font-bold text-primary") OPTIMAL (99.9%)
+
+      div(class="size-3 rounded-full bg-primary shadow-[0_0_12px_#C9DA2B] animate-pulse")
+

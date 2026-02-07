@@ -6,6 +6,11 @@
   --color-background-light: #F8F9FA;
   --color-background-dark: #000000;
   --color-surface-dark: #1A1A1A;
+  --color-vibrant-purple :"#4B0082";
+  --color-deep-cyan : "#008B8B";
+  --color-midnight-blue: "#191970";
+  --color-error-red : "#FF3131";
+                        
 
   --color-ritma-purple: #A462A7;
   --color-ritma-blue: #4F74B8;
@@ -15,12 +20,18 @@
 
   --font-display: "Montserrat", sans-serif;
   --font-body: "Roboto", sans-serif;
+  --font-acent : "Montserrat", "sans-serif";
+
+
+  
 
   --radius-default: 0.25rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
 
   --animate-bounce-fast: bounce 0.4s infinite;
+  
+
   
   /* Animación de escaneo para las imágenes de artistas */
   @keyframes scan {
@@ -48,6 +59,76 @@
   color: white;
 }
 
+
+body {
+    background: radial-gradient(circle at top left, #2D0054 0%, #001F3F 50%, #000000 100%);
+    background-attachment: fixed;
+}
+.vibrant-bg {
+    background: linear-gradient(135deg, #1A0B2E 0%, #002B36 50%, #001A33 100%);
+}
+.glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.glass-sidebar {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+.glass-header {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.pixel-pattern {
+    background-image: radial-gradient(var(--primary-color) 1px, transparent 1px);
+    background-size: 4px 4px;
+}
+.vu-meter-bar {
+    width: 4px;
+    background: var(--color-primary);
+    border-radius: 1px;
+    box-shadow: 0 0 8px rgba(201, 218, 43, 0.4);
+}
+.vu-meter-peak {
+            background: #FF3131;
+            box-shadow: 0 0 10px rgba(255, 49, 49, 0.6);
+        }
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(201, 218, 43, 0.2);
+    border-radius: 10px;
+}
+.neon-accent-shadow {
+    box-shadow: 0 0 20px rgba(201, 218, 43, 0.15);
+}
+
+.glow-red {
+            box-shadow: 0 0 30px rgba(255, 49, 49, 0.3);
+        }
+.glow-green {
+    box-shadow: 0 0 30px rgba(201, 218, 43, 0.3);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 @layer utilities {
   /* Gradiente Lightning optimizado */
   .lightning-gradient {
@@ -56,6 +137,11 @@
     background-clip: text;
     color: transparent;
   }
+   .pixel-pattern {
+    background-image: radial-gradient(var(--color-primary) 1px, transparent 1px);
+    background-size: 4px 4px;
+  }
+
 
 
   .neon-card {
@@ -166,7 +252,6 @@
     filter: drop-shadow(0 0 5px rgba(201, 218, 43, 0.5));
   }
 
- 
 
   
 
@@ -303,6 +388,7 @@
     @apply bg-red-500 hover:bg-red-600 text-white font-bold   uppercase flex items-center justify-center gap-2
   }
 
+  
 }
 
 @layer components {
@@ -323,6 +409,7 @@
     @apply  font-display text-xs uppercase leading-none;
   }
 
+  
 
   span {
     @apply text-primary font-mono text-sm
@@ -408,6 +495,9 @@
     @apply block text-[10px] uppercase font-bold text-red-500 mb-2 tracking-widest
   }
 
+  .tag-primary {
+    @apply px-3 py-1 bg-primary/10 text-[9px] font-bold text-primary rounded-full border border-primary/20 uppercase tracking-wider;
+  }
 
   
 
@@ -457,4 +547,23 @@
 
 .decorationUp {
     @apply absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-50
+}
+
+
+@media (max-width: 1023px) {
+  #sidebar {
+    width: 80px;
+  }
+
+  #sidebar.open {
+    width: 260px;
+  }
+
+  #sidebar .sidebar-text {
+    display: none;
+  }
+
+  #sidebar.open .sidebar-text {
+    display: block;
+  }
 }

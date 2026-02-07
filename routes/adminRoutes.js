@@ -1,11 +1,15 @@
 import express from "express";
-import { dashboard} from '../controllers/adminControllers.js'
+import { dashboard, usersPanel} from '../controllers/adminControllers.js'
 const routes = express.Router();
 
 
 
 //PANEL CONTROLLERS
 routes.get("/", dashboard)
+routes.get("/users", usersPanel)
+routes.get("/downloads", dashboard)
+routes.get("/credits", dashboard)
+routes.get("/multimedia", dashboard)
 
 
 
