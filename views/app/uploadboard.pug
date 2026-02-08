@@ -1,0 +1,165 @@
+include ../layout/head.pug
+include ../components/mixins/form-field.pug
+block contenedor
+
+
+    // ================================================
+    // NAVBAR
+    // ================================================
+//include ./navBar.pug
+div(class="flex min-h-screen ")
+    
+    //-MENU LATERAL
+    include layout/leftMenu.pug
+    main(class="flex-1 lg:ml-72 min-h-screen")
+        // HEADER 
+        
+        
+        include layout/headerAdmin.pug
+
+        //BODY
+        div(class="mx-auto p-4 pb-32")  
+
+            //UPLOAD FORM
+            section(class="max-w-5xl mx-auto space-y-8") 
+
+                div(class="glass-card rounded-3xl relative overflow-visible")
+
+                  nav(class="flex border-b border-white/10 bg-black/20")
+                    a(id="single" class="tab-btn  inactive cursor-pointer")
+                        span(class="material-symbols-outlined text-sm mr-3 ")  file_open
+                        | Solo un archivo
+                    a(id="multiple" class="tab-btn active cursor-pointer")
+                        span(class="material-symbols-outlined text-sm mr-3") library_music
+                        | Varios Archivos
+                      
+
+                  div(class="p-10 relative overflow-hidden")
+                    
+
+                    div(class="space-y-10 relative z-10")
+                      div(class="grid grid-cols-1 md:grid-cols-3 gap-8 pb-10 border-b border-white/5")
+                        div(class="space-y-2")
+                            +ritmaInput("nombreArtista", "nombreArtista", "text", "Nombre Artista o Grupo", true, "Grupo Super Cool", "artist")
+                            #listaGrupos
+
+                        div(class="space-y-2")
+                          +ritmaInput("nombreAlbum", "nombreAlbum", "text", "Titulo del album", true, "Hits de antología", "art_track")
+                            #listaAlbum
+
+                        div(class="space-y-2")
+                          label(class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest block ml-1") Caratula del Album
+                          div(class="flex items-center gap-4")
+                            +fileUploadMini("coverAlbum", "coverAlbum", true, "Subir Cover")
+
+
+                      div(class="space-y-6")
+                        div(class="flex items-center justify-between")
+                         h3(class="text-sm font-accent font-extrabold uppercase tracking-wider") Archivos por subir
+                         p(class="text-[10px] font-mono text-gray-500") TOTAL ITEMS: 
+                         div(class="flex gap-2")
+                            span(class="total-items-count text-primary") 1
+
+                        div(class="space-y-3")
+
+                            //- Contenedor principal de las filas
+                            div(id="contenedor-filas" class="space-y-4 mb-6")
+                                //- Fila Inicial (01)
+                                div(class="fila-archivo grid grid-cols-12 gap-4 items-end bg-white/5 p-4 rounded-2xl border border-white/5" data-index="1")
+                                    div(class="col-span-1 flex items-center justify-center pb-3")
+                                        span(class="numero-fila text-[10px] font-mono text-primary font-bold") 01
+
+                                    div(class="col-span-4 space-y-2")
+                                        +ritmaInput("titulo-1", "titulo[]", "text", "¿Cómo se llama la obra?", true, "Nombre del disco", "music_note")
+
+                                    div(class="col-span-2 space-y-2")
+                                        +ritmaInput("costo-1", "costoCreditos[]", "number", "Valor en Créditos", true, "10", "database")
+
+                                    div(class="col-span-2 space-y-2 flex items-center justify-center pt-3")
+                                        +ritmaSwitch("sw-1", "es_video[]", "Video", false)
+
+                                    div(class="col-span-2 space-y-2 flex items-center justify-center pt-3")
+                                        +fileUploadMini("file-1", "archivo[]", true, "Subir Archivo")
+
+                                    div(class="col-span-1 flex items-center justify-center pb-3")
+                                        //- Botón eliminar (oculto en la primera fila o funcional)
+                                        button(type="button" class="btn-eliminar-js text-primary hover:text-red-500 transition-colors")
+                                            span(class="material-symbols-outlined") delete
+
+                            //- Botón para agregar
+                            div(class="w-full")
+                                button(type="button" id="btn-agregar-fila" class="w-full py-4 bg-primary text-black font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all")
+                                    span(class="material-symbols-outlined") add
+                                    | Agregar Mas Archivos
+
+
+                            
+
+                            //- +btnSubmit("add", "add", "Agregar Mas Archivos", "add")
+
+                      div(class="grid grid-cols-1 md:grid-cols-2 gap-10")
+                        div(class="space-y-4")
+                          label(class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest block ml-1") Selecciona los generos al que pertenece
+                          a(class="w-full flex items-center justify-between px-4 py-3 bg-black/40 border border-white/10 rounded-xl hover:border-primary/50 transition-all group")
+                            span(class="text-[10px] font-bold uppercase tracking-widest text-gray-400 group-hover:text-white") Select Genres From DB
+                            span(class="material-symbols-outlined text-primary") database
+
+                          div(class="flex flex-wrap gap-2")
+                            div(class="genre-pill ")
+                              span.subtittle.text-2xs Techno
+                              a(class="material-symbols-outlined text-[12px] cursor-pointer ") close
+                           
+
+                        div(class="flex flex-col justify-end gap-4")
+                          div(class="p-4 glass-card rounded-2xl border-white/5 bg-white/2 flex items-center justify-between")
+                            div(class="space-y-1")
+                              p(class="text-[10px] font-bold text-white uppercase tracking-wider leading-none") Metadata Extraction
+                              p(class="text-[8px] font-mono text-gray-500") ID3_TAGS_PARSER_ON
+
+                            label(class="relative inline-flex items-center cursor-pointer")
+                              input(class="sr-only peer" type="checkbox" checked)
+                              div(class="w-9 h-5 bg-white/10 rounded-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-black after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full")
+
+                          button(class="w-full bg-primary py-4 rounded-xl text-black font-accent font-extrabold uppercase tracking-widest text-sm shadow-lg shadow-primary/20 hover:scale-[1.01] transition-transform")
+                            | Initialize Bulk Upload
+
+                  div(class="group mt-6")
+                    div(class="w-full h-48 border-2 border-dashed border-primary/20 rounded-3xl flex flex-col items-center justify-center gap-4 group-hover:border-primary/60 group-hover:bg-primary/5 transition-all cursor-pointer relative overflow-hidden")
+                      div(class="absolute inset-0 pixel-pattern opacity-5 group-hover:opacity-10")
+                      div(class="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform")
+                        span(class="material-symbols-outlined text-4xl") library_music
+                      div(class="text-center space-y-1")
+                        h4(class="font-accent font-bold uppercase tracking-widest text-sm") Drop Multiple Assets Here
+                        p(class="text-[10px] font-mono text-gray-500 uppercase") Batch limit: 50 files / Supported: WAV, MP3, FLAC (MAX 5GB Total)
+
+        script(src="/js/multimediaPanels.js") 
+
+
+
+
+                    
+
+          
+           
+
+           
+                
+
+        include layout/footer.pug 
+
+
+            
+
+                        
+
+
+
+            
+
+                
+        //FOOTER
+    
+    script(src="/js/controlPanel.js") 
+
+    // ================================================
+    // footer

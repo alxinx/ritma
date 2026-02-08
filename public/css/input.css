@@ -92,6 +92,8 @@ body {
     border-radius: 1px;
     box-shadow: 0 0 8px rgba(201, 218, 43, 0.4);
 }
+
+
 .vu-meter-peak {
             background: #FF3131;
             box-shadow: 0 0 10px rgba(255, 49, 49, 0.6);
@@ -253,8 +255,35 @@ body {
   }
 
 
-  
+  .genre-pill {
+            @apply flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-bold text-primary uppercase tracking-wider hover:bg-primary/20 transition-all cursor-default;
+        }
 
+    .tab-btn {
+            @apply relative px-8 py-4 text-[11px] font-extrabold uppercase tracking-[0.2em] transition-all;
+        }
+      .tab-bt:hover{
+        @apply text-blue-950
+      }
+
+      .tab-btn.active {
+            @apply text-primary;
+        }
+      
+        
+      
+        .tab-btn.inactive {
+            @apply text-gray-500 hover:text-white;
+        }
+
+        .tab-indicator {
+            @apply absolute bottom-0 left-0 w-full h-0.5 bg-primary shadow-[0_0_10px_#C9DA2B];
+        }
+
+
+.stats-crystal {
+  @apply rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden 
+}
 
   .ritma-input-container:focus-within div {
     @apply border-primary/30 text-white transition-all;
@@ -331,11 +360,17 @@ body {
   }
 
 
+  .upload-zone-mini {
+    @apply relative border-2 border-dashed border-white/10 bg-white/[0.02] 
+           rounded-sm  transition-all duration-500 cursor-pointer
+           flex flex-col items-center justify-center gap-2 overflow-hidden
+  }
   .upload-zone {
     @apply relative border-2 border-dashed border-white/10 bg-white/[0.02] 
            rounded-sm p-12 transition-all duration-500 cursor-pointer
            flex flex-col items-center justify-center gap-4 overflow-hidden;
   }
+
 
   /* Estado al arrastrar archivo (Drag Over) */
   .upload-zone.drag-active {
@@ -431,7 +466,7 @@ body {
   }
 
    span.subTittle {
-    @apply text-white/40 font-bold tracking-widest
+    @apply text-white/90 font-bold tracking-widest
    }
 
   p {
@@ -439,7 +474,7 @@ body {
   }
 
   p.subTittle {
-    @apply text-white/40 text-xs uppercase font-bold mb-6 tracking-widest;
+    @apply text-white/100 text-xs uppercase font-bold mb-6 tracking-widest;
   }
 
   p.text {
@@ -567,3 +602,4 @@ body {
     display: block;
   }
 }
+

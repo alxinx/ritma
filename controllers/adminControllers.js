@@ -23,7 +23,29 @@ const usersPanel = (req, res)=>{
 }
 
 
+const multimediaPanel = (req, res)=>{
+    return res.status(200).render('../views/app/multimediaPanel', {
+        tituloPagina : "Biblioteca Multimedia",
+        subtitulo : "Panel principal de la biblioteca multimedia",
+        active : 'multimedia',
+        csrfToken : req.csrfToken()
+    })
+}
+
+const uploadboard = (req, res)=>{
+    return res.status(200).render('../views/app/uploadboard', {
+        tituloPagina : "Biblioteca Multimedia",
+        subtitulo : "Subir Archivos Multimedia",
+        active : 'multimedia',
+        csrfToken : req.csrfToken()
+    })
+}
+
+//uploadboard
+
+
 export {
     dashboard,
-    usersPanel
+    usersPanel,
+    multimediaPanel, uploadboard
 }
