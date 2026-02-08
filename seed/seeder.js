@@ -1,5 +1,5 @@
-import { Artistas } from "../models/index.js";
-import artistas from "./artistas.js"
+import { Album } from "../models/index.js";
+import album from "./album.js"
 //import nombresData from "./departamentosData.js";
 //import municipios from "./municipiosData.js";
 //import nombresData from "./atributos.js";
@@ -13,7 +13,7 @@ const importarDatos = async () => {
         console.log('Conexión a DB OK');
         // Sincronizo
         await db.sync(); 
-        await Artistas.bulkCreate(artistas)
+        await Album.bulkCreate(album)
 
         
         console.log('Datos Importados Correctamente');

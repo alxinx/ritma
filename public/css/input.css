@@ -371,12 +371,17 @@ body {
            flex flex-col items-center justify-center gap-4 overflow-hidden;
   }
 
+  
 
   /* Estado al arrastrar archivo (Drag Over) */
   .upload-zone.drag-active {
     @apply border-primary bg-primary/5 shadow-[0_0_40px_rgba(201,218,43,0.1)];
   }
 
+
+  .category-select {
+    @apply w-full flex items-center justify-between px-4 py-3 bg-black/40 border border-white/10 rounded-xl hover:border-primary/50 transition-all  cursor-pointer
+  }
   /* Efecto de líneas de escaneo de fondo */
   .upload-scan-lines {
     background: linear-gradient(to bottom, transparent 50%, rgba(201, 218, 43, 0.03) 50%);

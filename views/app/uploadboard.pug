@@ -38,15 +38,20 @@ div(class="flex min-h-screen ")
                     
 
                     div(class="space-y-10 relative z-10")
+                      input(type="hidden", id="idArtista" name="idArtista")
                       div(class="grid grid-cols-1 md:grid-cols-3 gap-8 pb-10 border-b border-white/5")
                         div(class="space-y-2")
                             +ritmaInput("nombreArtista", "nombreArtista", "text", "Nombre Artista o Grupo", true, "Grupo Super Cool", "artist")
-                            #listaGrupos
-
+                            #sugerencias-artista(class="absolute z-50 w-full bg-black border border-white/10 hidden")
+                        
+                        
                         div(class="space-y-2")
-                          +ritmaInput("nombreAlbum", "nombreAlbum", "text", "Titulo del album", true, "Hits de antología", "art_track")
-                            #listaAlbum
-
+                          input(type="hidden" name="idAlbum" class="idAlbum-js")  
+                          +ritmaInput("nombreAlbum", "nombreAlbum", "text", "Titulo del album", true, "Ej: Mañana será bonito", "album") (class="")
+                          div(class="sugerencias-album-js hidden absolute z-50 w-full bg-black/95 border border-white/10 rounded-xl mt-1 overflow-hidden shadow-2xl")
+                        
+                        
+                        
                         div(class="space-y-2")
                           label(class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest block ml-1") Caratula del Album
                           div(class="flex items-center gap-4")
@@ -100,26 +105,44 @@ div(class="flex min-h-screen ")
                       div(class="grid grid-cols-1 md:grid-cols-2 gap-10")
                         div(class="space-y-4")
                           label(class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest block ml-1") Selecciona los generos al que pertenece
-                          a(class="w-full flex items-center justify-between px-4 py-3 bg-black/40 border border-white/10 rounded-xl hover:border-primary/50 transition-all group")
-                            span(class="text-[10px] font-bold uppercase tracking-widest text-gray-400 group-hover:text-white") Select Genres From DB
-                            span(class="material-symbols-outlined text-primary") database
-
-                          div(class="flex flex-wrap gap-2")
-                            div(class="genre-pill ")
-                              span.subtittle.text-2xs Techno
-                              a(class="material-symbols-outlined text-[12px] cursor-pointer ") close
+                          a(class="category-select" id="btn-abrir-generos")
+                            span(class="text-[10px] font-bold uppercase tracking-widest text-gray-400 group-hover:text-white") Seleccione los generos adecuados para el multimedia. 
+                            span(class="material-symbols-outlined text-primary") shelves
+                          input(type="hidden" name="generosSeleccionados" id="generosSeleccionados")
+                          div(id="contenedor-pills-generos" class="flex flex-wrap gap-2")
+                            
+                              
                            
+
+
+
+    
+                        div(id="modal-generos" class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 hidden")
+                            div(class="glass-card  w-full max-w-2xl p-8 rounded-3xl border border-white/10")
+                                //h2(class="text-primary font-accent font-extrabold uppercase tracking-widest mb-6") Seleccionar Géneros
+                                h3.text-primary.tracking-widest.font-display.text-center.mb-4 Selecciona los géneros
+                                
+                                //- NUEVO: Buscador de géneros
+                                div(class="relative mb-6")
+                                    +ritmaInput("busqueda-genero-modal", "busqueda-genero-modal", "text", "", true, "BUSCAR GÉNERO...", "search")
+                                
+                                
+                                div(id="lista-generos-modal" class="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-2 custom-scrollbar")
+                                div(class="flex justify-end gap-4 mt-8")
+                                    button(type="button" id="btn-cerrar-modal" class="px-6 py-2 text-xs font-bold uppercase text-gray-400 hover:text-white") Cancelar
+                                    button(type="button" id="btn-aceptar-generos" class="px-6 py-2 bg-primary text-black text-xs font-bold uppercase rounded-lg hover:brightness-110") Aceptar
+
+
+
 
                         div(class="flex flex-col justify-end gap-4")
                           div(class="p-4 glass-card rounded-2xl border-white/5 bg-white/2 flex items-center justify-between")
                             div(class="space-y-1")
                               p(class="text-[10px] font-bold text-white uppercase tracking-wider leading-none") Metadata Extraction
                               p(class="text-[8px] font-mono text-gray-500") ID3_TAGS_PARSER_ON
-
                             label(class="relative inline-flex items-center cursor-pointer")
                               input(class="sr-only peer" type="checkbox" checked)
                               div(class="w-9 h-5 bg-white/10 rounded-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-black after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full")
-
                           button(class="w-full bg-primary py-4 rounded-xl text-black font-accent font-extrabold uppercase tracking-widest text-sm shadow-lg shadow-primary/20 hover:scale-[1.01] transition-transform")
                             | Initialize Bulk Upload
 

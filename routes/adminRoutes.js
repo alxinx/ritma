@@ -1,5 +1,5 @@
 import express from "express";
-import { dashboard, usersPanel, multimediaPanel, uploadboard} from '../controllers/adminControllers.js'
+import { dashboard, usersPanel, multimediaPanel, uploadboard, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres} from '../controllers/adminControllers.js'
 const routes = express.Router();
 
 
@@ -19,6 +19,9 @@ routes.get("/multimedia", multimediaPanel)
 
 
 
+
+
+
 //**********************[POST] ***********************/
 
 //routes.post("/", loginPost)
@@ -26,5 +29,13 @@ routes.get("/multimedia", multimediaPanel)
 
 //loginPost
 
+
+
+//*******************[JSON]******************* */
+//routes.get('/json/artist/:nombreArtista', jsonCheckArtistByName)
+routes.get('/json/artistas', jsonCheckArtistByName);
+routes.get('/json/generos', getAllGenres);
+
+routes.get('/json/album/:idArtista', getAlbumsByArtist);
 
 export default routes
