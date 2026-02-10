@@ -1,0 +1,48 @@
+//- LIVE INGEST MONITOR (FASE 2)
+div(id="live-ingest-monitor" class="max-w-5xl mx-auto space-y-6 hidden")    
+    
+    //- CABECERA
+    div(class="glass-card rounded-2xl p-6 flex items-center justify-between border-primary/10")
+        div(class="flex items-center gap-8")
+            div(class="flex items-center gap-4")
+                div(class="size-12 rounded-lg bg-white/5 border border-white/10 overflow-hidden flex items-center justify-center")
+                    span(class="material-symbols-outlined text-primary/40") cloud_upload
+                div(class="flex flex-col")
+                    span(class="text-[10px] font-mono text-primary/60 uppercase tracking-tighter") ESTÁ SUBIENDO:
+                    span(id="monitor-artista-album" class="text-sm font-bold subtittle") Cargando...
+
+        div(class="flex items-center gap-4")
+            div(class="flex flex-col items-end")
+                div(class="text-[10px] font-mono text-gray-500 uppercase") Total Archivos:
+                div(id="monitor-total-files" class="text-sm font-bold") 0 archivos
+
+    //- MONITOR PRINCIPAL
+    div(class="glass-card rounded-3xl p-8 relative overflow-hidden")
+        div(class="flex items-center justify-between mb-8")
+            div(class="flex items-center gap-3")
+                div(class="size-2 bg-primary rounded-full animate-pulse shadow-[0_0_10px_#C9DA2B]")
+                h4(class="text-xs font-bold uppercase tracking-widest") Live Ingest Monitor
+            
+            div(class="flex flex-col items-end")
+                div(class="flex items-center gap-4 mb-2")
+                    span(class="material-symbols-outlined text-sm") avg_pace
+                    span(class="text-[10px] font-mono uppercase opacity-60") Progreso Total
+                    span(id="global-perc" class="glass-card p-1 rounded-sm font-mono text-xs") 0% 
+                
+                div(class="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden")
+                    div(id="global-bar" class="h-full bg-primary progress-glow rounded-full transition-all duration-300" style="width: 0%")
+
+        //- CONTENEDOR DINÁMICO DE TRACKS
+        div(id="monitor-items-container" class="space-y-4")
+            //- Inyectado por monitorUpload.js
+
+    //- ESTADÍSTICAS DE RED
+    div(class="flex justify-between items-center px-4")
+        div(class="flex items-center gap-6")
+            div(class="flex flex-col")
+                span(class="text-[10px] font-mono text-gray-500 uppercase mb-1") Falta aproximadamente:
+                span(class="tiempo-restante-js text-sm font-bold text-primary font-mono") --:-- min
+                    
+            div(class="flex flex-col border-l border-white/10 pl-6")
+                span(class="text-[10px] font-mono text-gray-500 uppercase mb-1") Velocidad de subida:
+                span(id="velocidad-media-js" class="text-sm font-bold text-primary font-mono") 0.0 MB/s

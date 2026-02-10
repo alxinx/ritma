@@ -18,30 +18,16 @@ div(class="flex min-h-screen ")
         include layout/headerAdmin.pug
 
         //BODY
-        div(class="mx-auto p-4 pb-32")  
+        div(class="flex-1 overflow-y-auto p-10 custom-scrollbar")  
 
-            //UPLOAD FORM
-            include partials/formUploadMultimedia.pug  
+            include partials/liveUploadMultimedia.pug
 
-            //
-            include partials/liveUploadMultimedia.pug          
-            
+
             
 
-                  
+
+ 
         script(src="/js/multimediaPanels.js") 
-        script(src="/js/monitorUpload.js") 
-
-
-
-
-                    
-
-          
-           
-
-           
-                
 
         include layout/footer.pug 
 

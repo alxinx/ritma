@@ -6,6 +6,7 @@ export default {
         basicValidator : './src/js/basicValidator.js',
         controlPanel : './src/js/controlPanel.js',
         multimediaPanels : './src/js/multimediaPanels.js',
+        monitorUpload : './src/js/monitorUpload.js',
 
     },
     output : {

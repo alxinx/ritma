@@ -1,3 +1,4 @@
+import Swal from 'sweetalert2';
 ;(function() {
     document.addEventListener('DOMContentLoaded', () => {
         
@@ -265,5 +266,79 @@
     // 5. CERRAR MODAL SIN CAMBIOS
     document.getElementById('btn-cerrar-modal')?.addEventListener('click', () => {
         modalGeneros.classList.add('hidden');
+    });
+})();
+
+
+
+//UPLOAD FILES
+(function() {
+    const formulario = document.getElementById('upload-form'); 
+
+    formulario?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // 1. Crear un FormData "ligero" (sin los archivos pesados) para validar campos
+        const rawFormData = new FormData(formulario);
+        const validationData = new FormData();
+        
+        // Solo copiamos los campos de texto, no los archivos
+        for (let [key, value] of rawFormData.entries()) {
+            if (!(value instanceof File)) {
+                validationData.append(key, value);
+            }
+        }
+
+        // Feedback visual
+        Swal.fire({
+            title: 'RTM-ENGINE: VALIDANDO',
+            html: '<span class="text-[10px] font-mono opacity-60 uppercase tracking-widest">Checking constraints...</span>',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); },
+            background: '#0a0a0c', color: '#fff',
+            customClass: { popup: 'rounded-3xl border border-white/10 glass-card' }
+        });
+
+        try {
+            // Enviamos solo los textos. El servidor responderá instantáneamente
+            const response = await fetch('/app/dash/uploadboard', {
+                method: 'POST',
+                body: validationData 
+            });
+
+            const data = await response.json();
+
+            // Si faltan campos (Artista, Título, etc.), el servidor dirá que NO
+            if (!data.ok) {
+                const listaErrores = data.errores.map(err => `<li>• ${err.msg}</li>`).join('');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'DATOS INCOMPLETOS',
+                    html: `<div class="text-left text-[11px] font-mono text-red-400 uppercase">${listaErrores}</div>`,
+                    background: '#0a0a0c', color: '#fff',
+                    confirmButtonColor: '#008B8B',
+                    customClass: { popup: 'rounded-3xl border border-red-500/30' }
+                });
+                return;
+            }
+
+            // --- SI TODO ESTÁ BIEN ---
+            Swal.close();
+
+            // Intercambiamos la UI
+            document.getElementById('upload-form').classList.add('hidden');
+            document.getElementById('live-ingest-monitor').classList.remove('hidden');
+
+            // 2. DISPARAR MONITOR CON LOS ARCHIVOS REALES
+            // Aquí usamos el original que sí tiene los archivos pesados
+            if (typeof inicializarMonitor === 'function') {
+                const rawFormData = new FormData(formulario);
+                
+                inicializarMonitor(rawFormData);
+            }
+
+        } catch (error) {
+            Swal.fire({ icon: 'error', title: 'ENGINE ERROR', background: '#0a0a0c', color: '#fff' });
+        }
     });
 })();

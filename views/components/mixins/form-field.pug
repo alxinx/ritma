@@ -137,9 +137,9 @@ mixin formActions(primaryLabel, secondaryHref)
 
 mixin btnSubmit(id, name, label, icon)
   div(class="pt-4 flex flex-col gap-6 w-full")
-    button(type="submit" id=id name=name class="btn-green w-full  group relative overflow-hidden")
+    button(type="submit" id=id name=name class=" w-full  group relative overflow-hidden")&attributes(attributes)
       div(class="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700")
-      span(class="text-black") #{label}
+      h4 #{label}
       span(class="material-symbols-outlined text-black transition-transform group-hover:translate-x-1") #{icon}
     
 mixin btnSubmitMini(id, name, label, icon)

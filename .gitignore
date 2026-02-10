@@ -4,4 +4,7 @@
 # Ignorar todo el contenido dentro de public/img/
 public/img/
 public/test/
+public/upload/
 node_modules/
+
+upload/*.

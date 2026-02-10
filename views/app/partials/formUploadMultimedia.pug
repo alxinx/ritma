@@ -1,0 +1,89 @@
+form(id="upload-form" class="max-w-5xl mx-auto space-y-8" enctype="multipart/form-data" novalidate ) 
+    input(type="hidden" name="_csrf")
+    div(class="glass-card rounded-3xl relative overflow-visible")
+      nav(class="flex border-b border-white/10 bg-black/20")
+        a(id="single" class="tab-btn  inactive cursor-pointer")
+            span(class="material-symbols-outlined text-sm mr-3 ")  file_open
+            | Solo un archivo
+        a(id="multiple" class="tab-btn active cursor-pointer")
+            span(class="material-symbols-outlined text-sm mr-3") library_music
+            | Varios Archivos
+      div(class="p-10 relative overflow-hidden")
+        div(class="space-y-10 relative z-10")
+          input(type="hidden", id="idArtista" name="idArtista")
+          div(class="grid grid-cols-1 md:grid-cols-3 gap-8 pb-10 border-b border-white/5")
+            div(class="space-y-2")
+                +ritmaInput("nombreArtista", "nombreArtista", "text", "Nombre Artista o Grupo", true, "Grupo Super Cool", "artist")
+                #sugerencias-artista(class="absolute z-50 w-full bg-black border border-white/10 hidden")
+            div(class="space-y-2")
+              input(type="hidden" name="idAlbum" class="idAlbum-js")  
+              +ritmaInput("nombreAlbum", "nombreAlbum", "text", "Titulo del album", true, "Ej: Mañana será bonito", "album") (class="")
+              div(class="sugerencias-album-js hidden absolute z-50 w-full bg-black/95 border border-white/10 rounded-xl mt-1 overflow-hidden shadow-2xl")
+            div(class="space-y-2")
+              label(class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest block ml-1") Caratula del Album
+              div(class="flex items-center gap-4")
+                +fileUploadMini("coverAlbum", "coverAlbum", true, "Subir Cover")
+          div(class="space-y-6")
+            div(class="flex items-center justify-between")
+             h3(class="text-sm font-accent font-extrabold uppercase tracking-wider") Archivos por subir
+             p(class="text-[10px] font-mono text-gray-500") TOTAL ITEMS: 
+             div(class="flex gap-2")
+                span(class="total-items-count text-primary") 1
+            div(class="space-y-3")
+                //- Contenedor principal de las filas
+                div(id="contenedor-filas" class="space-y-4 mb-6")
+                    //- Fila Inicial (01)
+                    div(class="fila-archivo grid grid-cols-12 gap-4 items-end bg-white/5 p-4 rounded-2xl border border-white/5" data-index="1")
+                        div(class="col-span-1 flex items-center justify-center pb-3")
+                            span(class="numero-fila text-[10px] font-mono text-primary font-bold") 01
+                        div(class="col-span-4 space-y-2")
+                            +ritmaInput("titulo-1", "titulo[]", "text", "¿Cómo se llama la obra?", true, "Nombre del disco", "music_note")
+                        div(class="col-span-2 space-y-2")
+                            +ritmaInput("costo-1", "costoCreditos[]", "number", "Valor en Créditos", true, "10", "database")
+                        div(class="col-span-2 space-y-2 flex items-center justify-center pt-3")
+                            +ritmaSwitch("sw-1", "es_video[]", "Video", false)
+                        div(class="col-span-2 space-y-2 flex items-center justify-center pt-3")
+                            +fileUploadMini("file-1", "archivo[]", true, "Subir Archivo")
+                        div(class="col-span-1 flex items-center justify-center pb-3")
+                            //- Botón eliminar (oculto en la primera fila o funcional)
+                            button(type="button" class="btn-eliminar-js text-primary hover:text-red-500 transition-colors")
+                                span(class="material-symbols-outlined") delete
+                //- Botón para agregar
+                div(class="w-full text-right")   
+                    a( id="btn-agregar-fila" class="cuadro pt-6 cursor-pointer hover:bg-surface-dark transition-colors")
+                        span(class="material-symbols-outlined pt-2") add
+                           
+          div(class="grid grid-cols-1 md:grid-cols-2 gap-10")
+            div(class="space-y-4")
+              label(class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest block ml-1") Selecciona los generos al que pertenece
+              a(class="category-select" id="btn-abrir-generos")
+                span(class="text-[10px] font-bold uppercase tracking-widest text-gray-400 group-hover:text-white") Seleccione los generos adecuados para el multimedia. 
+                span(class="material-symbols-outlined text-primary") shelves
+              input(type="hidden" name="generosSeleccionados" id="generosSeleccionados")
+              div(id="contenedor-pills-generos" class="flex flex-wrap gap-2")
+            div(class="flex flex-col justify-end gap-4")
+                div(class="p-4 glass-card rounded-2xl border-white/5 bg-white/2 flex items-center justify-between")
+                  div(class="space-y-1")
+                    p(class="text-[10px] font-bold text-white uppercase tracking-wider leading-none") Metadata Extraction
+                    p(class="text-[8px] font-mono text-gray-500") ID3_TAGS_PARSER_ON
+                  label(class="relative inline-flex items-center cursor-pointer")
+                    input(class="sr-only peer" type="checkbox" checked)
+                    div(class="w-9 h-5 bg-white/10 rounded-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-black after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full")
+        +btnSubmit("btnloadnow", "btnloadnow", "Inicializar Upload", "arrow_shape_up_stack_2")(class="btn-green text-black")
+//MODAL
+div(id="modal-generos" class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 hidden")
+  div(class="glass-card  w-full max-w-2xl p-8 rounded-3xl border border-white/10")
+      //h2(class="text-primary font-accent font-extrabold uppercase tracking-widest mb-6") Seleccionar Géneros
+      h3.text-primary.tracking-widest.font-display.text-center.mb-4 Selecciona los géneros
+      //- NUEVO: Buscador de géneros
+      div(class="relative mb-6")
+          +ritmaInput("busqueda-genero-modal", "busqueda-genero-modal", "text", "", true, "BUSCAR GÉNERO...", "search")
+      div(id="lista-generos-modal" class="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-2 custom-scrollbar")
+      div(class="flex justify-end gap-4 mt-8")
+          button(type="button" id="btn-cerrar-modal" class="px-6 py-2 text-xs font-bold uppercase text-gray-400 hover:text-white") Cancelar
+          button(type="button" id="btn-aceptar-generos" class="px-6 py-2 bg-primary text-black text-xs font-bold uppercase rounded-lg hover:brightness-110") Aceptar
+
+
+
+
+            

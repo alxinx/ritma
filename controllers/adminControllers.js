@@ -1,4 +1,4 @@
-import {Usuarios, Artistas, Album, Genero} from '../models/index.js'
+import {Usuarios, Artistas, Album, Generos} from '../models/index.js'
 import dotenv from "dotenv";
 import { Op } from 'sequelize';
 
@@ -40,6 +40,50 @@ const uploadboard = (req, res)=>{
         active : 'multimedia',
         csrfToken : req.csrfToken()
     })
+}
+
+
+///INGRESO EL MULTIMEDIA
+const postUploadMultimedia = async (req, res) => {
+    try {
+        console.log('--- INGESTA DETECTADA ---');
+        console.log('Archivos recibidos:', req.files?.length || 0);
+        console.log('Metadata del body:', req.body);
+
+        // Si es solo validación (sin archivos)
+        if (!req.files || req.files.length === 0) {
+            return res.status(200).json({
+                ok: true,
+                msg: 'Validación OK'
+            });
+        }
+
+        // Si hay archivos → subida real
+        setTimeout(() => {
+            return res.status(200).json({
+                ok: true,
+                msg: 'Batch procesado correctamente'
+            });
+        }, 1000);
+
+    } catch (error) {
+        console.error('Error en el Core:', error);
+        return res.status(500).json({ ok: false });
+    }
+};
+
+
+
+
+ 
+const liveUploadMonitor = async(req, res)=>{
+    return res.status(200).render('../views/app/live-upload-monitor', {
+        tituloPagina : "Biblioteca Multimedia",
+        subtitulo : "Live Upload Monitor",
+        active : 'multimedia',
+        csrfToken : req.csrfToken()
+    })
+
 }
 
 
@@ -101,7 +145,7 @@ const getAlbumsByArtist = async (req, res)=>{
 //Generos
 const getAllGenres = async (req, res)=>{
     
-    const genres = await Genero.findAll({
+    const genres = await Generos.findAll({
         attributes: ['genero_id', 'nombre', 'slug']
     });
     res.json(genres)
@@ -116,6 +160,7 @@ export {
     dashboard,
     usersPanel,
     multimediaPanel, uploadboard,
+    postUploadMultimedia, liveUploadMonitor,
     getAlbumsByArtist,
     getAllGenres,
     jsonCheckArtistByName,
