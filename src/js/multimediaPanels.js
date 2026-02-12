@@ -17,7 +17,7 @@ import Swal from 'sweetalert2';
         const idAlbumOculto = document.querySelector('.idAlbum-js');
         const sugerenciasAlbum = document.querySelector('.sugerencias-album-js');
 
-        const MAX_FILAS = 5;
+        const MAX_FILAS = 5
         let timeoutBusqueda;
 
         // --- 2. GESTIÓN DE FILAS (AGREGAR / ELIMINAR) ---
@@ -32,43 +32,92 @@ import Swal from 'sweetalert2';
             }
         }
 
-        btnAgregarFila?.addEventListener('click', () => {
-            const filas = document.querySelectorAll('.fila-archivo');
-            if (filas.length < MAX_FILAS) {
-                const nuevaFila = filas[0].cloneNode(true);
-                const nuevoIndice = filas.length + 1;
+        // btnAgregarFila?.addEventListener('click', () => {
+        //     const filas = document.querySelectorAll('.fila-archivo');
+        //     if (filas.length < MAX_FILAS) {
+        //         const nuevaFila = filas[0].cloneNode(true);
+        //         const nuevoIndice = filas.length + 1;
 
-                nuevaFila.setAttribute('data-index', nuevoIndice);
-                nuevaFila.querySelector('.numero-fila').textContent = nuevoIndice.toString().padStart(2, '0');
+        //         nuevaFila.setAttribute('data-index', nuevoIndice);
+        //         nuevaFila.querySelector('.numero-fila').textContent = nuevoIndice.toString().padStart(2, '0');
                 
-                // Limpiar inputs de la nueva fila
-                const inputs = nuevaFila.querySelectorAll('input');
-                inputs.forEach(input => {
-                    input.value = '';
-                    if (input.type === 'checkbox') input.checked = false;
-                    const oldId = input.getAttribute('id');
-                    if (oldId) input.setAttribute('id', oldId.replace(/-\d+$/, `-${nuevoIndice}`));
-                });
+        //         // Limpiar inputs de la nueva fila
+        //         const inputs = nuevaFila.querySelectorAll('input');
+        //         inputs.forEach(input => {
+        //             input.value = '';
+        //             if (input.type === 'checkbox') input.checked = false;
+        //             const oldId = input.getAttribute('id');
+        //             if (oldId) input.setAttribute('id', oldId.replace(/-\d+$/, `-${nuevoIndice}`));
+        //         });
 
-                contenedorFilas.appendChild(nuevaFila);
-                actualizarInterfaz();
-            }
-        });
+        //         contenedorFilas.appendChild(nuevaFila);
+        //         actualizarInterfaz();
+        //     }
+        // });
 
-        contenedorFilas?.addEventListener('click', (e) => {
-            const btnDelete = e.target.closest('.btn-eliminar-js');
-            if (btnDelete) {
-                const filas = document.querySelectorAll('.fila-archivo');
-                if (filas.length > 1) {
-                    btnDelete.closest('.fila-archivo').remove();
-                    // Re-enumerar filas restantes
-                    document.querySelectorAll('.fila-archivo').forEach((f, i) => {
-                        f.querySelector('.numero-fila').textContent = (i + 1).toString().padStart(2, '0');
-                    });
-                    actualizarInterfaz();
-                }
-            }
-        });
+        // contenedorFilas?.addEventListener('click', (e) => {
+        //     const btnDelete = e.target.closest('.btn-eliminar-js');
+        //     if (btnDelete) {
+        //         const filas = document.querySelectorAll('.fila-archivo');
+        //         if (filas.length > 1) {
+        //             btnDelete.closest('.fila-archivo').remove();
+        //             // Re-enumerar filas restantes
+        //             document.querySelectorAll('.fila-archivo').forEach((f, i) => {
+        //                 f.querySelector('.numero-fila').textContent = (i + 1).toString().padStart(2, '0');
+        //             });
+        //             actualizarInterfaz();
+        //         }
+        //     }
+        // });
+        btnAgregarFila?.addEventListener('click', () => {
+    const filas = document.querySelectorAll('.fila-archivo');
+    if (filas.length < MAX_FILAS) {
+        const nuevoIndice = filas.length + 1;
+        
+        const nuevaFila = document.createElement('div');
+        nuevaFila.className = 'fila-archivo grid grid-cols-12 gap-4 items-end bg-white/5 p-4 rounded-2xl border border-white/5';
+        nuevaFila.setAttribute('data-index', nuevoIndice);
+
+        nuevaFila.innerHTML = `
+            <div class="col-span-1 flex items-center justify-center pb-3">
+                <span class="numero-fila text-[10px] font-mono text-primary font-bold">${nuevoIndice.toString().padStart(2, '0')}</span>
+            </div>
+            <div class="col-span-4 space-y-2">
+                <div class="relative group">
+                    <label class="subTittle text-primary"> ¿Cómo se llama la obra?</label>
+                        <input class="ritma-input-field" type="text" name="titulo[]" placeholder="¿Cómo se llama  el disco?">
+                        <span class="material-symbols-outlined ritma-input-icon pt-2">music_note</span>
+                </div>
+            </div>
+            
+            <div class="col-span-2 space-y-2">
+                <label class="subTittle text-primary"> VALOR EN CRÉDITOS</label>
+                    <input class="ritma-input-field" type="number" name="costoCreditos[]" min="0" max="100" placeholder="10">
+            </div>
+            
+            <div class="col-span-2 space-y-2 flex items-center justify-center pt-3">
+                <label class="group flex items-center justify-between w-full cursor-pointer py-2">
+                    <span class="acordeonTitulo text-white/60 group-hover:text-primary transition-colors">Video</span>
+                    <input type="checkbox" name="es_video[]" class="ritma-switch-input"   >
+                </label>
+            </div>
+            <div class="col-span-2 space-y-2 flex items-center justify-center pt-3">
+                <input type="file" name="archivo[]" class="hidden input-archivo-real" id="file-${nuevoIndice}">
+                <label for="file-${nuevoIndice}" class="cursor-pointer bg-primary/10 text-primary text-[10px] px-3 py-2 rounded-lg hover:bg-primary hover:text-black transition-all">
+                    SUBIR ARCHIVO
+                </label>
+            </div>
+            <div class="col-span-1 flex items-center justify-center pb-3">
+                <button type="button" class="btn-eliminar-js text-primary hover:text-red-500 transition-colors">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
+            </div>
+        `;
+
+        contenedorFilas.appendChild(nuevaFila);
+        actualizarInterfaz();
+    }
+});
 
         // --- 3. AUTOCOMPLETADO DE ARTISTAS ---
         if (inputArtista) {
@@ -272,73 +321,68 @@ import Swal from 'sweetalert2';
 
 
 //UPLOAD FILES
-(function() {
-    const formulario = document.getElementById('upload-form'); 
+(function () {
+    const formulario = document.getElementById('upload-form');
 
     formulario?.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // 1. Crear un FormData "ligero" (sin los archivos pesados) para validar campos
         const rawFormData = new FormData(formulario);
+        const todosLosInputs = document.querySelectorAll('input[type="file"][name="archivo[]"]');
+        console.log("--- DEBUG DE BÚSQUEDA ---");
+        console.log("Total inputs 'archivo[]' encontrados en el DOM:", todosLosInputs.length);
+        console.log(todosLosInputs)
+        // Eliminamos captura automática
+        rawFormData.delete('archivo[]');
+        let archivosRealesEncontrados = 0;
+        todosLosInputs.forEach((input, index) => {
+
+            console.log(`input : ${input.files.length}`)
+             if (input.files && input.files.length > 0) {
+                 rawFormData.append('archivo[]', input.files[0]);
+                 archivosRealesEncontrados++;
+                 console.log(`Fila ${index + 1}: Archivo detectado ->`, input.files[0].name);
+             }
+        });
+
+        console.log("Total archivos listos ->", archivosRealesEncontrados);
+
+        if (archivosRealesEncontrados === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'SIN ARCHIVOS',
+                text: 'No has seleccionado ningún archivo para subir.'
+            });
+            return;
+        }
+
+        // Data de validación
         const validationData = new FormData();
-        
-        // Solo copiamos los campos de texto, no los archivos
         for (let [key, value] of rawFormData.entries()) {
             if (!(value instanceof File)) {
                 validationData.append(key, value);
             }
         }
 
-        // Feedback visual
-        Swal.fire({
-            title: 'RTM-ENGINE: VALIDANDO',
-            html: '<span class="text-[10px] font-mono opacity-60 uppercase tracking-widest">Checking constraints...</span>',
-            allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); },
-            background: '#0a0a0c', color: '#fff',
-            customClass: { popup: 'rounded-3xl border border-white/10 glass-card' }
-        });
-
         try {
-            // Enviamos solo los textos. El servidor responderá instantáneamente
             const response = await fetch('/app/dash/uploadboard', {
                 method: 'POST',
-                body: validationData 
+                body: validationData
             });
 
             const data = await response.json();
 
-            // Si faltan campos (Artista, Título, etc.), el servidor dirá que NO
-            if (!data.ok) {
-                const listaErrores = data.errores.map(err => `<li>• ${err.msg}</li>`).join('');
-                Swal.fire({
-                    icon: 'error',
-                    title: 'DATOS INCOMPLETOS',
-                    html: `<div class="text-left text-[11px] font-mono text-red-400 uppercase">${listaErrores}</div>`,
-                    background: '#0a0a0c', color: '#fff',
-                    confirmButtonColor: '#008B8B',
-                    customClass: { popup: 'rounded-3xl border border-red-500/30' }
-                });
-                return;
-            }
+            if (!data.ok) return;
 
-            // --- SI TODO ESTÁ BIEN ---
-            Swal.close();
-
-            // Intercambiamos la UI
             document.getElementById('upload-form').classList.add('hidden');
             document.getElementById('live-ingest-monitor').classList.remove('hidden');
 
-            // 2. DISPARAR MONITOR CON LOS ARCHIVOS REALES
-            // Aquí usamos el original que sí tiene los archivos pesados
             if (typeof inicializarMonitor === 'function') {
-                const rawFormData = new FormData(formulario);
-                
                 inicializarMonitor(rawFormData);
             }
 
         } catch (error) {
-            Swal.fire({ icon: 'error', title: 'ENGINE ERROR', background: '#0a0a0c', color: '#fff' });
+            console.error(error);
         }
     });
 })();

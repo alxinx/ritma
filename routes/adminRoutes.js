@@ -19,7 +19,10 @@ routes.get("/multimedia", multimediaPanel)
        
     routes.post(
             "/uploadboard", 
-            upload.any(),
+            upload.fields([
+                { name: 'archivo[]', maxCount: 20 },
+                { name: 'coverAlbum', maxCount: 1 }
+            ]),
             checkUploadMultimedia, 
             validarErrores, 
             postUploadMultimedia 

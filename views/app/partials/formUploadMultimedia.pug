@@ -30,9 +30,10 @@ form(id="upload-form" class="max-w-5xl mx-auto space-y-8" enctype="multipart/for
              div(class="flex gap-2")
                 span(class="total-items-count text-primary") 1
             div(class="space-y-3")
-                //- Contenedor principal de las filas
+                //- Contenedor principal de las filas  de los archivos que voy a subir al server. 
+
                 div(id="contenedor-filas" class="space-y-4 mb-6")
-                    //- Fila Inicial (01)
+                    //- Fila Inicial 
                     div(class="fila-archivo grid grid-cols-12 gap-4 items-end bg-white/5 p-4 rounded-2xl border border-white/5" data-index="1")
                         div(class="col-span-1 flex items-center justify-center pb-3")
                             span(class="numero-fila text-[10px] font-mono text-primary font-bold") 01
@@ -48,10 +49,13 @@ form(id="upload-form" class="max-w-5xl mx-auto space-y-8" enctype="multipart/for
                             //- Botón eliminar (oculto en la primera fila o funcional)
                             button(type="button" class="btn-eliminar-js text-primary hover:text-red-500 transition-colors")
                                 span(class="material-symbols-outlined") delete
+                
                 //- Botón para agregar
                 div(class="w-full text-right")   
                     a( id="btn-agregar-fila" class="cuadro pt-6 cursor-pointer hover:bg-surface-dark transition-colors")
                         span(class="material-symbols-outlined pt-2") add
+
+                        
                            
           div(class="grid grid-cols-1 md:grid-cols-2 gap-10")
             div(class="space-y-4")

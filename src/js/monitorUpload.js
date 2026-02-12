@@ -1,8 +1,7 @@
 /**
- * monitorUpload.js - CORE INGEST MONITOR (PRO)
+ * monitorUpload.js - CORE DEL  MONITOR (PRO)
  */
 import Swal from 'sweetalert2';
-
 window.inicializarMonitor = function(formData) {
     // 1. Header Metadata
     const artista = formData.get('nombreArtista') || 'Artista Desconocido';

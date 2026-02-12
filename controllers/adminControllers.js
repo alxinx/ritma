@@ -43,32 +43,51 @@ const uploadboard = (req, res)=>{
 }
 
 
-///INGRESO EL MULTIMEDIA
+/// INGRESO EL MULTIMEDIA
 const postUploadMultimedia = async (req, res) => {
     try {
-        console.log('--- INGESTA DETECTADA ---');
-        console.log('Archivos recibidos:', req.files?.length || 0);
-        console.log('Metadata del body:', req.body);
+        // 1. Extraer archivos según la configuración de upload.fields()
+        // Si usas upload.any(), los archivos vienen directamente en req.files como un array
+        const archivosMusica = req.files['archivo[]'] || (Array.isArray(req.files) ? req.files : []);
+        const portada = req.files['coverAlbum'] ? req.files['coverAlbum'][0] : null;
 
-        // Si es solo validación (sin archivos)
-        if (!req.files || req.files.length === 0) {
+        console.log('--- INGESTA DETECTADA ---');
+        console.log(`Total archivos de audio recibidos: ${archivosMusica.length}`);
+
+        // 2. Caso de validación inicial (sin archivos)
+        if (archivosMusica.length === 0 && !portada) {
             return res.status(200).json({
                 ok: true,
-                msg: 'Validación OK'
+                msg: 'Metadata validada correctamente'
             });
         }
 
-        // Si hay archivos → subida real
-        setTimeout(() => {
-            return res.status(200).json({
-                ok: true,
-                msg: 'Batch procesado correctamente'
-            });
-        }, 1000);
+        // 3. Procesamiento de múltiples archivos (Aquí está el arreglo)
+        archivosMusica.forEach((archivo, index) => {
+            // Ahora sí, index y archivo están definidos dentro del loop
+            console.log(`[Item ${index + 1}] Procesando: ${archivo.originalname}`);
+            console.log(`Ruta temporal: ${archivo.path || 'Memoria (Buffer)'}`);
+            
+            // TIP: Aquí es donde más adelante moverás el archivo a su carpeta final
+            // o lo subirás a Cloudflare R2 / S3.
+        });
+
+        if (portada) {
+            console.log(`[Portada] Procesando: ${portada.originalname}`);
+        }
+
+        // 4. Respuesta al Monitor (esto activa el "¡Listo!" en el front)
+        return res.status(200).json({
+            ok: true,
+            msg: `Batch de ${archivosMusica.length} archivos procesado correctamente por RTM-ENGINE`
+        });
 
     } catch (error) {
         console.error('Error en el Core:', error);
-        return res.status(500).json({ ok: false });
+        return res.status(500).json({ 
+            ok: false, 
+            msg: 'Error crítico en la ingesta' 
+        });
     }
 };
 

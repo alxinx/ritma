@@ -89,7 +89,7 @@ mixin fileUpload(id, name, required=false, title, subtitle)
 
 mixin fileUploadMini(id, name, required=false, subtitle)
   div(class="w-full group")
-    input(type="file" id=id name=name required=required class="hidden" multiple)
+    input(type="file" id=id name=name required=required class="hidden" )
     label(for=id class="upload-zone-mini")
       div(class="upload-scan-lines")
       div(class="text-center relative z-10")
