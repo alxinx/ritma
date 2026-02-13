@@ -3,10 +3,10 @@ import db from "../config/bd.js";
 
 const ArtistaGeneros = db.define('ARTISTA_GENEROS', {
     idArtistaGeneros: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    },
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+},
     idArtista: {
         type: DataTypes.UUID,
         allowNull: false,

@@ -53,6 +53,24 @@ const Multimedia = db.define('MULTIMEDIA', {
     estado_ingesta : {
         type: DataTypes.ENUM('uploading', 'processing', 'ready', 'error'),
         allowNull : true 
+    },
+    idArtista: {
+        type: DataTypes.UUID,
+        allowNull: true, // Cámbialo a false después si quieres obligatoriedad
+        references: {
+            model: 'ARTISTAS',
+            key: 'idArtista'
+        },
+        field: 'idArtista' // <--- ESTO es lo que obliga a Sequelize a usar ese nombre exacto
+    },
+    idAlbum: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+            model: 'ALBUM',
+            key: 'idAlbum'
+        },
+        field: 'idAlbum'
     }
 }, {
     timestamps: true,

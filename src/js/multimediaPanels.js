@@ -32,44 +32,8 @@ import Swal from 'sweetalert2';
             }
         }
 
-        // btnAgregarFila?.addEventListener('click', () => {
-        //     const filas = document.querySelectorAll('.fila-archivo');
-        //     if (filas.length < MAX_FILAS) {
-        //         const nuevaFila = filas[0].cloneNode(true);
-        //         const nuevoIndice = filas.length + 1;
-
-        //         nuevaFila.setAttribute('data-index', nuevoIndice);
-        //         nuevaFila.querySelector('.numero-fila').textContent = nuevoIndice.toString().padStart(2, '0');
-                
-        //         // Limpiar inputs de la nueva fila
-        //         const inputs = nuevaFila.querySelectorAll('input');
-        //         inputs.forEach(input => {
-        //             input.value = '';
-        //             if (input.type === 'checkbox') input.checked = false;
-        //             const oldId = input.getAttribute('id');
-        //             if (oldId) input.setAttribute('id', oldId.replace(/-\d+$/, `-${nuevoIndice}`));
-        //         });
-
-        //         contenedorFilas.appendChild(nuevaFila);
-        //         actualizarInterfaz();
-        //     }
-        // });
-
-        // contenedorFilas?.addEventListener('click', (e) => {
-        //     const btnDelete = e.target.closest('.btn-eliminar-js');
-        //     if (btnDelete) {
-        //         const filas = document.querySelectorAll('.fila-archivo');
-        //         if (filas.length > 1) {
-        //             btnDelete.closest('.fila-archivo').remove();
-        //             // Re-enumerar filas restantes
-        //             document.querySelectorAll('.fila-archivo').forEach((f, i) => {
-        //                 f.querySelector('.numero-fila').textContent = (i + 1).toString().padStart(2, '0');
-        //             });
-        //             actualizarInterfaz();
-        //         }
-        //     }
-        // });
-        btnAgregarFila?.addEventListener('click', () => {
+        
+    btnAgregarFila?.addEventListener('click', () => {
     const filas = document.querySelectorAll('.fila-archivo');
     if (filas.length < MAX_FILAS) {
         const nuevoIndice = filas.length + 1;
@@ -102,8 +66,8 @@ import Swal from 'sweetalert2';
                 </label>
             </div>
             <div class="col-span-2 space-y-2 flex items-center justify-center pt-3">
-                <input type="file" name="archivo[]" class="hidden input-archivo-real" id="file-${nuevoIndice}">
-                <label for="file-${nuevoIndice}" class="cursor-pointer bg-primary/10 text-primary text-[10px] px-3 py-2 rounded-lg hover:bg-primary hover:text-black transition-all">
+                <input type="file" name="archivo[]" class="hidden input-archivo-real" id="file-${nuevoIndice}" accept=".mp3,.wav,.mp4,.mov,.m4a, .flac, .m4a, .aac, .ogg, .wma, .aiff, .avi, .mkv, .wmv, .webm, .mpeg, .mpg, .m4v">
+                <label for="file-${nuevoIndice}" class="cursor-pointer bg-primary/10 text-primary text-[10px] px-3 py-2 rounded-lg hover:bg-primary hover:text-black transition-all" >
                     SUBIR ARCHIVO
                 </label>
             </div>
@@ -269,6 +233,8 @@ import Swal from 'sweetalert2';
         });
     });
 
+
+
     // 3. CONFIRMAR SELECCIÓN Y CERRAR
     document.getElementById('btn-aceptar-generos')?.addEventListener('click', () => {
         const seleccionados = modalGeneros.querySelectorAll('.check-genero:checked');
@@ -321,48 +287,106 @@ import Swal from 'sweetalert2';
 
 
 //UPLOAD FILES
+
 (function () {
     const formulario = document.getElementById('upload-form');
 
     formulario?.addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        // 1. RECOLECCIÓN Y CONTEO DE ARCHIVOS
         const rawFormData = new FormData(formulario);
-        const todosLosInputs = document.querySelectorAll('input[type="file"][name="archivo[]"]');
-        console.log("--- DEBUG DE BÚSQUEDA ---");
-        console.log("Total inputs 'archivo[]' encontrados en el DOM:", todosLosInputs.length);
-        console.log(todosLosInputs)
-        // Eliminamos captura automática
+        const todosLosInputs = document.querySelectorAll('input[type="file"][name="archivo[]"], input[type="file"][name="coverAlbum"]');     
         rawFormData.delete('archivo[]');
         let archivosRealesEncontrados = 0;
-        todosLosInputs.forEach((input, index) => {
 
-            console.log(`input : ${input.files.length}`)
-             if (input.files && input.files.length > 0) {
-                 rawFormData.append('archivo[]', input.files[0]);
-                 archivosRealesEncontrados++;
-                 console.log(`Fila ${index + 1}: Archivo detectado ->`, input.files[0].name);
-             }
+        todosLosInputs.forEach((input) => {
+            if (input.files && input.files.length > 0) {
+                if (input.name === 'archivo[]') {
+                    rawFormData.append('archivo[]', input.files[0]);
+                    archivosRealesEncontrados++;
+                } 
+            }
         });
 
-        console.log("Total archivos listos ->", archivosRealesEncontrados);
-
+        // --- VALIDACIÓN A: AL MENOS 1 ARCHIVO ---
         if (archivosRealesEncontrados === 0) {
             Swal.fire({
                 icon: 'warning',
-                title: 'SIN ARCHIVOS',
-                text: 'No has seleccionado ningún archivo para subir.'
+                title: 'FALTAN ARCHIVOS',
+                text: 'El RTM-ENGINE necesita al menos un archivo para procesar.',
+                background: '#0a0a0c', color: '#fff'
             });
             return;
         }
 
-        // Data de validación
+        // --- VALIDACIÓN B: NOMBRE DEL ARTISTA ---
+        const nombreArtista = rawFormData.get('nombreArtista')?.trim(); 
+        if (!nombreArtista) {
+            Swal.fire({
+                icon: 'error',
+                title: 'ARTISTA REQUERIDO',
+                text: 'Indica el nombre del artista para la indexación.',
+                background: '#0a0a0c', color: '#fff'
+            });
+            return;
+        }
+
+        // --- VALIDACIÓN C: GÉNEROS MUSICALES ---
+        // Al ser un input hidden que se llena dinámicamente:
+        const generos = rawFormData.get('generosSeleccionados')?.trim();
+        if (!generos || generos === "" || generos === "[]") {
+            Swal.fire({
+                icon: 'error',
+                title: 'GÉNERO REQUERIDO',
+                text: 'Debes seleccionar al menos un género musical.',
+                background: '#0a0a0c', color: '#fff'
+            });
+            return;
+        }
+
+
+        //VALIDO QUE LOS ARCHIVOS MULTIMEDIA SEAN LOS PERMITIDOS! 
+        const extensionesPermitidas = ['mp3', 'wav', 'mp4', 'mov', 'm4a', 'flac', 'm4a', 'aac', 'ogg','wma',  'aiff', 'avi','mkv','wmv','webm', 'mpeg', 'mpg', 'm4v', 'jpg', 'webp', 'png', 'jpeg', ];
+        let archivosInvalidos = [];
+
+        todosLosInputs.forEach((input, index) => {
+            if (input.files.length > 0) {
+                const file = input.files[0];
+                const ext = file.name.split('.').pop().toLowerCase();
+                
+                if (!extensionesPermitidas.includes(ext)) {
+                    archivosInvalidos.push(`Fila ${index + 1}: .${ext}`);
+                }
+            }
+        });
+
+        if (archivosInvalidos.length > 0) {
+            Swal.fire({
+                icon: 'error',
+                title: 'FORMATO NO VÁLIDO',
+                html: `<div class="text-[11px] text-left uppercase">Los siguientes archivos no son multimedia permitida:<br><b>${archivosInvalidos.join('<br>')}</b></div>`,
+                background: '#0a0a0c', color: '#fff'
+            });
+            return; 
+        }
+
+
+
+        // 2. PREPARACIÓN DE DATA LIGERA PARA EL SERVIDOR
         const validationData = new FormData();
         for (let [key, value] of rawFormData.entries()) {
             if (!(value instanceof File)) {
                 validationData.append(key, value);
             }
         }
+
+        Swal.fire({
+            title: 'VERIFICANDO CON EL CORE...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); },
+            background: '#0a0a0c', color: '#fff'
+        });
 
         try {
             const response = await fetch('/app/dash/uploadboard', {
@@ -372,8 +396,19 @@ import Swal from 'sweetalert2';
 
             const data = await response.json();
 
-            if (!data.ok) return;
+            // Aquí el servidor nos dirá si el artista existe o si hay algún otro problema
+            if (!data.ok) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'ERROR DE VALIDACIÓN',
+                    text: data.msg || 'Error en los datos enviados.',
+                    background: '#0a0a0c', color: '#fff'
+                });
+                return;
+            }
 
+            // 3. TODO OK -> CAMBIO DE UI Y SUBIDA REAL
+            Swal.close();
             document.getElementById('upload-form').classList.add('hidden');
             document.getElementById('live-ingest-monitor').classList.remove('hidden');
 
@@ -382,7 +417,45 @@ import Swal from 'sweetalert2';
             }
 
         } catch (error) {
-            console.error(error);
+            console.error("Error en validación:", error);
+            Swal.fire({ icon: 'error', title: 'COMMUNICATION ERROR', background: '#0a0a0c', color: '#fff' });
         }
     });
 })();
+
+
+
+
+// Listener Global para cambios en inputs de archivos
+document.addEventListener('change', (e) => {
+    if (e.target.matches('input[type="file"]')) {
+        const input = e.target;
+        // Buscamos el label asociado
+        const label = document.querySelector(`label[for="${input.id}"]`);
+        
+        if (label) {
+            if (input.files && input.files.length > 0) {
+                // Cambiamos estado visual
+                label.classList.add('archivo-cargado');
+                
+                // Cambiamos el icono a un "check" de verificado
+                const icono = label.querySelector('.material-symbols-outlined');
+                if (icono) icono.textContent = 'check_circle';
+                
+                // Mostramos el nombre del archivo (limitado para no romper el diseño)
+                const texto = label.querySelector('p');
+                if (texto) {
+                    const nombreLimpio = input.files[0].name.length > 15 
+                        ? input.files[0].name.substring(0, 12) + '...' 
+                        : input.files[0].name;
+                    texto.textContent = nombreLimpio;
+                }
+            } else {
+                // Revertimos si el usuario quita el archivo
+                label.classList.remove('archivo-cargado');
+                const icono = label.querySelector('.material-symbols-outlined');
+                if (icono) icono.textContent = 'cloud_upload';
+            }
+        }
+    }
+});

@@ -77,9 +77,9 @@ mixin customSelect(id, name, label, activeOption, options = [])
             div(class="option-led")
 
 //- 5. FILE UPLOAD (ID, NAME, REQUIRED, TITLE, SUBTITLE)
-mixin fileUpload(id, name, required=false, title, subtitle)
+mixin fileUpload(id, name, required=false, title, subtitle, acceptTypes = "")
   div(class="w-full group")
-    input(type="file" id=id name=name required=required class="hidden" multiple)
+    input(type="file" id=id name=name required=required accept=acceptTypes class="hidden" multiple)
     label(for=id class="upload-zone")
       div(class="upload-scan-lines")
       span(class="material-symbols-outlined text-4xl upload-icon-pulse mb-4") cloud_upload
@@ -87,14 +87,14 @@ mixin fileUpload(id, name, required=false, title, subtitle)
         h4 #{title}
         p(class="text-[10px] text-white/40 uppercase tracking-widest mt-2") #{subtitle}
 
-mixin fileUploadMini(id, name, required=false, subtitle)
+mixin fileUploadMini(id, name, required=false, subtitle, acceptTypes = "")
   div(class="w-full group")
-    input(type="file" id=id name=name required=required class="hidden" )
+    input(type="file" id=id name=name required=required accept=acceptTypes class="hidden" )
     label(for=id class="upload-zone-mini")
       div(class="upload-scan-lines")
       div(class="text-center relative z-10")
         span(class="material-symbols-outlined text-4xl upload-icon-pulse mb-4") cloud_upload
-          p(class="text-[10px] text-white/40 uppercase tracking-widest") #{subtitle}
+        p(class="text-[10px] text-white/40 uppercase tracking-widest") #{subtitle}
 
 
 //- 6. SWITCH (ID, NAME, LABEL, CHECKED)

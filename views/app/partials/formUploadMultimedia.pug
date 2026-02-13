@@ -17,12 +17,12 @@ form(id="upload-form" class="max-w-5xl mx-auto space-y-8" enctype="multipart/for
                 #sugerencias-artista(class="absolute z-50 w-full bg-black border border-white/10 hidden")
             div(class="space-y-2")
               input(type="hidden" name="idAlbum" class="idAlbum-js")  
-              +ritmaInput("nombreAlbum", "nombreAlbum", "text", "Titulo del album", true, "Ej: Mañana será bonito", "album") (class="")
+              +ritmaInput("nombreAlbum", "nombreAlbum", "text", "Titulo del album", "", "Ej: Mañana será bonito", "album") 
               div(class="sugerencias-album-js hidden absolute z-50 w-full bg-black/95 border border-white/10 rounded-xl mt-1 overflow-hidden shadow-2xl")
             div(class="space-y-2")
               label(class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest block ml-1") Caratula del Album
               div(class="flex items-center gap-4")
-                +fileUploadMini("coverAlbum", "coverAlbum", true, "Subir Cover")
+                +fileUploadMini("coverAlbum", "coverAlbum", true, "Subir Cover", ".jpg, .webp, .png, .jpeg")
           div(class="space-y-6")
             div(class="flex items-center justify-between")
              h3(class="text-sm font-accent font-extrabold uppercase tracking-wider") Archivos por subir
@@ -44,7 +44,7 @@ form(id="upload-form" class="max-w-5xl mx-auto space-y-8" enctype="multipart/for
                         div(class="col-span-2 space-y-2 flex items-center justify-center pt-3")
                             +ritmaSwitch("sw-1", "es_video[]", "Video", false)
                         div(class="col-span-2 space-y-2 flex items-center justify-center pt-3")
-                            +fileUploadMini("file-1", "archivo[]", true, "Subir Archivo")
+                            +fileUploadMini("file-1", "archivo[]", true, "Subir Archivo", '.mp3,.wav,.mp4,.mov,.m4a, .flac, .m4a, .aac, .ogg, .wma, .aiff, .avi, .mkv, .wmv, .webm, .mpeg, .mpg, .m4v')
                         div(class="col-span-1 flex items-center justify-center pb-3")
                             //- Botón eliminar (oculto en la primera fila o funcional)
                             button(type="button" class="btn-eliminar-js text-primary hover:text-red-500 transition-colors")

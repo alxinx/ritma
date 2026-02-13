@@ -121,6 +121,23 @@ body {
 
 
 
+/* Estado: Archivo Cargado */
+.upload-zone-mini.archivo-cargado {
+    border-color: #00ff88 !important;
+    background: rgba(0, 255, 136, 0.05) !important;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
+}
+
+.upload-zone-mini.archivo-cargado .upload-icon-pulse {
+    color: #00ff88 !important;
+    animation: none; /* Detenemos el pulso para dar sensación de estabilidad */
+}
+
+.upload-zone-mini.archivo-cargado p {
+    color: #00ff88 !important;
+    font-weight: bold;
+}
+
 
 
 

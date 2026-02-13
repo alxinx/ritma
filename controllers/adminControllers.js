@@ -1,7 +1,10 @@
-import {Usuarios, Artistas, Album, Generos} from '../models/index.js'
+import {Usuarios, Artistas, Album, Generos, Multimedia, MultimediaGeneros, ArtistaGeneros} from '../models/index.js'
+import db from "../config/bd.js";
 import dotenv from "dotenv";
-import { Op } from 'sequelize';
+import  path  from 'path';
 
+import { Op } from 'sequelize';
+import * as mm from 'music-metadata'; // Para BPM y Duración
 dotenv.config();
 
 const dashboard = (req, res)=>{
@@ -44,54 +47,97 @@ const uploadboard = (req, res)=>{
 
 
 /// INGRESO EL MULTIMEDIA
+
 const postUploadMultimedia = async (req, res) => {
+    const t = await db.transaction(); 
+
     try {
-        // 1. Extraer archivos según la configuración de upload.fields()
-        // Si usas upload.any(), los archivos vienen directamente en req.files como un array
-        const archivosMusica = req.files['archivo[]'] || (Array.isArray(req.files) ? req.files : []);
+        const { nombreArtista, nombreAlbum, generosSeleccionados } = req.body;
+        
+        // 0. Parsear géneros (Crucial para los pasos 3-2 y 4)
+        const generosIds = JSON.parse(generosSeleccionados || "[]");
+        
+        const archivosMusica = req.files['archivo[]'] || [];
         const portada = req.files['coverAlbum'] ? req.files['coverAlbum'][0] : null;
 
-        console.log('--- INGESTA DETECTADA ---');
-        console.log(`Total archivos de audio recibidos: ${archivosMusica.length}`);
-
-        // 2. Caso de validación inicial (sin archivos)
-        if (archivosMusica.length === 0 && !portada) {
-            return res.status(200).json({
-                ok: true,
-                msg: 'Metadata validada correctamente'
-            });
-        }
-
-        // 3. Procesamiento de múltiples archivos (Aquí está el arreglo)
-        archivosMusica.forEach((archivo, index) => {
-            // Ahora sí, index y archivo están definidos dentro del loop
-            console.log(`[Item ${index + 1}] Procesando: ${archivo.originalname}`);
-            console.log(`Ruta temporal: ${archivo.path || 'Memoria (Buffer)'}`);
-            
-            // TIP: Aquí es donde más adelante moverás el archivo a su carpeta final
-            // o lo subirás a Cloudflare R2 / S3.
+        // 1. LÓGICA DEL ARTISTA (Aseguramos el UUID)
+        const [artista] = await Artistas.findOrCreate({
+            where: { nombreArtista: nombreArtista.trim() },
+            transaction: t
+        });
+        
+        const idArtista = artista.idArtista;
+       
+        // 2. LÓGICA DE ÁLBUM (Garantizamos el idArtista capturado arriba)
+        const nombreBuscado = nombreAlbum?.trim() || "Single";
+        const [album] = await Album.findOrCreate({
+            where: { 
+                nombreAlbum: nombreBuscado, 
+                idArtista: idArtista 
+            },
+            defaults: { 
+                cover: portada ? portada.filename : null 
+            },
+            transaction: t
         });
 
-        if (portada) {
-            console.log(`[Portada] Procesando: ${portada.originalname}`);
+        // 3. PROCESAMIENTO DE ARCHIVOS
+        const resultadosMultimedia = [];
+
+        for (const archivo of archivosMusica) {
+            // Análisis de metadatos con music-metadata
+            const metadata = await mm.parseFile(archivo.path);
+            const tipoAsset = archivo.mimetype.startsWith('video/') ? 'VIDEO' : 'AUDIO';
+            console.log(`[RTM-DEBUG] Preparando multimedia para Artista ID: ${idArtista}`);
+            const nuevoMultimedia = await Multimedia.create({
+                nombreComposicion: path.parse(archivo.originalname).name,
+                idAlbum: album.idAlbum,
+                idArtista: idArtista, 
+                formato: path.extname(archivo.originalname).replace('.', ''),
+                tamano: archivo.size,
+                tipoAsset: tipoAsset,
+                bpm: metadata.common.bpm || null,
+                duracion: Math.round(metadata.format.duration) || null,
+                estado_ingesta: 'processing',
+                keyR2: `temp_${Date.now()}_${archivo.filename}`
+            }, { transaction: t });
+
+            // Guardar relación de Géneros para el Multimedia
+            if (generosIds.length > 0) {
+                const multiGeneros = generosIds.map(idGen => ({
+                    idMultimedia: nuevoMultimedia.idMultimedia,
+                    idGenero: idGen
+                }));
+                await MultimediaGeneros.bulkCreate(multiGeneros, { transaction: t });
+            }
+
+            resultadosMultimedia.push(nuevoMultimedia);
         }
 
-        // 4. Respuesta al Monitor (esto activa el "¡Listo!" en el front)
+        // 4. ACTUALIZAR GÉNEROS DEL ARTISTA (Sin duplicados)
+        if (generosIds.length > 0) {
+            for (const idGen of generosIds) {
+                await ArtistaGeneros.findOrCreate({
+                    where: { idArtista, idGenero: idGen },
+                    transaction: t
+                });
+            }
+        }
+
+        await t.commit(); // Consolidación total 😠👊
+        
         return res.status(200).json({
             ok: true,
-            msg: `Batch de ${archivosMusica.length} archivos procesado correctamente por RTM-ENGINE`
+            msg: 'Batch procesado y registrado en DB correctamente.',
+            data: { albumId: album.idAlbum, total: resultadosMultimedia.length }
         });
 
     } catch (error) {
-        console.error('Error en el Core:', error);
-        return res.status(500).json({ 
-            ok: false, 
-            msg: 'Error crítico en la ingesta' 
-        });
+        if (t) await t.rollback(); 
+        console.error('Error en la ingesta:', error);
+        return res.status(500).json({ ok: false, msg: 'Error al registrar en la base de datos' });
     }
 };
-
-
 
 
  
