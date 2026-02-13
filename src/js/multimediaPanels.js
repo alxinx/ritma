@@ -61,8 +61,8 @@ import Swal from 'sweetalert2';
             
             <div class="col-span-2 space-y-2 flex items-center justify-center pt-3">
                 <label class="group flex items-center justify-between w-full cursor-pointer py-2">
-                    <span class="acordeonTitulo text-white/60 group-hover:text-primary transition-colors">Video</span>
-                    <input type="checkbox" name="es_video[]" class="ritma-switch-input"   >
+                    <span class="acordeonTitulo text-white/60 group-hover:text-primary transition-colors">Subtítulos</span>
+                    <input type="checkbox" name="subtitulos[]" class="ritma-switch-input" value="on">
                 </label>
             </div>
             <div class="col-span-2 space-y-2 flex items-center justify-center pt-3">

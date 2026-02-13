@@ -42,7 +42,7 @@ form(id="upload-form" class="max-w-5xl mx-auto space-y-8" enctype="multipart/for
                         div(class="col-span-2 space-y-2")
                             +ritmaInput("costo-1", "costoCreditos[]", "number", "Valor en Créditos", true, "10", "database")
                         div(class="col-span-2 space-y-2 flex items-center justify-center pt-3")
-                            +ritmaSwitch("sw-1", "es_video[]", "Video", false)
+                            +ritmaSwitch("sw-1", "subtitulos[]", "Subtitulos", false)(value="on")
                         div(class="col-span-2 space-y-2 flex items-center justify-center pt-3")
                             +fileUploadMini("file-1", "archivo[]", true, "Subir Archivo", '.mp3,.wav,.mp4,.mov,.m4a, .flac, .m4a, .aac, .ogg, .wma, .aiff, .avi, .mkv, .wmv, .webm, .mpeg, .mpg, .m4v')
                         div(class="col-span-1 flex items-center justify-center pb-3")

@@ -24,8 +24,9 @@ const Album = db.define('ALBUM', {
         }
     },
     cover: {
-        type: DataTypes.STRING,
-        allowNull: true 
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        field: 'cover' // Esto asegura que apunte a la columna de tu imagen
     }
 }, {
     timestamps: true,

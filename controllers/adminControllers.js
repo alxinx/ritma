@@ -54,55 +54,108 @@ const postUploadMultimedia = async (req, res) => {
     try {
         const { nombreArtista, nombreAlbum, generosSeleccionados } = req.body;
         
-        // 0. Parsear géneros (Crucial para los pasos 3-2 y 4)
+        // 0. Parsear géneros y archivos
         const generosIds = JSON.parse(generosSeleccionados || "[]");
-        
         const archivosMusica = req.files['archivo[]'] || [];
         const portada = req.files['coverAlbum'] ? req.files['coverAlbum'][0] : null;
 
-        // 1. LÓGICA DEL ARTISTA (Aseguramos el UUID)
+        // 1. LÓGICA DEL ARTISTA
         const [artista] = await Artistas.findOrCreate({
             where: { nombreArtista: nombreArtista.trim() },
             transaction: t
         });
-        
         const idArtista = artista.idArtista;
        
-        // 2. LÓGICA DE ÁLBUM (Garantizamos el idArtista capturado arriba)
+        // 2. LÓGICA DE ÁLBUM
         const nombreBuscado = nombreAlbum?.trim() || "Single";
-        const [album] = await Album.findOrCreate({
+        const nombreArchivoPortada = portada ? portada.filename : null;
+
+        const [album, creado] = await Album.findOrCreate({
             where: { 
                 nombreAlbum: nombreBuscado, 
                 idArtista: idArtista 
             },
-            defaults: { 
-                cover: portada ? portada.filename : null 
-            },
             transaction: t
         });
 
-        // 3. PROCESAMIENTO DE ARCHIVOS
+        // Forzamos la actualización usando el método .update() de la instancia
+        if (nombreArchivoPortada) {
+            await album.update({ 
+                cover: nombreArchivoPortada 
+            }, { transaction: t });
+            
+            console.log(`[RTM-DEBUG] Portada registrada: ${nombreArchivoPortada} para el álbum: ${album.nombreAlbum}`);
+        }
+
+
+if (nombreArchivoPortada) {
+    album.cover = nombreArchivoPortada; 
+    await album.save({ transaction: t });
+}
+
+        // 3. CAPTURA Y LIMPIEZA DE METADATOS DEL FORMULARIO
+        const titulosFormulario = req.body['titulo[]'] || req.body.titulo || [];        
+        const costoCreditos = req.body['costoCreditos[]'] || req.body.costoCreditos || [];
+        const subtitulosBody = req.body['subtitulos[]'] || req.body.subtitulos || [];
+
         const resultadosMultimedia = [];
 
-        for (const archivo of archivosMusica) {
-            // Análisis de metadatos con music-metadata
+        // --- BUCLE PRINCIPAL DE PROCESAMIENTO ---
+        for (let i = 0; i < archivosMusica.length; i++) {
+            const archivo = archivosMusica[i];
+
+            // A. Sincronización de Título
+            let tituloDeEsteTrack = Array.isArray(titulosFormulario) ? titulosFormulario[i] : titulosFormulario;
+            
+            if (!tituloDeEsteTrack || tituloDeEsteTrack.trim() === "") {
+                tituloDeEsteTrack = path.parse(archivo.originalname).name;
+            }
+
+            // B. Sincronización de Créditos
+            let valorEsteTrack = Array.isArray(costoCreditos) ? costoCreditos[i] : costoCreditos;
+            valorEsteTrack = (valorEsteTrack !== undefined && valorEsteTrack !== "") ? valorEsteTrack : 0;
+
+            let marcado = false;
+
+            if (Array.isArray(subtitulosBody)) {
+                    const valor = subtitulosBody[i];
+
+                    if (Array.isArray(valor)) {
+                        marcado = valor.includes('on');
+                    } else {
+                        marcado = valor === 'on';
+                    }
+                } else {
+                    marcado = subtitulosBody === 'on';
+                }
+            // D. Regla de Negocio: Solo VIDEO puede tener subtítulos
+            const esVideoReal = archivo.mimetype.startsWith('video/');
+            
+            const tipoAsset = esVideoReal ? 'VIDEO' : 'AUDIO';
+            const tieneSubtitulos = esVideoReal && marcado;
+
+        
+            
+            // E. Extracción de Metadatos Técnicos
             const metadata = await mm.parseFile(archivo.path);
-            const tipoAsset = archivo.mimetype.startsWith('video/') ? 'VIDEO' : 'AUDIO';
-            console.log(`[RTM-DEBUG] Preparando multimedia para Artista ID: ${idArtista}`);
+            
+            // F. Creación del Registro en DB
             const nuevoMultimedia = await Multimedia.create({
-                nombreComposicion: path.parse(archivo.originalname).name,
-                idAlbum: album.idAlbum,
+                nombreComposicion: tituloDeEsteTrack,
+                idAlbum: album.idAlbum, 
                 idArtista: idArtista, 
                 formato: path.extname(archivo.originalname).replace('.', ''),
                 tamano: archivo.size,
                 tipoAsset: tipoAsset,
+                subtitulos: tieneSubtitulos, 
                 bpm: metadata.common.bpm || null,
                 duracion: Math.round(metadata.format.duration) || null,
+                costoCreditos: valorEsteTrack,
                 estado_ingesta: 'processing',
                 keyR2: `temp_${Date.now()}_${archivo.filename}`
             }, { transaction: t });
 
-            // Guardar relación de Géneros para el Multimedia
+            // G. Relación de Géneros Multimedia
             if (generosIds.length > 0) {
                 const multiGeneros = generosIds.map(idGen => ({
                     idMultimedia: nuevoMultimedia.idMultimedia,
@@ -124,18 +177,22 @@ const postUploadMultimedia = async (req, res) => {
             }
         }
 
-        await t.commit(); // Consolidación total 😠👊
+        // 5. COMMIT DE LA TRANSACCIÓN
+        await t.commit(); 
         
         return res.status(200).json({
             ok: true,
-            msg: 'Batch procesado y registrado en DB correctamente.',
+            msg: 'Batch procesado y registrado correctamente 😌.',
             data: { albumId: album.idAlbum, total: resultadosMultimedia.length }
         });
 
     } catch (error) {
         if (t) await t.rollback(); 
-        console.error('Error en la ingesta:', error);
-        return res.status(500).json({ ok: false, msg: 'Error al registrar en la base de datos' });
+        console.error('Error en la ingesta RTM-ENGINE:', error);
+        return res.status(500).json({ 
+            ok: false, 
+            msg: 'Error crítico en el registro de multimedia' 
+        });
     }
 };
 

@@ -30,6 +30,11 @@ const Multimedia = db.define('MULTIMEDIA', {
         type: DataTypes.ENUM('AUDIO', 'VIDEO', 'TOOL'),
         allowNull: false
     },
+    subtitulos: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        field: 'subtitulos'
+    },
     bpm: {
         type: DataTypes.SMALLINT, 
         allowNull: true

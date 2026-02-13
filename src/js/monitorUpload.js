@@ -110,7 +110,7 @@ function ejecutarSubida(formData) {
                         if (result.isConfirmed) {
                             window.location.href = '/app/dash/multimedia'; 
                         } else {
-                            resetearFormularioIngesta();
+                            window.location.href = '/app/dash/uploadboard'; 
                         }
                     });
                 } else {
@@ -140,73 +140,6 @@ function ejecutarSubida(formData) {
 }
 
 
-function resetearFormularioIngesta() {
-    const formulario = document.getElementById('upload-form');
-    const monitor = document.getElementById('live-ingest-monitor');
-    
-
-    if (!formulario) return;
-
-    // 1. Reset nativo de inputs (text, number, file, checkbox)
-    formulario.reset();
-
-    // 2. Limpieza manual de Géneros y Selects
-    // Buscamos todos los selects de género (ajusta el selector si usas una clase específica)
-    const selectsGeneros = formulario.querySelectorAll('select');
-    selectsGeneros.forEach(select => {
-        select.selectedIndex = 0; // Vuelve a la primera opción (usualmente "Seleccione...")
-        
-        // Si usas alguna librería tipo Select2 o TomSelect, debes disparar el evento 'change'
-        select.dispatchEvent(new Event('change'));
-    });
-
-    // Limpieza de estados visuales de los labels
-    const labelsCargados = formulario.querySelectorAll('.archivo-cargado');
-    labelsCargados.forEach(label => {
-        label.classList.remove('archivo-cargado');
-        const icono = label.querySelector('.material-symbols-outlined');
-        if (icono) icono.textContent = 'cloud_upload'; // Revertimos icono
-    });
-
-    // 3. Limpieza de Previsualización de Portada (Cover)
-    // Si tienes un <img> que muestra la miniatura de la portada, hay que resetearlo
-    const previewPortada = document.getElementById('preview-cover-album'); // Ajusta el ID
-    if (previewPortada) {
-        previewPortada.src = '/img/default-placeholder.jpg'; // O un string vacío
-    }
-
-    // 4. Limpiar las filas dinámicas (Dejar solo la primera fila "viva")
-    const contenedorFilas = document.getElementById('contenedor-filas');
-    if (contenedorFilas) {
-        const filas = contenedorFilas.querySelectorAll('.fila-archivo');
-        filas.forEach((fila, index) => {
-            if (index > 0) {
-                fila.remove(); 
-            } else {
-                // Limpiamos los inputs de la primera fila por si acaso
-                const inputsFilaUno = fila.querySelectorAll('input');
-                inputsFilaUno.forEach(inp => {
-                    inp.value = '';
-                    if (inp.type === 'checkbox') inp.checked = false;
-                });
-            }
-        });
-    }
-
-    // 5. Reset de contadores visuales
-    const totalItemsTxt = document.getElementById('total-items-txt'); // Ajusta a tu ID
-    if (totalItemsTxt) totalItemsTxt.textContent = '01';
-
-    // 6. Volver a la interfaz de carga
-    monitor.classList.add('hidden');
-    formulario.classList.remove('hidden');
-
-    // 7. Reset de las barras del monitor para el próximo uso
-    document.getElementById('global-bar').style.width = '0%';
-    document.getElementById('global-perc').textContent = '0%';
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
 
 
 
