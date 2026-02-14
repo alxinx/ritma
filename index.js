@@ -45,9 +45,9 @@ app.set("views", "./views");
    MIDDLEWARES BASE
 ====================== */
 app.use(express.static("public"));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
 /* ======================
    CSRF (solo después de cookies)
 ====================== */
@@ -55,6 +55,11 @@ const csrfProtection = csrf({ cookie: true });
 
 // Inyectar token en vistas
 app.use((req, res, next) => {
+  // Si la ruta es para firmar subidas, saltamos el CSRF
+  if (req.path.startsWith('/app/dash/api/upload/sign')) {
+    return next();
+  }
+
   try {
     csrfProtection(req, res, () => {
       res.locals.csrfToken = req.csrfToken();

@@ -2,8 +2,8 @@ import {Usuarios, Artistas, Album, Generos, Multimedia, MultimediaGeneros, Artis
 import db from "../config/bd.js";
 import dotenv from "dotenv";
 import  path  from 'path';
-
 import { Op } from 'sequelize';
+
 import * as mm from 'music-metadata'; // Para BPM y Duración
 dotenv.config();
 
@@ -52,151 +52,147 @@ const postUploadMultimedia = async (req, res) => {
     const t = await db.transaction(); 
 
     try {
-        const { nombreArtista, nombreAlbum, generosSeleccionados } = req.body;
+      const { 
+            nombreArtista, 
+            nombreAlbum, 
+            generosSeleccionados,   
+            idArtista, 
+            idAlbum,
+            keyCover, 
+            keysTracks, 
+            titulos, 
+            costos, 
+            subtitulos,
+            metadatos
+        } = req.body;
         
-        // 0. Parsear géneros y archivos
         const generosIds = JSON.parse(generosSeleccionados || "[]");
-        const archivosMusica = req.files['archivo[]'] || [];
-        const portada = req.files['coverAlbum'] ? req.files['coverAlbum'][0] : null;
 
-        // 1. LÓGICA DEL ARTISTA
-        const [artista] = await Artistas.findOrCreate({
-            where: { nombreArtista: nombreArtista.trim() },
-            transaction: t
-        });
-        const idArtista = artista.idArtista;
-       
-        // 2. LÓGICA DE ÁLBUM
-        const nombreBuscado = nombreAlbum?.trim() || "Single";
-        const nombreArchivoPortada = portada ? portada.filename : null;
-
-        const [album, creado] = await Album.findOrCreate({
-            where: { 
-                nombreAlbum: nombreBuscado, 
-                idArtista: idArtista 
-            },
-            transaction: t
-        });
-
-        // Forzamos la actualización usando el método .update() de la instancia
-        if (nombreArchivoPortada) {
-            await album.update({ 
-                cover: nombreArchivoPortada 
-            }, { transaction: t });
-            
-            console.log(`[RTM-DEBUG] Portada registrada: ${nombreArchivoPortada} para el álbum: ${album.nombreAlbum}`);
+        // 1. OBTENER O CREAR ARTISTA (Usando el ID si existe para mayor precisión en Ritma)
+        let artista;
+        if (idArtista) {
+            artista = await Artistas.findByPk(idArtista, { transaction: t });
+        } else {
+            [artista] = await Artistas.findOrCreate({
+                where: { nombreArtista: nombreArtista.trim() },
+                transaction: t
+            });
         }
 
+        // 2. OBTENER O CREAR ÁLBUM
+        let album;
+        if (idAlbum) {
+            album = await Album.findByPk(idAlbum, { transaction: t });
+        } else {
+            [album] = await Album.findOrCreate({
+                where: { nombreAlbum: nombreAlbum?.trim() || "Single", idArtista: artista.idArtista },
+                transaction: t
+            });
+        }
 
-if (nombreArchivoPortada) {
-    album.cover = nombreArchivoPortada; 
-    await album.save({ transaction: t });
-}
+        // Actualizar portada solo si se subió una nueva
+        if (keyCover) {
+            await album.update({ 
+                cover: keyCover // Aquí llegará solo el nombre limpio gracias al cambio en el JS
+            }, { transaction: t });
+            //console.log(`[RTM-ENGINE] Portada vinculada: ${keyCover}`);
+        }
 
-        // 3. CAPTURA Y LIMPIEZA DE METADATOS DEL FORMULARIO
-        const titulosFormulario = req.body['titulo[]'] || req.body.titulo || [];        
-        const costoCreditos = req.body['costoCreditos[]'] || req.body.costoCreditos || [];
-        const subtitulosBody = req.body['subtitulos[]'] || req.body.subtitulos || [];
-
+        // 3. REGISTRO DE TRACKS
+        // Aseguramos que keysTracks sea un array para evitar errores de .length
+        const tracksArray = Array.isArray(keysTracks) ? keysTracks : [keysTracks];
         const resultadosMultimedia = [];
 
-        // --- BUCLE PRINCIPAL DE PROCESAMIENTO ---
-        for (let i = 0; i < archivosMusica.length; i++) {
-            const archivo = archivosMusica[i];
+        for (let i = 0; i < tracksArray.length; i++) {
+            const keyR2 = tracksArray[i];
+            const meta = metadatos[i];
 
-            // A. Sincronización de Título
-            let tituloDeEsteTrack = Array.isArray(titulosFormulario) ? titulosFormulario[i] : titulosFormulario;
-            
-            if (!tituloDeEsteTrack || tituloDeEsteTrack.trim() === "") {
-                tituloDeEsteTrack = path.parse(archivo.originalname).name;
-            }
-
-            // B. Sincronización de Créditos
-            let valorEsteTrack = Array.isArray(costoCreditos) ? costoCreditos[i] : costoCreditos;
-            valorEsteTrack = (valorEsteTrack !== undefined && valorEsteTrack !== "") ? valorEsteTrack : 0;
-
-            let marcado = false;
-
-            if (Array.isArray(subtitulosBody)) {
-                    const valor = subtitulosBody[i];
-
-                    if (Array.isArray(valor)) {
-                        marcado = valor.includes('on');
-                    } else {
-                        marcado = valor === 'on';
-                    }
-                } else {
-                    marcado = subtitulosBody === 'on';
-                }
-            // D. Regla de Negocio: Solo VIDEO puede tener subtítulos
-            const esVideoReal = archivo.mimetype.startsWith('video/');
-            
-            const tipoAsset = esVideoReal ? 'VIDEO' : 'AUDIO';
-            const tieneSubtitulos = esVideoReal && marcado;
-
-        
-            
-            // E. Extracción de Metadatos Técnicos
-            const metadata = await mm.parseFile(archivo.path);
-            
-            // F. Creación del Registro en DB
             const nuevoMultimedia = await Multimedia.create({
-                nombreComposicion: tituloDeEsteTrack,
+                nombreComposicion: Array.isArray(titulos) ? titulos[i] : titulos,
                 idAlbum: album.idAlbum, 
-                idArtista: idArtista, 
-                formato: path.extname(archivo.originalname).replace('.', ''),
-                tamano: archivo.size,
-                tipoAsset: tipoAsset,
-                subtitulos: tieneSubtitulos, 
-                bpm: metadata.common.bpm || null,
-                duracion: Math.round(metadata.format.duration) || null,
-                costoCreditos: valorEsteTrack,
-                estado_ingesta: 'processing',
-                keyR2: `temp_${Date.now()}_${archivo.filename}`
+                idArtista: artista.idArtista,
+                tipoAsset: keyR2.endsWith('.mp4') || keyR2.endsWith('.mov') ? 'VIDEO' : 'AUDIO',
+                
+                
+                formato: meta ? meta.formato : 'unknown',
+                tamano: meta ? meta.tamano : 0,
+                duracion: meta ? meta.duracion : 0, 
+                
+                costoCreditos: (Array.isArray(costos) ? costos[i] : costos) || 0,
+                subtitulos: Array.isArray(subtitulos) && subtitulos[i] === 'on',
+                keyR2: meta.nombreFinal || keyR2.split('/').pop(),
+                estado_ingesta: 'processing'
             }, { transaction: t });
 
-            // G. Relación de Géneros Multimedia
+
+            // TRANSACCIÓN DE LOS GENEROS MUSICALES AL QUE PERTENECE EL DISCO O EL VIDEO. . 
+
             if (generosIds.length > 0) {
                 const multiGeneros = generosIds.map(idGen => ({
                     idMultimedia: nuevoMultimedia.idMultimedia,
                     idGenero: idGen
                 }));
+                
                 await MultimediaGeneros.bulkCreate(multiGeneros, { transaction: t });
             }
+
+            //TRANSACCION PARA  LOS GENEROS DEL ARTISTA. 
+            if (generosIds.length > 0) {
+            const promesasGenerosArtista = generosIds.map(idGen => {
+                return ArtistaGeneros.findOrCreate({
+                    where: { 
+                        idArtista: artista.idArtista, 
+                        idGenero: idGen 
+                    },
+                    transaction: t
+                });
+            });
+
+            await Promise.all(promesasGenerosArtista);
+            //console.log(`[RTM-ENGINE] Géneros actualizados para el artista: ${artista.nombreArtista}`);
+        }
+
 
             resultadosMultimedia.push(nuevoMultimedia);
         }
 
-        // 4. ACTUALIZAR GÉNEROS DEL ARTISTA (Sin duplicados)
-        if (generosIds.length > 0) {
-            for (const idGen of generosIds) {
-                await ArtistaGeneros.findOrCreate({
-                    where: { idArtista, idGenero: idGen },
-                    transaction: t
-                });
-            }
-        }
-
-        // 5. COMMIT DE LA TRANSACCIÓN
         await t.commit(); 
-        
-        return res.status(200).json({
-            ok: true,
-            msg: 'Batch procesado y registrado correctamente 😌.',
-            data: { albumId: album.idAlbum, total: resultadosMultimedia.length }
-        });
+
+        res.status(200).json({ ok: true, msg: '¡Registro en Ritma completado! 😌' });
 
     } catch (error) {
-        if (t) await t.rollback(); 
-        console.error('Error en la ingesta RTM-ENGINE:', error);
-        return res.status(500).json({ 
-            ok: false, 
-            msg: 'Error crítico en el registro de multimedia' 
-        });
+        if (t) await t.rollback();
+        console.error('Error Sequelize:', error.name, error.message);
+        res.status(500).json({ ok: false, msg: 'Error al guardar en la base de datos: ' + error.message });
     }
 };
 
 
+
+const validateUpload = async (req, res) => {
+    try {
+        const { nombreArtista, nombreAlbum, generosSeleccionados } = req.body;
+
+        // 1. Validaciones básicas de negocio [cite: 2026-01-22]
+        if (!nombreArtista || nombreArtista.trim() === "") {
+            return res.status(400).json({ ok: false, msg: "El nombre del artista es obligatorio." });
+        }
+
+        const generos = JSON.parse(generosSeleccionados || "[]");
+        if (generos.length === 0) {
+            return res.status(400).json({ ok: false, msg: "Debes seleccionar al menos un género." });
+        }
+
+        // 2. Podrías verificar si el álbum ya existe para este artista para evitar duplicados
+        // const artista = await Artistas.findOne({ where: { nombreArtista } });
+        // if (artista) { ... comprobaciones extras ... }
+
+        return res.json({ ok: true, msg: "Metadata validada. Iniciando RTM-ENGINE..." });
+    } catch (error) {
+        console.error("Error en validación:", error);
+        return res.status(500).json({ ok: false, msg: "Error interno al validar datos." });
+    }
+};
  
 const liveUploadMonitor = async(req, res)=>{
     return res.status(200).render('../views/app/live-upload-monitor', {
@@ -282,7 +278,7 @@ export {
     dashboard,
     usersPanel,
     multimediaPanel, uploadboard,
-    postUploadMultimedia, liveUploadMonitor,
+    postUploadMultimedia, validateUpload, liveUploadMonitor,
     getAlbumsByArtist,
     getAllGenres,
     jsonCheckArtistByName,

@@ -14,6 +14,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.990.0",
+    "@aws-sdk/s3-request-presigner": "^3.990.0",
     "@tailwindcss/cli": "^4.1.6",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
@@ -36,6 +38,7 @@
     "sequelize": "^6.37.7",
     "sharp": "^0.34.5",
     "sweetalert2": "^11.26.18",
+    "uuid": "^13.0.0",
     "webpack": "^5.105.0"
   },
   "devDependencies": {

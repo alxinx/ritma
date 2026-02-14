@@ -1,4 +1,5 @@
 import { Multimedia, ArtistaGeneros, MultimediaGeneros, Artistas, Album, Generos } from "../models/index.js";
+import album from './album.js'
 import db from '../config/bd.js'
 
 // Importar datos de ejemplo o archivos JSON si los tienes
@@ -28,8 +29,8 @@ const importarDatos = async () => {
         // 3. Ahora que existen las canciones, las tablas puente SI pueden ir en paralelo
         // Esto acelera el proceso significativamente
         await Promise.all([
-            ArtistaGeneros.bulkCreate([ /* data */ ]),
-            MultimediaGeneros.bulkCreate([ /* data */ ])
+            Album.bulkCreate(album),
+            //MultimediaGeneros.bulkCreate(album)
         ]);
 
         console.log('Datos Importados Correctamente');

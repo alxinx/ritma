@@ -501,9 +501,6 @@
   .mt-auto {
     margin-top: auto;
   }
-  .mr-1 {
-    margin-right: calc(var(--spacing) * 1);
-  }
   .mr-2 {
     margin-right: calc(var(--spacing) * 2);
   }
@@ -1634,9 +1631,6 @@
   }
   .px-12 {
     padding-inline: calc(var(--spacing) * 12);
-  }
-  .py-0\.5 {
-    padding-block: calc(var(--spacing) * 0.5);
   }
   .py-1 {
     padding-block: calc(var(--spacing) * 1);

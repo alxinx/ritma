@@ -4,7 +4,9 @@ import upload from '../middlewares/upload.js';
 import procesarImagenes from '../middlewares/imageProcessor.js'
 import validarErrores  from '../middlewares/validarErrores.js'
 import {checkUploadMultimedia} from '../middlewares/validationFields.js';
-import { dashboard, usersPanel, multimediaPanel, uploadboard, postUploadMultimedia, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres} from '../controllers/adminControllers.js'
+import  {getPresignedUrl}  from '../controllers/uploadController.js';
+
+import { dashboard, usersPanel, multimediaPanel, uploadboard, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres} from '../controllers/adminControllers.js'
 const routes = express.Router();
 dotenv.config();
 
@@ -19,17 +21,12 @@ routes.get("/multimedia", multimediaPanel)
     routes.get("/uploadboard", uploadboard)
        
     routes.post(
-            "/uploadboard", 
-            upload.fields([
-                { name: 'archivo[]', maxCount: 20 },
-                { name: 'coverAlbum', maxCount: 1 }
-            ]),
-            checkUploadMultimedia, 
-            procesarImagenes,
-            validarErrores, 
-            postUploadMultimedia 
-        );
-
+    "/uploadboard", 
+    // checkUploadMultimedia, // <-- COMENTALO TEMPORALMENTE para probar
+    validarErrores, 
+    postUploadMultimedia 
+);
+        routes.post("/uploadboard/validate", validateUpload);
 routes.get("/live-upload-monitor", upload.any(), liveUploadMonitor)
 
 
@@ -48,6 +45,11 @@ routes.get("/live-upload-monitor", upload.any(), liveUploadMonitor)
 //routes.post("/register", newAdmin)
 
 //loginPost
+
+
+//********************[API] ******************* */
+
+routes.post('/api/upload/sign', getPresignedUrl);
 
 
 

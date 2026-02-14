@@ -294,93 +294,43 @@ import Swal from 'sweetalert2';
     formulario?.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // 1. RECOLECCIÓN Y CONTEO DE ARCHIVOS
+        // 1. RECOLECCIÓN DE DATOS Y ARCHIVOS
         const rawFormData = new FormData(formulario);
         const todosLosInputs = document.querySelectorAll('input[type="file"][name="archivo[]"], input[type="file"][name="coverAlbum"]');     
-        rawFormData.delete('archivo[]');
-        let archivosRealesEncontrados = 0;
-
-        todosLosInputs.forEach((input) => {
-            if (input.files && input.files.length > 0) {
-                if (input.name === 'archivo[]') {
-                    rawFormData.append('archivo[]', input.files[0]);
-                    archivosRealesEncontrados++;
-                } 
+        
+        // Limpiamos los archivos del FormData para la validación ligera
+        const validationData = {};
+        rawFormData.forEach((value, key) => {
+            if (!(value instanceof File)) {
+                validationData[key] = value;
             }
         });
 
-        // --- VALIDACIÓN A: AL MENOS 1 ARCHIVO ---
-        if (archivosRealesEncontrados === 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'FALTAN ARCHIVOS',
-                text: 'El RTM-ENGINE necesita al menos un archivo para procesar.',
-                background: '#0a0a0c', color: '#fff'
-            });
-            return;
-        }
-
-        // --- VALIDACIÓN B: NOMBRE DEL ARTISTA ---
-        const nombreArtista = rawFormData.get('nombreArtista')?.trim(); 
-        if (!nombreArtista) {
-            Swal.fire({
-                icon: 'error',
-                title: 'ARTISTA REQUERIDO',
-                text: 'Indica el nombre del artista para la indexación.',
-                background: '#0a0a0c', color: '#fff'
-            });
-            return;
-        }
-
-        // --- VALIDACIÓN C: GÉNEROS MUSICALES ---
-        // Al ser un input hidden que se llena dinámicamente:
-        const generos = rawFormData.get('generosSeleccionados')?.trim();
-        if (!generos || generos === "" || generos === "[]") {
-            Swal.fire({
-                icon: 'error',
-                title: 'GÉNERO REQUERIDO',
-                text: 'Debes seleccionar al menos un género musical.',
-                background: '#0a0a0c', color: '#fff'
-            });
-            return;
-        }
-
-
-        //VALIDO QUE LOS ARCHIVOS MULTIMEDIA SEAN LOS PERMITIDOS! 
-        const extensionesPermitidas = ['mp3', 'wav', 'mp4', 'mov', 'm4a', 'flac', 'm4a', 'aac', 'ogg','wma',  'aiff', 'avi','mkv','wmv','webm', 'mpeg', 'mpg', 'm4v', 'jpg', 'webp', 'png', 'jpeg', ];
+        // --- VALIDACIONES FRONTEND ---
+        let archivosRealesEncontrados = 0;
         let archivosInvalidos = [];
+        const extensionesPermitidas = ['mp3', 'wav', 'mp4', 'mov', 'm4a', 'flac', 'aac', 'ogg', 'wma', 'aiff', 'avi', 'mkv', 'wmv', 'webm', 'mpeg', 'mpg', 'm4v', 'jpg', 'webp', 'png', 'jpeg'];
 
         todosLosInputs.forEach((input, index) => {
-            if (input.files.length > 0) {
+            if (input.files && input.files.length > 0) {
+                archivosRealesEncontrados++;
                 const file = input.files[0];
                 const ext = file.name.split('.').pop().toLowerCase();
-                
                 if (!extensionesPermitidas.includes(ext)) {
-                    archivosInvalidos.push(`Fila ${index + 1}: .${ext}`);
+                    archivosInvalidos.push(`${file.name} (.${ext})`);
                 }
             }
         });
 
+        if (archivosRealesEncontrados === 0) {
+            return Swal.fire({ icon: 'warning', title: 'FALTAN ARCHIVOS', text: 'Selecciona al menos un archivo para procesar.', background: '#0a0a0c', color: '#fff' });
+        }
+
         if (archivosInvalidos.length > 0) {
-            Swal.fire({
-                icon: 'error',
-                title: 'FORMATO NO VÁLIDO',
-                html: `<div class="text-[11px] text-left uppercase">Los siguientes archivos no son multimedia permitida:<br><b>${archivosInvalidos.join('<br>')}</b></div>`,
-                background: '#0a0a0c', color: '#fff'
-            });
-            return; 
+            return Swal.fire({ icon: 'error', title: 'FORMATO NO VÁLIDO', html: `Formatos no permitidos:<br><b>${archivosInvalidos.join('<br>')}</b>`, background: '#0a0a0c', color: '#fff' });
         }
 
-
-
-        // 2. PREPARACIÓN DE DATA LIGERA PARA EL SERVIDOR
-        const validationData = new FormData();
-        for (let [key, value] of rawFormData.entries()) {
-            if (!(value instanceof File)) {
-                validationData.append(key, value);
-            }
-        }
-
+        // --- PASO 2: VALIDACIÓN CON EL CORE (BACKEND) ---
         Swal.fire({
             title: 'VERIFICANDO CON EL CORE...',
             allowOutsideClick: false,
@@ -389,36 +339,39 @@ import Swal from 'sweetalert2';
         });
 
         try {
-            const response = await fetch('/app/dash/uploadboard', {
+            // Enviamos solo la metadata para validar que el artista/album sean correctos
+            const response = await fetch('/app/dash/uploadboard/validate', {
                 method: 'POST',
-                body: validationData
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-csrf-token': rawFormData.get('_csrf') 
+                },
+                body: JSON.stringify(validationData)
             });
 
             const data = await response.json();
 
-            // Aquí el servidor nos dirá si el artista existe o si hay algún otro problema
             if (!data.ok) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'ERROR DE VALIDACIÓN',
-                    text: data.msg || 'Error en los datos enviados.',
-                    background: '#0a0a0c', color: '#fff'
-                });
-                return;
+                return Swal.fire({ icon: 'error', title: 'ERROR DE VALIDACIÓN', text: data.msg, background: '#0a0a0c', color: '#fff' });
             }
 
-            // 3. TODO OK -> CAMBIO DE UI Y SUBIDA REAL
+            // --- PASO 3: TODO OK -> CAMBIO DE UI Y SUBIDA A R2 ---
             Swal.close();
+            
+            // Ocultamos formulario y mostramos el monitor
             document.getElementById('upload-form').classList.add('hidden');
             document.getElementById('live-ingest-monitor').classList.remove('hidden');
 
-            if (typeof inicializarMonitor === 'function') {
-                inicializarMonitor(rawFormData);
+            // Llamamos al monitor real que ejecutará las firmas y la subida a R2
+            if (typeof window.inicializarMonitor === 'function') {
+                window.inicializarMonitor(rawFormData);
+            } else {
+                console.error("Error: inicializarMonitor no está definido. Revisa monitorUpload.js");
             }
 
         } catch (error) {
-            console.error("Error en validación:", error);
-            Swal.fire({ icon: 'error', title: 'COMMUNICATION ERROR', background: '#0a0a0c', color: '#fff' });
+            console.error("Error en el flujo de subida:", error);
+            Swal.fire({ icon: 'error', title: 'COMMUNICATION ERROR', text: 'No se pudo conectar con el servidor.', background: '#0a0a0c', color: '#fff' });
         }
     });
 })();
