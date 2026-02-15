@@ -18,6 +18,18 @@ const Multimedia = db.define('MULTIMEDIA', {
         allowNull: false,
         unique: true // Integridad total en el bucket
     },
+    keyTemp: {
+    type: DataTypes.STRING,
+    allowNull: true
+    },
+    keyOriginal: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    keyPreview: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     formato: {
         type: DataTypes.STRING(10), 
         allowNull: false
@@ -59,6 +71,7 @@ const Multimedia = db.define('MULTIMEDIA', {
         type: DataTypes.ENUM('uploading', 'processing', 'ready', 'error'),
         allowNull : true 
     },
+    error_ingesta : DataTypes.TEXT,
     idArtista: {
         type: DataTypes.UUID,
         allowNull: true, // Cámbialo a false después si quieres obligatoriedad
