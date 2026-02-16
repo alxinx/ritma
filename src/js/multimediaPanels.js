@@ -1,12 +1,12 @@
 import Swal from 'sweetalert2';
-;(function() {
+; (function () {
     document.addEventListener('DOMContentLoaded', () => {
-        
+
         // --- 1. SELECTORES GLOBALES ---
         const contenedorFilas = document.getElementById('contenedor-filas');
         const btnAgregarFila = document.getElementById('btn-agregar-fila');
         const totalItemsTxt = document.querySelector('.total-items-count');
-        
+
         // Selectores de Artista (Cabezal)
         const inputArtista = document.getElementById('nombreArtista');
         const idArtistaOculto = document.getElementById('idArtista');
@@ -19,6 +19,7 @@ import Swal from 'sweetalert2';
 
         const MAX_FILAS = 5
         let timeoutBusqueda;
+        let controllerBusqueda; // Para abortar peticiones anteriores
 
         // --- 2. GESTIÓN DE FILAS (AGREGAR / ELIMINAR) ---
         function actualizarInterfaz() {
@@ -32,17 +33,17 @@ import Swal from 'sweetalert2';
             }
         }
 
-        
-    btnAgregarFila?.addEventListener('click', () => {
-    const filas = document.querySelectorAll('.fila-archivo');
-    if (filas.length < MAX_FILAS) {
-        const nuevoIndice = filas.length + 1;
-        
-        const nuevaFila = document.createElement('div');
-        nuevaFila.className = 'fila-archivo grid grid-cols-12 gap-4 items-end bg-white/5 p-4 rounded-2xl border border-white/5';
-        nuevaFila.setAttribute('data-index', nuevoIndice);
 
-        nuevaFila.innerHTML = `
+        btnAgregarFila?.addEventListener('click', () => {
+            const filas = document.querySelectorAll('.fila-archivo');
+            if (filas.length < MAX_FILAS) {
+                const nuevoIndice = filas.length + 1;
+
+                const nuevaFila = document.createElement('div');
+                nuevaFila.className = 'fila-archivo grid grid-cols-12 gap-4 items-end bg-white/5 p-4 rounded-2xl border border-white/5';
+                nuevaFila.setAttribute('data-index', nuevoIndice);
+
+                nuevaFila.innerHTML = `
             <div class="col-span-1 flex items-center justify-center pb-3">
                 <span class="numero-fila text-[10px] font-mono text-primary font-bold">${nuevoIndice.toString().padStart(2, '0')}</span>
             </div>
@@ -66,10 +67,16 @@ import Swal from 'sweetalert2';
                 </label>
             </div>
             <div class="col-span-2 space-y-2 flex items-center justify-center pt-3">
-                <input type="file" name="archivo[]" class="hidden input-archivo-real" id="file-${nuevoIndice}" accept=".mp3,.wav,.mp4,.mov,.m4a, .flac, .m4a, .aac, .ogg, .wma, .aiff, .avi, .mkv, .wmv, .webm, .mpeg, .mpg, .m4v">
-                <label for="file-${nuevoIndice}" class="cursor-pointer bg-primary/10 text-primary text-[10px] px-3 py-2 rounded-lg hover:bg-primary hover:text-black transition-all" >
-                    SUBIR ARCHIVO
-                </label>
+                <div class="w-full group">
+                    <input type="file" name="archivo[]" id="file-${nuevoIndice}" class="hidden input-archivo-real" accept=".mp3,.wav,.mp4,.mov,.m4a, .flac, .m4a, .aac, .ogg, .wma, .aiff, .avi, .mkv, .wmv, .webm, .mpeg, .mpg, .m4v">
+                    <label for="file-${nuevoIndice}" class="upload-zone-mini">
+                        <div class="upload-scan-lines"></div>
+                        <div class="text-center relative z-10">
+                            <span class="material-symbols-outlined text-4xl upload-icon-pulse mb-4">cloud_upload</span>
+                            <p class="text-[10px] text-white/40 uppercase tracking-widest">Subir Archivo</p>
+                        </div>
+                    </label>
+                </div>
             </div>
             <div class="col-span-1 flex items-center justify-center pb-3">
                 <button type="button" class="btn-eliminar-js text-primary hover:text-red-500 transition-colors">
@@ -78,17 +85,36 @@ import Swal from 'sweetalert2';
             </div>
         `;
 
-        contenedorFilas.appendChild(nuevaFila);
-        actualizarInterfaz();
-    }
-});
+                contenedorFilas.appendChild(nuevaFila);
+                actualizarInterfaz();
+            }
+        });
+
+        // --- 2.5 GESTIÓN DE ELIMINAR FILAS (DELEGACIÓN DE EVENTOS) ---
+        contenedorFilas?.addEventListener('click', (e) => {
+            const btnEliminar = e.target.closest('.btn-eliminar-js');
+            if (btnEliminar) {
+                const fila = btnEliminar.closest('.fila-archivo');
+                if (fila) {
+                    fila.remove();
+                    // Re-indexar visualmente
+                    const filasRestantes = document.querySelectorAll('.fila-archivo');
+                    filasRestantes.forEach((f, index) => {
+                        const numero = f.querySelector('.numero-fila');
+                        if (numero) numero.textContent = (index + 1).toString().padStart(2, '0');
+                        f.setAttribute('data-index', index + 1);
+                    });
+                    actualizarInterfaz();
+                }
+            }
+        });
 
         // --- 3. AUTOCOMPLETADO DE ARTISTAS ---
         if (inputArtista) {
             inputArtista.addEventListener('input', (e) => {
                 clearTimeout(timeoutBusqueda);
                 const query = e.target.value.trim();
-                
+
                 // Limpieza en cascada: Si cambia artista, invalidamos ID y limpiamos álbum
                 if (idArtistaOculto) idArtistaOculto.value = '';
                 if (inputAlbum) {
@@ -102,11 +128,17 @@ import Swal from 'sweetalert2';
                 }
 
                 timeoutBusqueda = setTimeout(async () => {
+                    if (controllerBusqueda) controllerBusqueda.abort();
+                    controllerBusqueda = new AbortController();
+                    const signal = controllerBusqueda.signal;
+
                     try {
-                        const res = await fetch(`/app/dash/json/artistas?nombreArtista=${encodeURIComponent(query)}`);
+                        const res = await fetch(`/app/dash/json/artistas?nombreArtista=${encodeURIComponent(query)}`, { signal });
                         const artistas = await res.json();
                         renderizarSugerencias(artistas, sugerenciasArtista, inputArtista, idArtistaOculto, 'artista');
-                    } catch (err) { console.error("Error Artistas:", err); }
+                    } catch (err) {
+                        if (err.name !== 'AbortError') console.error("Error Artistas:", err);
+                    }
                 }, 300);
             });
         }
@@ -118,7 +150,7 @@ import Swal from 'sweetalert2';
                 const query = e.target.value.trim();
                 const artistaId = idArtistaOculto?.value;
 
-                if (idAlbumOculto) idAlbumOculto.value = ''; 
+                if (idAlbumOculto) idAlbumOculto.value = '';
 
                 // Solo busca si hay un artista seleccionado previamente
                 if (!artistaId || query.length < 1) {
@@ -127,11 +159,17 @@ import Swal from 'sweetalert2';
                 }
 
                 timeoutBusqueda = setTimeout(async () => {
+                    if (controllerBusqueda) controllerBusqueda.abort();
+                    controllerBusqueda = new AbortController();
+                    const signal = controllerBusqueda.signal;
+
                     try {
-                        const res = await fetch(`/app/dash/json/album/${artistaId}?q=${encodeURIComponent(query)}`);
+                        const res = await fetch(`/app/dash/json/album/${artistaId}?q=${encodeURIComponent(query)}`, { signal });
                         const albums = await res.json();
                         renderizarSugerencias(albums, sugerenciasAlbum, inputAlbum, idAlbumOculto, 'album');
-                    } catch (err) { console.error("Error Álbumes:", err); }
+                    } catch (err) {
+                        if (err.name !== 'AbortError') console.error("Error Álbumes:", err);
+                    }
                 }, 300);
             });
         }
@@ -147,7 +185,7 @@ import Swal from 'sweetalert2';
             data.forEach(item => {
                 const div = document.createElement('div');
                 div.className = "px-4 py-3 hover:bg-primary hover:text-black cursor-pointer text-[11px] uppercase transition-colors border-b border-white/5 last:border-0 text-white";
-                
+
                 const nombre = tipo === 'artista' ? item.nombreArtista : item.nombreAlbum;
                 const idValue = tipo === 'artista' ? item.idArtista : item.idAlbum;
 
@@ -156,9 +194,9 @@ import Swal from 'sweetalert2';
                     inputTxt.value = nombre;
                     if (inputId) inputId.value = idValue;
                     contenedor.classList.add('hidden');
-                    
+
                     // Foco automático al siguiente campo si seleccionó artista
-                    if(tipo === 'artista') inputAlbum?.focus();
+                    if (tipo === 'artista') inputAlbum?.focus();
                 });
                 contenedor.appendChild(div);
             });
@@ -179,7 +217,7 @@ import Swal from 'sweetalert2';
 
 //MODALS FOR GENERS
 // --- 5. LÓGICA DE GÉNEROS (MODAL, BUSCADOR Y PILLS) ---
-(function(){
+(function () {
     const btnAbrirGeneros = document.getElementById('btn-abrir-generos');
     const modalGeneros = document.getElementById('modal-generos');
     const listaGenerosModal = document.getElementById('lista-generos-modal');
@@ -192,13 +230,13 @@ import Swal from 'sweetalert2';
     // 1. ABRIR MODAL Y CARGAR DATOS
     btnAbrirGeneros?.addEventListener('click', async () => {
         modalGeneros.classList.remove('hidden');
-        
+
         // Evitar recargar de la DB si ya los tenemos en el DOM del modal
         if (listaGenerosModal.children.length === 0) {
             try {
-                const res = await fetch('/app/dash/json/generos'); 
+                const res = await fetch('/app/dash/json/generos');
                 const generos = await res.json();
-                
+
                 generos.forEach(g => {
                     const item = document.createElement('label');
                     item.className = "glass-card rounded-sm p-1 relative overflow-hidden";
@@ -212,7 +250,7 @@ import Swal from 'sweetalert2';
                 console.error("Error al cargar géneros:", error);
             }
         }
-        
+
         // Foco automático al buscador al abrir
         setTimeout(() => inputBusquedaGenero?.focus(), 100);
     });
@@ -245,16 +283,16 @@ import Swal from 'sweetalert2';
 
         actualizarPills();
         modalGeneros.classList.add('hidden');
-        if(inputBusquedaGenero) inputBusquedaGenero.value = ''; // Limpiar buscador al salir
+        if (inputBusquedaGenero) inputBusquedaGenero.value = ''; // Limpiar buscador al salir
     });
 
     // 4. ACTUALIZAR VISUALIZACIÓN (PILLS)
     function actualizarPills() {
-        if(!contenedorPills || !inputGenerosOculto) return;
-        
+        if (!contenedorPills || !inputGenerosOculto) return;
+
         contenedorPills.innerHTML = '';
         const ids = generosFinales.map(g => g.id);
-        inputGenerosOculto.value = JSON.stringify(ids); 
+        inputGenerosOculto.value = JSON.stringify(ids);
 
         generosFinales.forEach(g => {
             const pill = document.createElement('div');
@@ -263,14 +301,14 @@ import Swal from 'sweetalert2';
                 <span class="text-[10px] font-bold uppercase">${g.nombre}</span>
                 <span class="material-symbols-outlined text-[14px] cursor-pointer hover:text-red-500" data-id="${g.id}">close</span>
             `;
-            
+
             pill.querySelector('.material-symbols-outlined').onclick = (e) => {
                 const idToRemove = e.target.dataset.id;
                 generosFinales = generosFinales.filter(item => item.id !== idToRemove);
-                
+
                 const cb = modalGeneros.querySelector(`input[value="${idToRemove}"]`);
-                if(cb) cb.checked = false;
-                
+                if (cb) cb.checked = false;
+
                 actualizarPills();
             };
 
@@ -296,8 +334,8 @@ import Swal from 'sweetalert2';
 
         // 1. RECOLECCIÓN DE DATOS Y ARCHIVOS
         const rawFormData = new FormData(formulario);
-        const todosLosInputs = document.querySelectorAll('input[type="file"][name="archivo[]"], input[type="file"][name="coverAlbum"]');     
-        
+        const todosLosInputs = document.querySelectorAll('input[type="file"][name="archivo[]"], input[type="file"][name="coverAlbum"]');
+
         // Limpiamos los archivos del FormData para la validación ligera
         const validationData = {};
         rawFormData.forEach((value, key) => {
@@ -342,9 +380,9 @@ import Swal from 'sweetalert2';
             // Enviamos solo la metadata para validar que el artista/album sean correctos
             const response = await fetch('/app/dash/uploadboard/validate', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    'x-csrf-token': rawFormData.get('_csrf') 
+                    'x-csrf-token': rawFormData.get('_csrf')
                 },
                 body: JSON.stringify(validationData)
             });
@@ -357,7 +395,7 @@ import Swal from 'sweetalert2';
 
             // --- PASO 3: TODO OK -> CAMBIO DE UI Y SUBIDA A R2 ---
             Swal.close();
-            
+
             // Ocultamos formulario y mostramos el monitor
             document.getElementById('upload-form').classList.add('hidden');
             document.getElementById('live-ingest-monitor').classList.remove('hidden');
@@ -385,21 +423,21 @@ document.addEventListener('change', (e) => {
         const input = e.target;
         // Buscamos el label asociado
         const label = document.querySelector(`label[for="${input.id}"]`);
-        
+
         if (label) {
             if (input.files && input.files.length > 0) {
                 // Cambiamos estado visual
                 label.classList.add('archivo-cargado');
-                
+
                 // Cambiamos el icono a un "check" de verificado
                 const icono = label.querySelector('.material-symbols-outlined');
                 if (icono) icono.textContent = 'check_circle';
-                
+
                 // Mostramos el nombre del archivo (limitado para no romper el diseño)
                 const texto = label.querySelector('p');
                 if (texto) {
-                    const nombreLimpio = input.files[0].name.length > 15 
-                        ? input.files[0].name.substring(0, 12) + '...' 
+                    const nombreLimpio = input.files[0].name.length > 15
+                        ? input.files[0].name.substring(0, 12) + '...'
                         : input.files[0].name;
                     texto.textContent = nombreLimpio;
                 }

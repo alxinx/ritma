@@ -5,13 +5,13 @@ import Swal from 'sweetalert2';
  * Integra optimización de imagen, monitor de progreso y handshake final.
  */
 let progresoArchivos = {};
-window.inicializarMonitor = async function(formData) {
+window.inicializarMonitor = async function (formData) {
     progresoArchivos = {}; // Reiniciamos en cada carga
     // 1. LIMPIAR Y PREPARAR HEADER
     const artista = formData.get('nombreArtista') || 'Artista';
     const album = formData.get('nombreAlbum') || 'Álbum';
     document.getElementById('monitor-artista-album').textContent = `${artista} | ${album}`;
-    
+
     // 2. RENDERIZAR INTERFAZ (Evita errores de "style" al asegurar que existan los IDs)
     await prepararInterfazMonitor(formData);
 
@@ -26,11 +26,11 @@ window.inicializarMonitor = async function(formData) {
         // --- A. PROCESAR Y SUBIR PORTADA ---
         if (coverInput && coverInput.files[0]) {
             const statusCover = document.getElementById('status-cover');
-            if(statusCover) statusCover.textContent = 'OPTIMIZANDO...';
-            
+            if (statusCover) statusCover.textContent = 'OPTIMIZANDO...';
+
             // Reemplazo de Sharp en el Cliente
             const fotoOptimizada = await optimizarImagenWebP(coverInput.files[0]);
-            
+
             const resCover = await ejecutarSubidaDirecta(fotoOptimizada, 'cover', 'Portada', 'cover');
             keysSubidas.cover = resCover.fileKey;
         }
@@ -71,13 +71,13 @@ async function optimizarImagenWebP(file) {
                 canvas.width = SIZE;
                 canvas.height = SIZE;
                 const ctx = canvas.getContext('2d');
-                
+
                 // Efecto Cover/Center
                 const scale = Math.max(SIZE / img.width, SIZE / img.height);
                 const x = (SIZE / 2) - (img.width / 2) * scale;
                 const y = (SIZE / 2) - (img.height / 2) * scale;
                 ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-                
+
                 canvas.toBlob((blob) => {
                     resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), { type: 'image/webp' }));
                 }, 'image/webp', 0.8);
@@ -112,7 +112,7 @@ async function prepararInterfazMonitor(formData) {
         container.insertAdjacentHTML('beforeend', `
             <div class="bg-white/5 p-4 rounded-xl border border-white/5 mb-2">
                 <div class="flex justify-between items-center mb-2">
-                    <span class="text-[10px] uppercase font-mono">${(i+1).toString().padStart(2,'0')} - ${titulo}</span>
+                    <span class="text-[10px] uppercase font-mono">${(i + 1).toString().padStart(2, '0')} - ${titulo}</span>
                     <span id="perc-${i}" class="text-[9px] font-mono">0%</span>
                 </div>
                 <div class="w-full h-1 bg-white/10 rounded-full overflow-hidden">
@@ -134,7 +134,7 @@ async function ejecutarSubidaDirecta(file, category, nombreVisual, index) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileName: file.name, fileType: file.type, category })
     });
-    
+
     const { uploadUrl, fileKey } = await resSign.json();
 
     return new Promise((resolve, reject) => {
@@ -150,7 +150,7 @@ async function ejecutarSubidaDirecta(file, category, nombreVisual, index) {
 
                 const barId = index === 'cover' ? 'bar-cover' : `bar-${index}`;
                 const percId = index === 'cover' ? 'status-cover' : `perc-${index}`;
-                
+
                 const bar = document.getElementById(barId);
                 const txt = document.getElementById(percId);
 
@@ -174,11 +174,11 @@ async function ejecutarSubidaDirecta(file, category, nombreVisual, index) {
  */
 async function enviarRegistroFinalDB(formData, keysSubidas) {
     console.log("--- INICIANDO HANDSHAKE FINAL RITMA ---");
-    
+
     // 1. CAPTURAR ELEMENTOS DEL DOM (Definición local para evitar ReferenceErrors)
     const tokenElement = document.querySelector('input[name="_csrf"]'); // <-- AQUÍ SE DEFINE 🚀
     const trackInputs = document.querySelectorAll('input[name="archivo[]"]');
-    
+
     if (!tokenElement) {
         throw new Error("Token de seguridad (CSRF) no encontrado en el formulario.");
     }
@@ -186,21 +186,37 @@ async function enviarRegistroFinalDB(formData, keysSubidas) {
     const csrfTokenValue = tokenElement.value;
 
     // 2. EXTRAER METADATOS Y DURACIÓN
-  const metadatosFiles = await Promise.all(Array.from(trackInputs).map(async (input) => {
-    const file = input.files[0];
-    if (!file) return null;
+    const metadatosFiles = await Promise.all(Array.from(trackInputs).map(async (input) => {
+        const file = input.files[0];
+        if (!file) return null;
 
-    const seg = await obtenerDuracionMedia(file); // Extraemos segundos aquí
+        const seg = await obtenerDuracionMedia(file); // Extraemos segundos aquí
 
-    return {
-        tamano: file.size,
-        formato: file.name.split('.').pop().toLowerCase(),
-        duracion: Math.round(seg) // Se guarda dentro del objeto del track
-    };
-}));
+        return {
+            tamano: file.size,
+            formato: file.name.split('.').pop().toLowerCase(),
+            duracion: Math.round(seg) // Se guarda dentro del objeto del track
+        };
+    }));
 
 
     // 3. CONSTRUIR PAYLOAD SEGURO
+    const subtitulosArray = [];
+
+    // Iteramos sobre los inputs de archivo para encontrar su checkbox de subtitulo correspondiente
+    trackInputs.forEach((input) => {
+        // Asumimos que el checkbox está en el mismo contenedor padre o fila
+        // Buscamos el contenedor de la fila
+        const fila = input.closest('.fila-archivo');
+        if (fila) {
+            const checkbox = fila.querySelector('input[name="subtitulos[]"]');
+            subtitulosArray.push(checkbox && checkbox.checked ? 'on' : 'off');
+        } else {
+            // Fallback por si la estructura cambia, aunque 'fila-archivo' debería existir
+            subtitulosArray.push('off');
+        }
+    });
+
     const payload = {
         nombreArtista: formData.get('nombreArtista'),
         nombreAlbum: formData.get('nombreAlbum'),
@@ -209,16 +225,16 @@ async function enviarRegistroFinalDB(formData, keysSubidas) {
         idAlbum: formData.get('idAlbum'),
         keyCover: keysSubidas.cover,
         keysTracks: keysSubidas.tracks.filter(k => k),
-        metadatos: metadatosFiles.filter(m => m !== null), // Aquí ya viajan las duraciones individuales
+        metadatos: metadatosFiles.filter(m => m !== null),
         titulos: formData.getAll('titulo[]'),
         costos: formData.getAll('costoCreditos[]'),
-        subtitulos: formData.getAll('subtitulos[]')
+        subtitulos: subtitulosArray
     };
 
     // 4. ENVÍO AL BACKEND
     const res = await fetch('/app/dash/uploadboard', {
         method: 'POST',
-        headers: { 
+        headers: {
             'Content-Type': 'application/json',
             'x-csrf-token': csrfTokenValue // Usamos la variable recién definida
         },
@@ -227,11 +243,11 @@ async function enviarRegistroFinalDB(formData, keysSubidas) {
 
     const data = await res.json();
     if (data.ok) {
-        Swal.fire({ 
-            icon: 'success', 
-            title: '¡RTM-ENGINE CORONADO!', 
+        Swal.fire({
+            icon: 'success',
+            title: '¡RTM-ENGINE CORONADO!',
             text: data.msg,
-            background: '#0a0a0c', color: '#fff' 
+            background: '#0a0a0c', color: '#fff'
         }).then(() => window.location.href = '/app/dash/multimedia');
     } else {
         throw new Error(data.msg || "Fallo en el registro de base de datos");
@@ -258,7 +274,7 @@ function obtenerDuracionMedia(file) {
     return new Promise((resolve) => {
         const element = file.type.startsWith('video') ? document.createElement('video') : document.createElement('audio');
         element.src = URL.createObjectURL(file);
-        
+
         element.onloadedmetadata = () => {
             URL.revokeObjectURL(element.src);
             resolve(element.duration || 0);
@@ -266,6 +282,7 @@ function obtenerDuracionMedia(file) {
 
         element.onerror = () => {
             console.warn(`[RTM-ENGINE] No se pudo extraer duración de: ${file.name}`);
+            URL.revokeObjectURL(element.src); // FIX: Liberar memoria también en error
             resolve(0);
         };
     });
