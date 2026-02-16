@@ -5,6 +5,7 @@ import Album from './Album.js'
 import Multimedia from './Multimedia.js'
 import ArtistaGeneros from './ArtistaGeneros.js';
 import MultimediaGeneros from './MultimediaGeneros.js'
+import LogErrores from './LogErrores.js'
 
 
 
@@ -35,6 +36,6 @@ Generos.belongsToMany(Artistas, { through: 'ARTISTA_GENEROS', foreignKey: 'idGen
 
 
 export {
-        Usuarios, Generos ,Artistas, Album, Multimedia, ArtistaGeneros, MultimediaGeneros
+        Usuarios, Generos ,Artistas, Album, Multimedia, ArtistaGeneros, MultimediaGeneros, LogErrores
 
 }

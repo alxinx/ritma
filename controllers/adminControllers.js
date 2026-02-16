@@ -1,47 +1,48 @@
-import {Usuarios, Artistas, Album, Generos, Multimedia, MultimediaGeneros, ArtistaGeneros} from '../models/index.js'
+import { Usuarios, Artistas, Album, Generos, Multimedia, MultimediaGeneros, ArtistaGeneros } from '../models/index.js'
+import multimediaQueue from '../queues/multimediaQueue.js';
 import db from "../config/bd.js";
 import dotenv from "dotenv";
-import  path  from 'path';
+import path from 'path';
 import { Op } from 'sequelize';
 
 import * as mm from 'music-metadata'; // Para BPM y Duración
 dotenv.config();
 
-const dashboard = (req, res)=>{
+const dashboard = (req, res) => {
     return res.status(200).render('../views/app/dashboard', {
-        tituloPagina : "Panel de control Principal",
-        subtitulo : "Bienvenido",
-        active : 'dashboard',
-        csrfToken : req.csrfToken()
+        tituloPagina: "Panel de control Principal",
+        subtitulo: "Bienvenido",
+        active: 'dashboard',
+        csrfToken: req.csrfToken()
     })
 }
 
 
-const usersPanel = (req, res)=>{
+const usersPanel = (req, res) => {
     return res.status(200).render('../views/app/userPanel', {
-        tituloPagina : "Usuarios",
-        subtitulo : "Panel de control de los usuarios",
-        active : 'users',
-        csrfToken : req.csrfToken()
+        tituloPagina: "Usuarios",
+        subtitulo: "Panel de control de los usuarios",
+        active: 'users',
+        csrfToken: req.csrfToken()
     })
 }
 
 
-const multimediaPanel = (req, res)=>{
+const multimediaPanel = (req, res) => {
     return res.status(200).render('../views/app/multimediaPanel', {
-        tituloPagina : "Biblioteca Multimedia",
-        subtitulo : "Panel principal de la biblioteca multimedia",
-        active : 'multimedia',
-        csrfToken : req.csrfToken()
+        tituloPagina: "Biblioteca Multimedia",
+        subtitulo: "Panel principal de la biblioteca multimedia",
+        active: 'multimedia',
+        csrfToken: req.csrfToken()
     })
 }
 
-const uploadboard = (req, res)=>{
+const uploadboard = (req, res) => {
     return res.status(200).render('../views/app/uploadboard', {
-        tituloPagina : "Biblioteca Multimedia",
-        subtitulo : "Subir Archivos Multimedia",
-        active : 'multimedia',
-        csrfToken : req.csrfToken()
+        tituloPagina: "Biblioteca Multimedia",
+        subtitulo: "Subir Archivos Multimedia",
+        active: 'multimedia',
+        csrfToken: req.csrfToken()
     })
 }
 
@@ -49,23 +50,23 @@ const uploadboard = (req, res)=>{
 /// INGRESO EL MULTIMEDIA
 
 const postUploadMultimedia = async (req, res) => {
-    const t = await db.transaction(); 
+    const t = await db.transaction();
 
     try {
-      const { 
-            nombreArtista, 
-            nombreAlbum, 
-            generosSeleccionados,   
-            idArtista, 
+        const {
+            nombreArtista,
+            nombreAlbum,
+            generosSeleccionados,
+            idArtista,
             idAlbum,
-            keyCover, 
-            keysTracks, 
-            titulos, 
-            costos, 
+            keyCover,
+            keysTracks,
+            titulos,
+            costos,
             subtitulos,
             metadatos
         } = req.body;
-        
+
         const generosIds = JSON.parse(generosSeleccionados || "[]");
 
         // 1. OBTENER O CREAR ARTISTA (Usando el ID si existe para mayor precisión en Ritma)
@@ -92,7 +93,7 @@ const postUploadMultimedia = async (req, res) => {
 
         // Actualizar portada solo si se subió una nueva
         if (keyCover) {
-            await album.update({ 
+            await album.update({
                 cover: keyCover // Aquí llegará solo el nombre limpio gracias al cambio en el JS
             }, { transaction: t });
             //console.log(`[RTM-ENGINE] Portada vinculada: ${keyCover}`);
@@ -104,23 +105,23 @@ const postUploadMultimedia = async (req, res) => {
         const resultadosMultimedia = [];
 
         for (let i = 0; i < tracksArray.length; i++) {
-            const keyR2 = tracksArray[i];
+            const keyTemp = tracksArray[i];
             const meta = metadatos[i];
 
             const nuevoMultimedia = await Multimedia.create({
                 nombreComposicion: Array.isArray(titulos) ? titulos[i] : titulos,
-                idAlbum: album.idAlbum, 
+                idAlbum: album.idAlbum,
                 idArtista: artista.idArtista,
-                tipoAsset: keyR2.endsWith('.mp4') || keyR2.endsWith('.mov') ? 'VIDEO' : 'AUDIO',
-                
-                
+                tipoAsset: keyTemp.endsWith('.mp4') || keyTemp.endsWith('.mov') ? 'VIDEO' : 'AUDIO',
+
+
                 formato: meta ? meta.formato : 'unknown',
                 tamano: meta ? meta.tamano : 0,
-                duracion: meta ? meta.duracion : 0, 
-                
+                duracion: meta ? meta.duracion : 0,
+
                 costoCreditos: (Array.isArray(costos) ? costos[i] : costos) || 0,
                 subtitulos: Array.isArray(subtitulos) && subtitulos[i] === 'on',
-                keyR2: meta.nombreFinal || keyR2.split('/').pop(),
+                keyTemp: meta.nombreFinal || keyTemp.split('/').pop(),
                 estado_ingesta: 'processing'
             }, { transaction: t });
 
@@ -132,31 +133,58 @@ const postUploadMultimedia = async (req, res) => {
                     idMultimedia: nuevoMultimedia.idMultimedia,
                     idGenero: idGen
                 }));
-                
+
                 await MultimediaGeneros.bulkCreate(multiGeneros, { transaction: t });
             }
 
             //TRANSACCION PARA  LOS GENEROS DEL ARTISTA. 
             if (generosIds.length > 0) {
-            const promesasGenerosArtista = generosIds.map(idGen => {
-                return ArtistaGeneros.findOrCreate({
-                    where: { 
-                        idArtista: artista.idArtista, 
-                        idGenero: idGen 
-                    },
-                    transaction: t
+                const promesasGenerosArtista = generosIds.map(idGen => {
+                    return ArtistaGeneros.findOrCreate({
+                        where: {
+                            idArtista: artista.idArtista,
+                            idGenero: idGen
+                        },
+                        transaction: t
+                    });
                 });
+
+                await Promise.all(promesasGenerosArtista);
+                //console.log(`[RTM-ENGINE] Géneros actualizados para el artista: ${artista.nombreArtista}`);
+            }
+
+
+            resultadosMultimedia.push({
+                ...nuevoMultimedia.toJSON(),
+                keyTemp: keyTemp // Necesitamos la key original para el worker
             });
-
-            await Promise.all(promesasGenerosArtista);
-            //console.log(`[RTM-ENGINE] Géneros actualizados para el artista: ${artista.nombreArtista}`);
         }
 
+        await t.commit();
 
-            resultadosMultimedia.push(nuevoMultimedia);
+        // 5. ENCOLAR JOBS (Ya con la DB confirmada)
+        // Iteramos los resultados para mandar al worker
+        // Ojo: nuevoMultimedia.keyTemp en DB es el nombre limpio. 
+        // En el worker necesitamos el path en R2 (que venia en keysTracks).
+        // En el paso anterior guardamos keyTemp original en el objeto resultadosMultimedia.
+
+        for (const meta of resultadosMultimedia) {
+            try {
+                // keyTemp en el objeto que empujamos arriba es la key de R2 (track original)
+                // OJO: En el push anterior (paso 3) asegúrate de pasar la key correcta.
+                // Revisemos el push: resultadosMultimedia.push({ ...nuevoMultimedia.toJSON(), keyTemp: keyTemp });
+
+                await multimediaQueue.add('processPreview', {
+                    keyTemp: meta.keyTemp, // Esta debe ser 'multimedia/temp/uuid.mp3'
+                    tipoAsset: meta.tipoAsset
+                });
+                console.log(`[RTM-QUEUE] Job agregado para: ${meta.keyTemp}`);
+            } catch (qError) {
+                console.error('[RTM-QUEUE] Error al encolar:', qError);
+                // No fallamos el request, solo logueamos.
+                // Podrías guardar un LogErrores aquí también.
+            }
         }
-
-        await t.commit(); 
 
         res.status(200).json({ ok: true, msg: '¡Registro en Ritma completado! 😌' });
 
@@ -193,13 +221,13 @@ const validateUpload = async (req, res) => {
         return res.status(500).json({ ok: false, msg: "Error interno al validar datos." });
     }
 };
- 
-const liveUploadMonitor = async(req, res)=>{
+
+const liveUploadMonitor = async (req, res) => {
     return res.status(200).render('../views/app/live-upload-monitor', {
-        tituloPagina : "Biblioteca Multimedia",
-        subtitulo : "Live Upload Monitor",
-        active : 'multimedia',
-        csrfToken : req.csrfToken()
+        tituloPagina: "Biblioteca Multimedia",
+        subtitulo: "Live Upload Monitor",
+        active: 'multimedia',
+        csrfToken: req.csrfToken()
     })
 
 }
@@ -214,7 +242,7 @@ const liveUploadMonitor = async(req, res)=>{
 
 const jsonCheckArtistByName = async (req, res) => {
     try {
-        const { nombreArtista } = req.query;        
+        const { nombreArtista } = req.query;
         if (!nombreArtista || nombreArtista.trim() === '') {
             return res.json([]);
         }
@@ -223,7 +251,7 @@ const jsonCheckArtistByName = async (req, res) => {
             where: {
                 nombreArtista: { [Op.like]: term }
             },
-            limit: 5, 
+            limit: 5,
             order: [['nombreArtista', 'ASC']],
             attributes: ['idArtista', 'nombreArtista', 'cover'] // Solo enviamos lo necesario
         });
@@ -238,11 +266,11 @@ const jsonCheckArtistByName = async (req, res) => {
 
 
 //FIND ALBUM 
-const getAlbumsByArtist = async (req, res)=>{
+const getAlbumsByArtist = async (req, res) => {
     const { idArtista } = req.params;
     const { q } = req.query; // Término de búsqueda (ej: "Mañ")
     try {
-    const albums = await Album.findAll({
+        const albums = await Album.findAll({
             where: {
                 idArtista: idArtista,
                 nombreAlbum: {
@@ -255,14 +283,14 @@ const getAlbumsByArtist = async (req, res)=>{
         res.json(albums);
 
     } catch (error) {
-        
+
     }
 
 }
 
 //Generos
-const getAllGenres = async (req, res)=>{
-    
+const getAllGenres = async (req, res) => {
+
     const genres = await Generos.findAll({
         attributes: ['genero_id', 'nombre', 'slug']
     });

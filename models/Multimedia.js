@@ -13,11 +13,11 @@ const Multimedia = db.define('MULTIMEDIA', {
     },
     // Nota: idArtista e idAlbum se omiten aquí porque index.js creará las FK
     
-    keyR2: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true // Integridad total en el bucket
-    },
+    // keyTemp: {
+    //     type: DataTypes.STRING,
+    //     allowNull: false,
+    //     unique: true // Integridad total en el bucket
+    // },
     keyTemp: {
     type: DataTypes.STRING,
     allowNull: true
