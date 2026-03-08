@@ -6,7 +6,9 @@ import validarErrores  from '../middlewares/validarErrores.js'
 import {checkUploadMultimedia} from '../middlewares/validationFields.js';
 import  {getPresignedUrl}  from '../controllers/uploadController.js';
 
-import { dashboard, usersPanel, multimediaPanel, uploadboard, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres} from '../controllers/adminControllers.js'
+import { dashboard, usersPanel, multimediaPanel, uploadboard, liveUploadMonitor } from '../controllers/adminControllers.js'
+import { postUploadMultimedia, validateUpload } from '../controllers/uploadControllers.js'
+import { jsonCheckArtistByName, getAlbumsByArtist, getAllGenres } from '../controllers/apiControllers.js'
 const routes = express.Router();
 dotenv.config();
 
