@@ -251,7 +251,11 @@ async function enviarRegistroFinalDB(formData, keysSubidas) {
             background: '#0a0a0c', color: '#fff'
         }).then(() => window.location.href = '/app/dash/multimedia');
     } else {
-        throw new Error(data.msg || "Fallo en el registro de base de datos");
+        // Soporta errores del controlador (data.msg) y del validador (data.errores)
+        const errorMsg = data.msg
+            || (data.errores && data.errores.map(e => e.msg).join(', '))
+            || "Fallo en el registro de base de datos";
+        throw new Error(errorMsg);
     }
 }
 

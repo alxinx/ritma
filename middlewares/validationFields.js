@@ -49,7 +49,7 @@ const checkUploadMultimedia = [
         .notEmpty().withMessage('Debe seleccionar al menos un género.')
         .isLength({ min: 5 }).withMessage('La selección de género no es válida.'),
 
-    check('titulo')
+    check('titulos')
         .isArray({ min: 1 }).withMessage('Debes añadir al menos una fila de contenido.')
         .custom((value) => {
             if (!value || !value[0] || value[0].trim() === '') {
