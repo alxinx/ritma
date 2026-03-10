@@ -222,6 +222,8 @@
         });
 
         // Detectar cambios en los customSelect (delegacion de eventos)
+        // Los onclick de .ritma-option usan stopPropagation, asi que
+        // escuchamos en fase de captura para detectar la seleccion
         document.addEventListener('click', (e) => {
             const option = e.target.closest('.ritma-option');
             if (option) {
@@ -231,7 +233,12 @@
                     fetchMultimedia();
                 }, 50);
             }
-        });
+
+            // Cerrar todos los dropdowns al hacer click fuera de un select
+            if (!e.target.closest('[id^="select-container"]')) {
+                document.querySelectorAll('.options-container').forEach(d => d.classList.add('hidden'));
+            }
+        }, true); // true = capture phase (para capturar antes del stopPropagation)
 
         // ==========================================
         // 4. MODAL DE GENEROS

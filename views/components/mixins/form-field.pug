@@ -59,19 +59,23 @@ mixin formField(id, name, type='text', label, required=false, placeholder, vuPat
 
 //- 4. CUSTOM SELECT (ID, NAME, LABEL, ACTIVEOPTION, OPTIONS)
 mixin customSelect(id, name, label, activeOption, options = [])
-  div(class="relative z-1000 mt-5 w-full group " id=`select-container-${id}`)
+  div(class="relative mt-5 w-full" id=`select-container-${id}`)
     input(type="hidden" id=id name=name value=(options.find(o => o.selected) ? options.find(o => o.selected).value : ""))
     if label
       label(class="mb-1 block") #{label}
-    button(type="button" class="ritma-select-trigger flex items-center justify-between")
+    button(
+      type="button"
+      class="ritma-select-trigger flex items-center justify-between"
+      onclick="event.stopPropagation(); var dd=this.nextElementSibling; document.querySelectorAll('.options-container').forEach(function(d){if(d!==dd)d.classList.add('hidden')}); dd.classList.toggle('hidden')"
+    )
       span(class="current-selection") #{activeOption}
-    
-    div(class="options-container hidden group-focus-within:block")
+
+    div(class="options-container hidden")
       each opt in options
         div(
           class="ritma-option"
-          onclick=`document.getElementById('${id}').value = '${opt.value}'; this.closest('.group').querySelector('.current-selection').innerText = '${opt.label}'`
-        ) 
+          onclick=`event.stopPropagation(); document.getElementById('${id}').value='${opt.value}'; this.closest('[id^=\"select-container\"]').querySelector('.current-selection').innerText='${opt.label}'; this.parentElement.classList.add('hidden')`
+        )
           span(class="acordeonTitulo") #{opt.label}
           if opt.selected
             div(class="option-led")
