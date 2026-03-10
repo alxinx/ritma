@@ -74,7 +74,9 @@ const worker = new Worker('multimedia-processing', async job => {
     }));
 
     // 5️⃣ Update Database
-    const multimediaRecord = await Multimedia.findOne({ where: { keyTemp } });
+    // La DB guarda solo el filename, el worker recibe el path completo de R2
+    const keyTempFilename = path.basename(keyTemp);
+    const multimediaRecord = await Multimedia.findOne({ where: { keyTemp: keyTempFilename } });
 
     if (multimediaRecord) {
       await multimediaRecord.update({
