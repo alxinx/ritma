@@ -1,5 +1,5 @@
 div(class="space-y-6")
-  div(class="glass-card rounded-2xl p-4 flex flex-wrap gap-4 items-center overflow-visible")
+  div(class="glass-card rounded-2xl p-4 flex flex-wrap gap-4 items-center overflow-visible relative z-20")
     div(class="flex-1 min-w-[200px] relative")
       +ritmaInput("searchMultimedia", "searchMultimedia", type='text', "", required=false, "Filtra por artista, nombre de la canción o formato", icon='search' , autocompleteType = 'on' )
 
@@ -18,7 +18,7 @@ div(class="space-y-6")
       
       +btnSubmit('filter', 'filter', 'Avanzado', 'filter_list')
 
-  div(class="glass-card rounded-3xl z-10 overflow-hidden")
+  div(class="glass-card rounded-3xl overflow-hidden")
     table(class="w-full text-left border-collapse")
       thead
         tr(class="border-b border-white/5 bg-white/2")
