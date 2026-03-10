@@ -109,7 +109,7 @@ async function startServer() {
     const ADDRESS = process.env.APP_ADDRESS || 'localhost';
 
     app.listen(PORT, () => {
-      console.log(`Servidor corriendo en http://${ADDRESS}:${PORT}`);
+      console.log(`Servidor corriendo en ${ADDRESS}:${PORT}`);
     });
   } catch (error) {
     console.error('Error iniciando el servidor:', error);

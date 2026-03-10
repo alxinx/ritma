@@ -28,6 +28,9 @@ const usersPanel = (req, res) => {
 }
 
 
+
+
+//PANEL DE MULTIMEDIA. 
 const multimediaPanel = (req, res) => {
     return res.status(200).render('../views/app/multimediaPanel', {
         tituloPagina: "Biblioteca Multimedia",
@@ -36,6 +39,8 @@ const multimediaPanel = (req, res) => {
         csrfToken: req.csrfToken()
     })
 }
+
+
 
 const uploadboard = (req, res) => {
     return res.status(200).render('../views/app/uploadboard', {
