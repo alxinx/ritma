@@ -215,6 +215,7 @@ body {
     background-repeat: no-repeat;
   }
 
+
   .ritma-switch-input {
     @apply appearance-none w-12 h-6 rounded-full border-2 border-white/10 bg-white/5 
            relative cursor-pointer transition-all duration-300;
@@ -272,8 +273,25 @@ body {
   }
 
 
-  .genre-pill {
-            @apply flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-bold text-primary uppercase tracking-wider hover:bg-primary/20 transition-all cursor-default;
+  .green-pill {
+            @apply flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/20 rounded-xl text-[10px] font-bold text-primary uppercase tracking-wider hover:bg-primary/20 transition-all cursor-default;
+        }
+
+  .purple-pill {
+            @apply flex items-center gap-1.5 px-3 py-1 bg-ritma-purple/10 border border-ritma-purple/20 rounded-xl text-[10px] font-bold text-ritma-purple uppercase tracking-wider hover:bg-ritma-purple/20 transition-all cursor-default;
+        }
+    
+  .red-pill {
+            @apply flex items-center gap-1.5 px-3 py-1 bg-ritma-red/10 border border-ritma-red/20 rounded-xl text-[10px] font-bold text-ritma-red uppercase tracking-wider hover:bg-ritma-red/20 transition-all cursor-default;
+        }
+
+  
+  .blue-pill {
+            @apply flex items-center gap-1.5 px-3 py-1 bg-ritma-blue/10 border border-ritma-blue/20 rounded-xl text-[10px] font-bold text-white/80 uppercase tracking-wider hover:bg-ritma-blue/20 transition-all cursor-default;
+        }
+
+  .gray-pill { 
+            @apply flex items-center gap-1.5 px-3 py-1 bg-black border border-ritma-blue/20 rounded-xs text-[10px] font-bold text-white uppercase tracking-wider hover:bg-ritma-blue/20 transition-all cursor-default;
         }
 
     .tab-btn {

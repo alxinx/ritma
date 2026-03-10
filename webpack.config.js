@@ -7,6 +7,7 @@ export default {
         controlPanel : './src/js/controlPanel.js',
         multimediaPanels : './src/js/multimediaPanels.js',
         monitorUpload : './src/js/monitorUpload.js',
+        listadoMultimedia : './src/js/listadoMultimedia.js',
 
     },
     output : {
