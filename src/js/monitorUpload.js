@@ -21,6 +21,7 @@ window.inicializarMonitor = async function (formData) {
     const titulos = formData.getAll('titulo[]');
 
     let keysSubidas = { cover: null, tracks: [] };
+    let metadatosExtraidos = []; // Metadatos extraídos durante la subida
 
     try {
         // --- A. PROCESAR Y SUBIR PORTADA ---
@@ -35,18 +36,25 @@ window.inicializarMonitor = async function (formData) {
             keysSubidas.cover = resCover.fileKey;
         }
 
-        // --- B. SUBIR TRACKS EN SECUENCIA (evita cargar todos los archivos en memoria a la vez) ---
+        // --- B. SUBIR TRACKS EN SECUENCIA ---
+        // Extraemos duración AQUÍ (1 archivo a la vez) para no recargar después
         const trackInputsArray = Array.from(trackInputs);
         for (let i = 0; i < trackInputsArray.length; i++) {
             const file = trackInputsArray[i].files[0];
             if (file) {
+                const duracion = await obtenerDuracionMedia(file);
+                metadatosExtraidos[i] = {
+                    tamano: file.size,
+                    formato: file.name.split('.').pop().toLowerCase(),
+                    duracion: Math.round(duracion)
+                };
                 const resTrack = await ejecutarSubidaDirecta(file, 'multimedia', titulos[i], i);
                 keysSubidas.tracks[i] = resTrack.fileKey;
             }
         }
 
         // --- C. HANDSHAKE FINAL CON EL BACKEND ---
-        await enviarRegistroFinalDB(formData, keysSubidas);
+        await enviarRegistroFinalDB(formData, keysSubidas, metadatosExtraidos);
 
     } catch (error) {
         console.error("Fallo crítico en el flujo:", error);
@@ -173,11 +181,11 @@ async function ejecutarSubidaDirecta(file, category, nombreVisual, index) {
 /**
  * Handshake final: Envía llaves de R2 y Metadata al servidor
  */
-async function enviarRegistroFinalDB(formData, keysSubidas) {
+async function enviarRegistroFinalDB(formData, keysSubidas, metadatosExtraidos) {
     console.log("--- INICIANDO HANDSHAKE FINAL RITMA ---");
 
-    // 1. CAPTURAR ELEMENTOS DEL DOM (Definición local para evitar ReferenceErrors)
-    const tokenElement = document.querySelector('input[name="_csrf"]'); // <-- AQUÍ SE DEFINE 🚀
+    // 1. CAPTURAR ELEMENTOS DEL DOM
+    const tokenElement = document.querySelector('input[name="_csrf"]');
     const trackInputs = document.querySelectorAll('input[name="archivo[]"]');
 
     if (!tokenElement) {
@@ -186,34 +194,17 @@ async function enviarRegistroFinalDB(formData, keysSubidas) {
 
     const csrfTokenValue = tokenElement.value;
 
-    // 2. EXTRAER METADATOS Y DURACIÓN
-    const metadatosFiles = await Promise.all(Array.from(trackInputs).map(async (input) => {
-        const file = input.files[0];
-        if (!file) return null;
-
-        const seg = await obtenerDuracionMedia(file); // Extraemos segundos aquí
-
-        return {
-            tamano: file.size,
-            formato: file.name.split('.').pop().toLowerCase(),
-            duracion: Math.round(seg) // Se guarda dentro del objeto del track
-        };
-    }));
-
+    // 2. METADATOS YA EXTRAÍDOS (se reciben como parámetro, no se re-leen los archivos)
 
     // 3. CONSTRUIR PAYLOAD SEGURO
     const subtitulosArray = [];
 
-    // Iteramos sobre los inputs de archivo para encontrar su checkbox de subtitulo correspondiente
     trackInputs.forEach((input) => {
-        // Asumimos que el checkbox está en el mismo contenedor padre o fila
-        // Buscamos el contenedor de la fila
         const fila = input.closest('.fila-archivo');
         if (fila) {
             const checkbox = fila.querySelector('input[name="subtitulos[]"]');
             subtitulosArray.push(checkbox && checkbox.checked ? 'on' : 'off');
         } else {
-            // Fallback por si la estructura cambia, aunque 'fila-archivo' debería existir
             subtitulosArray.push('off');
         }
     });
@@ -226,7 +217,7 @@ async function enviarRegistroFinalDB(formData, keysSubidas) {
         idAlbum: formData.get('idAlbum'),
         keyCover: keysSubidas.cover,
         keysTracks: keysSubidas.tracks.filter(k => k),
-        metadatos: metadatosFiles.filter(m => m !== null),
+        metadatos: metadatosExtraidos.filter(m => m !== null),
         titulos: formData.getAll('titulo[]'),
         costos: formData.getAll('costoCreditos[]'),
         subtitulos: subtitulosArray
