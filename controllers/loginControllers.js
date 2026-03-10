@@ -5,6 +5,7 @@ import redirection from '../helpers/redirection.js'
 import crypto from "crypto"
 import nodemailer from "nodemailer"
 import {mailRecovery} from '../helpers/mailRecovery.js'
+import { Op } from 'sequelize';
 
 import dotenv from "dotenv";
 
@@ -78,23 +79,21 @@ const loginPost = async (req, res)=>{
         where : {emailUsuario : email}
             })
 
-       if (!usuario) {
-            //return res.status(404).json({ msg: "El usuario no existe" });
-            res.status(401).render( "./auth/login", {
-                    tituloPagina : "Login",
-                    mensaje : '❌ El usuario no existe'
-                    } )
+        // Mensaje genérico para evitar user enumeration
+        if (!usuario) {
+            return res.status(401).render('./auth/login', {
+                tituloPagina: 'Login',
+                mensaje: '❌ Credenciales inválidas'
+            });
         }
+
         //Compruebo que la contraseña sea correcta
         const passwordCorrecto = await usuario.checkPassword(password);
-        if (passwordCorrecto === false) {
-            //return res.status(404).json({ msg: "Passwowd incorrecto" });
-
-            return res.status(401).render( "./auth/login", {
-                     tituloPagina : "Login",
-                     mensaje : '❌ Contraseña Incorrecta'
-                     } )
-            
+        if (!passwordCorrecto) {
+            return res.status(401).render('./auth/login', {
+                tituloPagina: 'Login',
+                mensaje: '❌ Credenciales inválidas'
+            });
         }
 
         //GENERO EN JWT
@@ -108,7 +107,11 @@ const loginPost = async (req, res)=>{
         }).redirect(urlRedireccion)
 
     } catch (error) {
-        throw new Error('Error en server')
+        console.error('Error en loginPost:', error.message);
+        return res.status(500).render('./auth/login', {
+            tituloPagina: 'Login',
+            mensaje: '❌ Error interno del servidor. Intenta más tarde.'
+        });
     }
 }
 
@@ -187,9 +190,11 @@ const resetPassword = async (req, res)=>{
 
         const {password, token}= req.body
 
-        const usuario = await Usuarios.findOne({ 
-            token: token,
-            expiracion: { $gt: Date.now() } 
+        const usuario = await Usuarios.findOne({
+            where: {
+                token: token,
+                expiracion: { [Op.gt]: new Date() }
+            }
         });
 
 

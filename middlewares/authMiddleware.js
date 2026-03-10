@@ -29,7 +29,8 @@ const rutaProtegida = async (req, res, next)=>{
 
     } catch (e) {
         console.error('Error en protegerRuta:', e.message);
-       // return res.redirect('/admin');
+        res.clearCookie('_token');
+        return res.redirect('/');
       }
 }
 

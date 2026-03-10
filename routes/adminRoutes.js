@@ -21,10 +21,10 @@ routes.get("/multimedia", multimediaPanel)
     routes.get("/uploadboard", uploadboard)
        
     routes.post(
-    "/uploadboard", 
-    // checkUploadMultimedia, // <-- COMENTALO TEMPORALMENTE para probar
-    validarErrores, 
-    postUploadMultimedia 
+    "/uploadboard",
+    checkUploadMultimedia,
+    validarErrores,
+    postUploadMultimedia
 );
         routes.post("/uploadboard/validate", validateUpload);
 routes.get("/live-upload-monitor", upload.any(), liveUploadMonitor)

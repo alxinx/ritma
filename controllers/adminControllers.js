@@ -283,20 +283,23 @@ const getAlbumsByArtist = async (req, res) => {
         res.json(albums);
 
     } catch (error) {
-
+        console.error('[RTM] Error en getAlbumsByArtist:', error.message);
+        res.status(500).json({ msg: 'Error al consultar álbumes' });
     }
 
 }
 
 //Generos
 const getAllGenres = async (req, res) => {
-
-    const genres = await Generos.findAll({
-        attributes: ['genero_id', 'nombre', 'slug']
-    });
-    res.json(genres)
-
-
+    try {
+        const genres = await Generos.findAll({
+            attributes: ['genero_id', 'nombre', 'slug']
+        });
+        res.json(genres);
+    } catch (error) {
+        console.error('[RTM] Error en getAllGenres:', error.message);
+        res.status(500).json({ msg: 'Error al obtener géneros' });
+    }
 }
 
 

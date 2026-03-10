@@ -1,5 +1,6 @@
 import express from "express";
 import {emailValidation, checkPasswords} from '../middlewares/validationFields.js'
+import loginRateLimiter from '../middlewares/rateLimiter.js';
 
 import {adminLogin, adminForgot,  recovery, postRecovery, resetPassword,sendRecovery, register, newAdmin, loginPost, logout} from '../controllers/loginControllers.js';
 //import {rutaProtegida,verificarRol} from "../middlewares/authMiddleware.js"
@@ -29,7 +30,7 @@ routes.post("/logout", logout)
 
 //**********************[POST] ***********************/
 
-routes.post("/", loginPost)
+routes.post("/", loginRateLimiter, loginPost)
 routes.post("/register", newAdmin)
 
 //loginPost

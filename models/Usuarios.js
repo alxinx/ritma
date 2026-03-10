@@ -29,7 +29,7 @@ const Usuarios =  db.define('USUARIOS', {
     },
     permisos : {
         type : DataTypes.ENUM('ADMIN', 'USUARIO'),
-        defaultValue : 'ADMIN'
+        defaultValue : 'USUARIO'
     },
     token : {
         type : DataTypes.STRING,

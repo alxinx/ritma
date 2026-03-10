@@ -7,6 +7,7 @@ import express from "express";
 import csrf from "csurf";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import securityHeaders from "./middlewares/securityHeaders.js";
 
 import db from "./config/bd.js";
 import redisClient from './config/redis.js';
@@ -39,6 +40,11 @@ const app = express(); // <--- crear app antes
 ====================== */
 app.set("view engine", "pug");
 app.set("views", "./views");
+
+/* ======================
+   SEGURIDAD — HEADERS HTTP
+====================== */
+app.use(securityHeaders);
 
 /* ======================
    MIDDLEWARES BASE
