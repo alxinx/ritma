@@ -19,7 +19,7 @@ const worker = new Worker('multimedia-processing', async job => {
   console.log(`Procesando job ${job.id} - archivo: ${keyTemp}`);
 
   try {
-    // 1️⃣ Descargar archivo desde R2 a temporal local
+    // Descargo los archivoos temporales
     const tempFilePath = path.join(TEMP_DIR, path.basename(keyTemp));
     const previewFilePath = path.join(TEMP_DIR, `preview-${path.basename(keyTemp)}`);
 
@@ -91,8 +91,8 @@ const worker = new Worker('multimedia-processing', async job => {
 
       await multimediaRecord.update({
         estado_ingesta: todosSubidos ? 'ready' : 'error',
-        keyPreview: previewSubido ? previewKey : null,
-        keyOriginal: originalSubido ? originalKey : null,
+        keyPreview: previewSubido ? `preview-${keyTempFilename}` : null,
+        keyOriginal: originalSubido ? keyTempFilename : null,
         keyTemp: todosSubidos ? null : keyTempFilename,
         error_ingesta: todosSubidos ? null : 'Fallo al subir archivos a R2'
       });
