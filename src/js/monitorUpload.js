@@ -35,16 +35,15 @@ window.inicializarMonitor = async function (formData) {
             keysSubidas.cover = resCover.fileKey;
         }
 
-        // --- B. SUBIR TRACKS EN PARALELO ---
-        const promesasTracks = Array.from(trackInputs).map(async (input, i) => {
-            const file = input.files[0];
+        // --- B. SUBIR TRACKS EN SECUENCIA (evita cargar todos los archivos en memoria a la vez) ---
+        const trackInputsArray = Array.from(trackInputs);
+        for (let i = 0; i < trackInputsArray.length; i++) {
+            const file = trackInputsArray[i].files[0];
             if (file) {
                 const resTrack = await ejecutarSubidaDirecta(file, 'multimedia', titulos[i], i);
                 keysSubidas.tracks[i] = resTrack.fileKey;
             }
-        });
-
-        await Promise.all(promesasTracks);
+        }
 
         // --- C. HANDSHAKE FINAL CON EL BACKEND ---
         await enviarRegistroFinalDB(formData, keysSubidas);
@@ -57,31 +56,33 @@ window.inicializarMonitor = async function (formData) {
 
 /**
  * Optimiza la imagen a 1000x1000 WebP (Reemplazo de Middleware Sharp)
+ * FIX: Usa createObjectURL en vez de readAsDataURL para evitar el string base64 en memoria
  */
 async function optimizarImagenWebP(file) {
     return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (e) => {
-            const img = new Image();
-            img.src = e.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const SIZE = 1000;
-                canvas.width = SIZE;
-                canvas.height = SIZE;
-                const ctx = canvas.getContext('2d');
+        const objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+        img.src = objectUrl;
+        img.onload = () => {
+            URL.revokeObjectURL(objectUrl);
 
-                // Efecto Cover/Center
-                const scale = Math.max(SIZE / img.width, SIZE / img.height);
-                const x = (SIZE / 2) - (img.width / 2) * scale;
-                const y = (SIZE / 2) - (img.height / 2) * scale;
-                ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+            const canvas = document.createElement('canvas');
+            const SIZE = 1000;
+            canvas.width = SIZE;
+            canvas.height = SIZE;
+            const ctx = canvas.getContext('2d');
 
-                canvas.toBlob((blob) => {
-                    resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), { type: 'image/webp' }));
-                }, 'image/webp', 0.8);
-            };
+            // Efecto Cover/Center
+            const scale = Math.max(SIZE / img.width, SIZE / img.height);
+            const x = (SIZE / 2) - (img.width / 2) * scale;
+            const y = (SIZE / 2) - (img.height / 2) * scale;
+            ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+            canvas.toBlob((blob) => {
+                canvas.width = 0;
+                canvas.height = 0;
+                resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), { type: 'image/webp' }));
+            }, 'image/webp', 0.8);
         };
     });
 }
@@ -273,16 +274,24 @@ function actualizarProgresoGlobal() {
 function obtenerDuracionMedia(file) {
     return new Promise((resolve) => {
         const element = file.type.startsWith('video') ? document.createElement('video') : document.createElement('audio');
-        element.src = URL.createObjectURL(file);
+        const objectUrl = URL.createObjectURL(file);
+
+        element.preload = 'metadata'; // Solo cargar metadatos, no el archivo completo
+        element.src = objectUrl;
 
         element.onloadedmetadata = () => {
-            URL.revokeObjectURL(element.src);
-            resolve(element.duration || 0);
+            const duration = element.duration || 0;
+            element.src = '';   // Liberar buffer del navegador
+            element.load();     // Forzar limpieza del recurso media
+            URL.revokeObjectURL(objectUrl);
+            resolve(duration);
         };
 
         element.onerror = () => {
             console.warn(`[RTM-ENGINE] No se pudo extraer duración de: ${file.name}`);
-            URL.revokeObjectURL(element.src); // FIX: Liberar memoria también en error
+            element.src = '';
+            element.load();
+            URL.revokeObjectURL(objectUrl);
             resolve(0);
         };
     });
