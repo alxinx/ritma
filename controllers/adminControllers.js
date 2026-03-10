@@ -42,6 +42,19 @@ const multimediaPanel = (req, res) => {
 
 
 
+
+//MUESTRO LA HOOJA DE PERFIL DEL MULTIMEDIA
+const mediafile = (req, res) => {
+    return res.status(200).render('../views/app/mediafile', {
+        tituloPagina: "Biblioteca Multimedia",
+        subtitulo: "Panel principal de la biblioteca multimedia",
+        active: 'multimedia',
+        csrfToken: req.csrfToken()
+    })
+}
+
+
+
 const uploadboard = (req, res) => {
     return res.status(200).render('../views/app/uploadboard', {
         tituloPagina: "Biblioteca Multimedia",
@@ -437,7 +450,7 @@ const getMultimediaStatus = async (req, res) => {
 export {
     dashboard,
     usersPanel,
-    multimediaPanel, uploadboard,
+    multimediaPanel, uploadboard, mediafile,
     postUploadMultimedia, validateUpload, liveUploadMonitor,
     getAlbumsByArtist,
     getAllGenres,

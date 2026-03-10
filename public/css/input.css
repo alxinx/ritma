@@ -120,6 +120,12 @@ body {
 }
 
 
+.waveform-massive {
+    mask-image: url("data:image/svg+xml,%3Csvg width='800' height='100' viewBox='0 0 800 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 L10 20 L20 80 L30 40 L40 60 L50 10 L60 90 L70 50 L80 30 L90 70 L100 50 L110 20 L120 80 L130 40 L140 60 L150 10 L160 90 L170 50 L180 30 L190 70 L200 50 L210 20 L220 80 L230 40 L240 60 L250 10 L260 90 L270 50 L280 30 L290 70 L300 50 L310 20 L320 80 L330 40 L340 60 L350 10 L360 90 L370 50 L380 30 L390 70 L400 50 L410 20 L420 80 L430 40 L440 60 L450 10 L460 90 L470 50 L480 30 L490 70 L500 50 L510 20 L520 80 L530 40 L540 60 L550 10 L560 90 L570 50 L580 30 L590 70 L600 50 L610 20 L620 80 L630 40 L640 60 L650 10 L660 90 L670 50 L680 30 L690 70 L700 50 L710 20 L720 80 L730 40 L740 60 L750 10 L760 90 L770 50 L780 30 L790 70 L800 50' stroke='black' stroke-width='4' fill='none'/%3E%3C/svg%3E");
+    mask-repeat: repeat-x;
+    mask-size: cover;
+}
+
 
 /* Estado: Archivo Cargado */
 .upload-zone-mini.archivo-cargado {
@@ -189,6 +195,9 @@ body {
     text-shadow: 0 0 10px rgba(201, 218, 43, 0.5);
   }
 
+  .sidebar-line {
+    background: linear-gradient(to bottom, #C9DA2B 0%, transparent 100%);
+  }
   .vu-bar-active {
     background: linear-gradient(to top, var(--color-primary), var(--color-ritma-red));
   }

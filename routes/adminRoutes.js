@@ -6,7 +6,7 @@ import validarErrores  from '../middlewares/validarErrores.js'
 import {checkUploadMultimedia} from '../middlewares/validationFields.js';
 import  {getPresignedUrl}  from '../controllers/uploadController.js';
 
-import { dashboard, usersPanel, multimediaPanel, uploadboard, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus } from '../controllers/adminControllers.js'
+import { dashboard, usersPanel, multimediaPanel, uploadboard, mediafile, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus } from '../controllers/adminControllers.js'
 const routes = express.Router();
 dotenv.config();
 
@@ -31,20 +31,11 @@ routes.get("/live-upload-monitor", upload.any(), liveUploadMonitor)
 
 
 
+routes.get("/profile/mediafile/:idMultimedia", mediafile)
 
 
 
 
-
-
-
-
-//**********************[POST] ***********************/
-
-//routes.post("/", loginPost)
-//routes.post("/register", newAdmin)
-
-//loginPost
 
 
 //********************[API] ******************* */

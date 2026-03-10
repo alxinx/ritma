@@ -1,0 +1,55 @@
+include ../layout/head.pug
+include ../components/mixins/form-field.pug
+include ../components/mixins/layouts.pug
+block contenedor
+
+
+    // ================================================
+    // NAVBAR
+    // ================================================
+//include ./navBar.pug
+div(class="flex min-h-screen ")
+    
+    //-MENU LATERAL
+    include layout/leftMenu.pug
+    main(class="flex-1 lg:ml-72 min-h-screen")
+        // HEADER 
+        
+        
+        include layout/headerAdmin.pug
+
+        //BODY
+        div(class="mx-auto  pb-32")  
+
+            //STATS
+            div(class="flex flex-col lg:flex-row min-h-screen")
+                include layout/audioProfile.pug
+                //- include  stats/allVideosDownload.pug
+                //- include  stats/allAudioDownload.pug
+                //- include  stats/bestFileWeek.pug
+
+           
+
+            div(class="space-y-6 mt-5")
+               // include  layout/listadoMultimedia.pug
+
+           
+                
+
+        include layout/footer.pug 
+
+
+            
+
+                        
+
+
+
+            
+
+                
+        //FOOTER
+
+
+    // ================================================
+    // footer
