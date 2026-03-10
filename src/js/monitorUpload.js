@@ -276,23 +276,26 @@ function obtenerDuracionMedia(file) {
         const element = file.type.startsWith('video') ? document.createElement('video') : document.createElement('audio');
         const objectUrl = URL.createObjectURL(file);
 
-        element.preload = 'metadata'; // Solo cargar metadatos, no el archivo completo
-        element.src = objectUrl;
-
-        element.onloadedmetadata = () => {
-            const duration = element.duration || 0;
-            element.src = '';   // Liberar buffer del navegador
-            element.load();     // Forzar limpieza del recurso media
+        // Limpia listeners ANTES de tocar src para evitar loop infinito
+        const cleanup = (duration) => {
+            element.onloadedmetadata = null;
+            element.onerror = null;
+            element.src = '';
+            element.load();
             URL.revokeObjectURL(objectUrl);
             resolve(duration);
         };
 
+        element.preload = 'metadata';
+        element.src = objectUrl;
+
+        element.onloadedmetadata = () => {
+            cleanup(element.duration || 0);
+        };
+
         element.onerror = () => {
             console.warn(`[RTM-ENGINE] No se pudo extraer duración de: ${file.name}`);
-            element.src = '';
-            element.load();
-            URL.revokeObjectURL(objectUrl);
-            resolve(0);
+            cleanup(0);
         };
     });
 }
