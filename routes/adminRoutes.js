@@ -8,7 +8,7 @@ import  {getPresignedUrl}  from '../controllers/uploadController.js';
 
 import { dashboard, usersPanel, multimediaPanel, uploadboard, liveUploadMonitor } from '../controllers/adminControllers.js'
 import { postUploadMultimedia, validateUpload } from '../controllers/uploadControllers.js'
-import { jsonCheckArtistByName, getAlbumsByArtist, getAllGenres } from '../controllers/apiControllers.js'
+import { jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus } from '../controllers/apiControllers.js'
 const routes = express.Router();
 dotenv.config();
 
@@ -61,5 +61,8 @@ routes.get('/json/artistas', jsonCheckArtistByName);
 routes.get('/json/generos', getAllGenres);
 
 routes.get('/json/album/:idArtista', getAlbumsByArtist);
+
+routes.get('/json/multimedia', getMultimediaList);
+routes.get('/json/multimedia/status', getMultimediaStatus);
 
 export default routes

@@ -23,6 +23,9 @@ Album.belongsTo(Artistas, {
 Album.hasMany(Multimedia, { foreignKey: 'idAlbum' });
 Multimedia.belongsTo(Album, { foreignKey: 'idAlbum' });
 
+Artistas.hasMany(Multimedia, { foreignKey: 'idArtista' });
+Multimedia.belongsTo(Artistas, { foreignKey: 'idArtista' });
+
 // --- 2. RELACIONES N:M (Muchos a Muchos) ---
 
 // El core: Para que la canción tenga sus etiquetas (los pills que mencionas)
