@@ -227,154 +227,137 @@ import Swal from 'sweetalert2';
             const fullscreenIcon = btnFullscreen ? btnFullscreen.querySelector('.material-symbols-outlined') : null;
             const videoContainer = video ? video.closest('.group') : null;
 
-            if (!video || !btnPlay) return;
+            // Only setup player controls if video element exists
+            if (video && btnPlay) {
+                let isPlaying = false;
+                let isDragging = false;
 
-            // Secure streaming: request token and set video src
-            if (config.hasPreview) {
-                (async () => {
-                    try {
-                        const res = await fetch(`/app/dash/json/multimedia/${idMultimedia}/request-stream`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrfToken }
-                        });
-                        const data = await res.json();
-                        if (data.ok && data.token) {
-                            video.src = `/app/dash/api/video/stream/${idMultimedia}?token=${data.token}`;
-                        }
-                    } catch (err) {
-                        console.error('Error requesting stream token:', err);
+                function formatTime(s) {
+                    const m = Math.floor(s / 60);
+                    const sec = Math.floor(s % 60);
+                    return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+                }
+
+                function updateProgress(pct) {
+                    if (progressFill) progressFill.style.width = pct + '%';
+                    if (seekDot) seekDot.style.left = `calc(${pct}% - 6px)`;
+                }
+
+                // Play/Pause toggle
+                btnPlay.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (isPlaying) {
+                        video.pause();
+                        isPlaying = false;
+                        if (playIcon) playIcon.textContent = 'play_arrow';
+                    } else {
+                        video.play();
+                        isPlaying = true;
+                        if (playIcon) playIcon.textContent = 'pause';
                     }
-                })();
-            }
+                });
 
-            let isPlaying = false;
-            let isDragging = false;
-
-            function formatTime(s) {
-                const m = Math.floor(s / 60);
-                const sec = Math.floor(s % 60);
-                return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-            }
-
-            function updateProgress(pct) {
-                if (progressFill) progressFill.style.width = pct + '%';
-                if (seekDot) seekDot.style.left = `calc(${pct}% - 6px)`;
-            }
-
-            // Play/Pause toggle
-            btnPlay.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (isPlaying) {
-                    video.pause();
-                    isPlaying = false;
-                    if (playIcon) playIcon.textContent = 'play_arrow';
-                } else {
-                    video.play();
-                    isPlaying = true;
-                    if (playIcon) playIcon.textContent = 'pause';
-                }
-            });
-
-            // Also toggle on video click
-            video.addEventListener('click', (e) => {
-                if (isDragging) return;
-                e.stopPropagation();
-                btnPlay.click();
-            });
-
-            // Time update → progress bar + seek dot + time display
-            video.addEventListener('timeupdate', () => {
-                if (!isDragging && video.duration) {
-                    const pct = (video.currentTime / video.duration) * 100;
-                    updateProgress(pct);
-                }
-                if (timeDisplay && video.duration) {
-                    const dur = Math.floor(video.duration);
-                    const durM = Math.floor(dur / 60);
-                    const durS = dur % 60;
-                    timeDisplay.textContent = `${formatTime(video.currentTime)} / ${String(durM).padStart(2,'0')}:${String(durS).padStart(2,'0')}`;
-                }
-            });
-
-            // Click on progress bar to seek
-            if (progressBar) {
-                progressBar.addEventListener('click', (e) => {
+                // Also toggle on video click
+                video.addEventListener('click', (e) => {
                     if (isDragging) return;
-                    const rect = progressBar.getBoundingClientRect();
-                    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                    if (video.duration) {
-                        video.currentTime = pct * video.duration;
-                        updateProgress(pct * 100);
-                    }
+                    e.stopPropagation();
+                    btnPlay.click();
                 });
 
-                // Drag to seek on progress bar
-                progressBar.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
-                    isDragging = true;
-                    if (seekDot) {
-                        seekDot.style.opacity = '1';
-                        seekDot.style.transform = 'translateY(-50%) scale(1.4)';
+                // Time update → progress bar + seek dot + time display
+                video.addEventListener('timeupdate', () => {
+                    if (!isDragging && video.duration) {
+                        const pct = (video.currentTime / video.duration) * 100;
+                        updateProgress(pct);
                     }
-                    const rect = progressBar.getBoundingClientRect();
-                    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                    updateProgress(pct * 100);
-                });
-
-                document.addEventListener('mousemove', (e) => {
-                    if (!isDragging || !progressBar) return;
-                    const rect = progressBar.getBoundingClientRect();
-                    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                    updateProgress(pct * 100);
                     if (timeDisplay && video.duration) {
-                        const cur = pct * video.duration;
                         const dur = Math.floor(video.duration);
                         const durM = Math.floor(dur / 60);
                         const durS = dur % 60;
-                        timeDisplay.textContent = `${formatTime(cur)} / ${String(durM).padStart(2,'0')}:${String(durS).padStart(2,'0')}`;
+                        timeDisplay.textContent = `${formatTime(video.currentTime)} / ${String(durM).padStart(2,'0')}:${String(durS).padStart(2,'0')}`;
                     }
                 });
 
-                document.addEventListener('mouseup', () => {
-                    if (!isDragging) return;
-                    isDragging = false;
-                    if (seekDot) {
-                        seekDot.style.transform = 'translateY(-50%)';
-                    }
-                    // Apply seek
-                    if (progressFill && video.duration) {
-                        const pct = parseFloat(progressFill.style.width) / 100;
-                        video.currentTime = pct * video.duration;
-                    }
-                });
-            }
+                // Click on progress bar to seek
+                if (progressBar) {
+                    progressBar.addEventListener('click', (e) => {
+                        if (isDragging) return;
+                        const rect = progressBar.getBoundingClientRect();
+                        const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                        if (video.duration) {
+                            video.currentTime = pct * video.duration;
+                            updateProgress(pct * 100);
+                        }
+                    });
 
-            // Ended
-            video.addEventListener('ended', () => {
-                isPlaying = false;
-                if (playIcon) playIcon.textContent = 'play_arrow';
-                updateProgress(0);
-            });
+                    // Drag to seek on progress bar
+                    progressBar.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        isDragging = true;
+                        if (seekDot) {
+                            seekDot.style.opacity = '1';
+                            seekDot.style.transform = 'translateY(-50%) scale(1.4)';
+                        }
+                        const rect = progressBar.getBoundingClientRect();
+                        const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                        updateProgress(pct * 100);
+                    });
 
-            // Fullscreen toggle with icon swap
-            if (btnFullscreen) {
-                btnFullscreen.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const container = videoContainer || video;
-                    if (!document.fullscreenElement) {
-                        if (container.requestFullscreen) container.requestFullscreen();
-                        else if (video.requestFullscreen) video.requestFullscreen();
-                    } else {
-                        document.exitFullscreen();
-                    }
+                    document.addEventListener('mousemove', (e) => {
+                        if (!isDragging || !progressBar) return;
+                        const rect = progressBar.getBoundingClientRect();
+                        const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                        updateProgress(pct * 100);
+                        if (timeDisplay && video.duration) {
+                            const cur = pct * video.duration;
+                            const dur = Math.floor(video.duration);
+                            const durM = Math.floor(dur / 60);
+                            const durS = dur % 60;
+                            timeDisplay.textContent = `${formatTime(cur)} / ${String(durM).padStart(2,'0')}:${String(durS).padStart(2,'0')}`;
+                        }
+                    });
+
+                    document.addEventListener('mouseup', () => {
+                        if (!isDragging) return;
+                        isDragging = false;
+                        if (seekDot) {
+                            seekDot.style.transform = 'translateY(-50%)';
+                        }
+                        // Apply seek
+                        if (progressFill && video.duration) {
+                            const pct = parseFloat(progressFill.style.width) / 100;
+                            video.currentTime = pct * video.duration;
+                        }
+                    });
+                }
+
+                // Ended
+                video.addEventListener('ended', () => {
+                    isPlaying = false;
+                    if (playIcon) playIcon.textContent = 'play_arrow';
+                    updateProgress(0);
                 });
 
-                document.addEventListener('fullscreenchange', () => {
-                    if (fullscreenIcon) {
-                        fullscreenIcon.textContent = document.fullscreenElement ? 'fullscreen_exit' : 'fullscreen';
-                    }
-                });
-            }
+                // Fullscreen toggle with icon swap
+                if (btnFullscreen) {
+                    btnFullscreen.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const container = videoContainer || video;
+                        if (!document.fullscreenElement) {
+                            if (container.requestFullscreen) container.requestFullscreen();
+                            else if (video.requestFullscreen) video.requestFullscreen();
+                        } else {
+                            document.exitFullscreen();
+                        }
+                    });
+
+                    document.addEventListener('fullscreenchange', () => {
+                        if (fullscreenIcon) {
+                            fullscreenIcon.textContent = document.fullscreenElement ? 'fullscreen_exit' : 'fullscreen';
+                        }
+                    });
+                }
+            } // end if (video && btnPlay)
         }
 
         // ==========================================

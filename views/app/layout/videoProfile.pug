@@ -13,9 +13,9 @@ main(class="pt-4 pb-20 relative")
       div(class="lg:col-span-3 space-y-6")
         div(class="relative aspect-video bg-surface-dark border border-white/10 video-glow overflow-hidden group")
           if multimedia.keyPreview
-            video(id="video-player" class="w-full h-full object-cover" poster=coverUrl preload="metadata")
+            video(id="video-player" class="w-full h-full object-cover" src=`/app/dash/api/preview/${multimedia.idMultimedia}` poster=coverUrl preload="metadata")
           else
-            img(alt="Video Preview" class="w-full h-full object-cover" src=coverUrl)
+            video(id="video-player" class="w-full h-full object-cover" poster=coverUrl preload="none")
 
           //- Video Controls Overlay
           div(class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-6")
