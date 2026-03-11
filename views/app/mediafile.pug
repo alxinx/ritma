@@ -29,6 +29,11 @@ div(class="flex min-h-screen")
             tipoAsset: "#{multimedia.tipoAsset}",
             estado: "#{multimedia.estado}",
             csrfToken: "#{csrfToken}",
-            hasPreview: #{multimedia.keyPreview ? 'true' : 'false'}
+            hasPreview: #{multimedia.keyPreview ? 'true' : 'false'},
+            idArtista: "#{multimedia.idArtista || ''}",
+            nombreComposicion: "#{multimedia.nombreComposicion}",
+            costoCreditos: #{multimedia.costoCreditos || 0},
+            idAlbum: "#{multimedia.idAlbum || ''}",
+            generosActuales: !{JSON.stringify((multimedia.GENEROs || []).map(g => g.genero_id))}
         };
     script(src="/js/mediafileProfile.js")

@@ -581,7 +581,181 @@ const verifyAndDownload = async (req, res) => {
 };
 
 // ==========================================
+// ACTUALIZAR DATOS DE MULTIMEDIA (EDIT MODAL)
+// ==========================================
+const updateMultimediaData = async (req, res) => {
+    const t = await db.transaction();
+    try {
+        const { idMultimedia } = req.params;
+        const { nombreComposicion, costoCreditos, idAlbum, generos } = req.body;
+
+        const multimedia = await Multimedia.findByPk(idMultimedia, { transaction: t });
+        if (!multimedia) {
+            await t.rollback();
+            return res.status(404).json({ ok: false, msg: 'Multimedia no encontrado' });
+        }
+
+        // Update basic fields
+        const updateFields = {};
+        if (nombreComposicion !== undefined) updateFields.nombreComposicion = nombreComposicion.trim();
+        if (costoCreditos !== undefined) updateFields.costoCreditos = parseInt(costoCreditos) || 0;
+        if (idAlbum !== undefined) updateFields.idAlbum = idAlbum || null;
+
+        await multimedia.update(updateFields, { transaction: t });
+
+        // Update genres: destroy existing + recreate
+        if (Array.isArray(generos)) {
+            await MultimediaGeneros.destroy({
+                where: { idMultimedia },
+                transaction: t
+            });
+
+            if (generos.length > 0) {
+                const multiGeneros = generos.map(idGen => ({
+                    idMultimedia,
+                    idGenero: idGen
+                }));
+                await MultimediaGeneros.bulkCreate(multiGeneros, { transaction: t });
+            }
+        }
+
+        await t.commit();
+        res.json({ ok: true, msg: 'Datos actualizados correctamente' });
+    } catch (error) {
+        if (t) await t.rollback();
+        console.error('Error updateMultimediaData:', error);
+        res.status(500).json({ ok: false, msg: 'Error al actualizar datos' });
+    }
+};
+
+// ==========================================
+// SOLICITAR TOKEN DE STREAMING (video seguro)
+// ==========================================
+const requestStreamToken = async (req, res) => {
+    try {
+        const { idMultimedia } = req.params;
+        const multimedia = await Multimedia.findByPk(idMultimedia, {
+            attributes: ['idMultimedia', 'keyPreview']
+        });
+        if (!multimedia || !multimedia.keyPreview) {
+            return res.status(404).json({ ok: false, msg: 'Preview no disponible' });
+        }
+
+        const token = crypto.randomUUID();
+        await redisClient.setEx(`stream:${token}`, 120, JSON.stringify({
+            idMultimedia,
+            ip: req.ip
+        }));
+
+        res.json({ ok: true, token });
+    } catch (error) {
+        console.error('Error requestStreamToken:', error);
+        res.status(500).json({ ok: false, msg: 'Error al generar token de streaming' });
+    }
+};
+
+// ==========================================
+// STREAMING DE VIDEO CON HTTP 206 RANGE
+// ==========================================
+const streamVideo = async (req, res) => {
+    try {
+        const { idMultimedia } = req.params;
+        const { token } = req.query;
+        const clientIp = req.ip;
+        const sessionKey = `stream-session:${idMultimedia}:${clientIp}`;
+
+        // Validate access: one-time token OR existing session
+        const existingSession = await redisClient.get(sessionKey);
+
+        if (!existingSession) {
+            // First request — validate one-time token
+            if (!token) return res.status(403).json({ msg: 'Token requerido' });
+
+            const tokenData = await redisClient.get(`stream:${token}`);
+            if (!tokenData) return res.status(403).json({ msg: 'Token expirado o inválido' });
+
+            const parsed = JSON.parse(tokenData);
+            if (parsed.idMultimedia !== idMultimedia) return res.status(403).json({ msg: 'Token no corresponde' });
+
+            // Consume token and create session (5 min TTL, refreshed on each request)
+            await redisClient.del(`stream:${token}`);
+            await redisClient.setEx(sessionKey, 300, '1');
+        } else {
+            // Refresh session TTL on each Range request
+            await redisClient.expire(sessionKey, 300);
+        }
+
+        // Fetch multimedia info
+        const multimedia = await Multimedia.findByPk(idMultimedia, {
+            attributes: ['idMultimedia', 'keyPreview', 'tipoAsset']
+        });
+        if (!multimedia || !multimedia.keyPreview) return res.status(404).end();
+
+        const r2Key = `multimedia/previews/${multimedia.keyPreview}`;
+        const contentType = multimedia.tipoAsset === 'VIDEO' ? 'video/mp4' : 'audio/mpeg';
+
+        // Check Range header
+        const rangeHeader = req.headers.range;
+
+        if (rangeHeader) {
+            // First get file size with a HEAD-like request
+            const headCommand = new GetObjectCommand({
+                Bucket: process.env.R2_BUCKET_NAME,
+                Key: r2Key
+            });
+            const headResponse = await s3Client.send(headCommand);
+            const fileSize = headResponse.ContentLength;
+            // Destroy the body we don't need
+            headResponse.Body.destroy();
+
+            // Parse range
+            const parts = rangeHeader.replace(/bytes=/, '').split('-');
+            const start = parseInt(parts[0], 10);
+            const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+            const chunkSize = end - start + 1;
+
+            // Fetch range from R2
+            const rangeCommand = new GetObjectCommand({
+                Bucket: process.env.R2_BUCKET_NAME,
+                Key: r2Key,
+                Range: `bytes=${start}-${end}`
+            });
+            const rangeResponse = await s3Client.send(rangeCommand);
+
+            res.writeHead(206, {
+                'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                'Accept-Ranges': 'bytes',
+                'Content-Length': chunkSize,
+                'Content-Type': contentType,
+                'Cache-Control': 'private, no-store'
+            });
+
+            rangeResponse.Body.pipe(res);
+        } else {
+            // Full file request
+            const command = new GetObjectCommand({
+                Bucket: process.env.R2_BUCKET_NAME,
+                Key: r2Key
+            });
+            const r2Response = await s3Client.send(command);
+
+            res.set('Content-Type', contentType);
+            if (r2Response.ContentLength) res.set('Content-Length', r2Response.ContentLength);
+            res.set('Accept-Ranges', 'bytes');
+            res.set('Cache-Control', 'private, no-store');
+            res.set('Content-Disposition', 'inline');
+
+            r2Response.Body.pipe(res);
+        }
+    } catch (error) {
+        console.error('Error streamVideo:', error);
+        res.status(500).end();
+    }
+};
+
+// ==========================================
 // PROXY STREAMING DE PREVIEW (no expone R2 URL)
+// Soporta Range requests para audio/video seek
 // ==========================================
 const streamPreview = async (req, res) => {
     try {
@@ -594,22 +768,55 @@ const streamPreview = async (req, res) => {
             return res.status(404).end();
         }
 
-        const command = new GetObjectCommand({
-            Bucket: process.env.R2_BUCKET_NAME,
-            Key: `multimedia/previews/${multimedia.keyPreview}`
-        });
-
-        const r2Response = await s3Client.send(command);
-
-        // Set content headers
+        const r2Key = `multimedia/previews/${multimedia.keyPreview}`;
         const contentType = multimedia.tipoAsset === 'VIDEO' ? 'video/mp4' : 'audio/mpeg';
-        res.set('Content-Type', contentType);
-        if (r2Response.ContentLength) res.set('Content-Length', r2Response.ContentLength);
-        res.set('Accept-Ranges', 'bytes');
-        res.set('Cache-Control', 'private, max-age=3600');
+        const rangeHeader = req.headers.range;
 
-        // Pipe the stream
-        r2Response.Body.pipe(res);
+        if (rangeHeader) {
+            // Get file size first
+            const headCommand = new GetObjectCommand({
+                Bucket: process.env.R2_BUCKET_NAME,
+                Key: r2Key
+            });
+            const headResponse = await s3Client.send(headCommand);
+            const fileSize = headResponse.ContentLength;
+            headResponse.Body.destroy();
+
+            const parts = rangeHeader.replace(/bytes=/, '').split('-');
+            const start = parseInt(parts[0], 10);
+            const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+            const chunkSize = end - start + 1;
+
+            const rangeCommand = new GetObjectCommand({
+                Bucket: process.env.R2_BUCKET_NAME,
+                Key: r2Key,
+                Range: `bytes=${start}-${end}`
+            });
+            const rangeResponse = await s3Client.send(rangeCommand);
+
+            res.writeHead(206, {
+                'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                'Accept-Ranges': 'bytes',
+                'Content-Length': chunkSize,
+                'Content-Type': contentType,
+                'Cache-Control': 'private, max-age=3600'
+            });
+
+            rangeResponse.Body.pipe(res);
+        } else {
+            const command = new GetObjectCommand({
+                Bucket: process.env.R2_BUCKET_NAME,
+                Key: r2Key
+            });
+            const r2Response = await s3Client.send(command);
+
+            res.set('Content-Type', contentType);
+            if (r2Response.ContentLength) res.set('Content-Length', r2Response.ContentLength);
+            res.set('Accept-Ranges', 'bytes');
+            res.set('Cache-Control', 'private, max-age=3600');
+
+            r2Response.Body.pipe(res);
+        }
     } catch (error) {
         console.error('Error streamPreview:', error);
         res.status(500).end();
@@ -629,5 +836,8 @@ export {
     toggleMultimediaEstado,
     requestDownloadToken,
     verifyAndDownload,
+    updateMultimediaData,
+    requestStreamToken,
+    streamVideo,
     streamPreview,
 }
