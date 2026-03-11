@@ -6,6 +6,7 @@ import Multimedia from './Multimedia.js'
 import ArtistaGeneros from './ArtistaGeneros.js';
 import MultimediaGeneros from './MultimediaGeneros.js'
 import LogErrores from './LogErrores.js'
+import HistorialDescargas from './HistorialDescargas.js'
 
 
 
@@ -36,9 +37,13 @@ Generos.belongsToMany(Multimedia, { through: 'MULTIMEDIA_GENEROS', foreignKey: '
 Artistas.belongsToMany(Generos, { through: 'ARTISTA_GENEROS', foreignKey: 'idArtista' });
 Generos.belongsToMany(Artistas, { through: 'ARTISTA_GENEROS', foreignKey: 'idGenero' });
 
+// --- 3. HISTORIAL DE DESCARGAS ---
+Multimedia.hasMany(HistorialDescargas, { foreignKey: 'idMultimedia' });
+HistorialDescargas.belongsTo(Multimedia, { foreignKey: 'idMultimedia' });
+Usuarios.hasMany(HistorialDescargas, { foreignKey: 'idUsuario' });
+HistorialDescargas.belongsTo(Usuarios, { foreignKey: 'idUsuario' });
 
 
 export {
-        Usuarios, Generos ,Artistas, Album, Multimedia, ArtistaGeneros, MultimediaGeneros, LogErrores
-
+        Usuarios, Generos, Artistas, Album, Multimedia, ArtistaGeneros, MultimediaGeneros, LogErrores, HistorialDescargas
 }

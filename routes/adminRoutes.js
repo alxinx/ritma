@@ -6,7 +6,7 @@ import validarErrores  from '../middlewares/validarErrores.js'
 import {checkUploadMultimedia} from '../middlewares/validationFields.js';
 import  {getPresignedUrl}  from '../controllers/uploadController.js';
 
-import { dashboard, usersPanel, multimediaPanel, uploadboard, mediafile, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus } from '../controllers/adminControllers.js'
+import { dashboard, usersPanel, multimediaPanel, uploadboard, mediafile, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus, toggleMultimediaEstado, requestDownloadToken, verifyAndDownload } from '../controllers/adminControllers.js'
 const routes = express.Router();
 dotenv.config();
 
@@ -53,5 +53,8 @@ routes.get('/json/album/:idArtista', getAlbumsByArtist);
 
 routes.get('/json/multimedia', getMultimediaList);
 routes.get('/json/multimedia/status', getMultimediaStatus);
+routes.patch('/json/multimedia/:idMultimedia/toggle', toggleMultimediaEstado);
+routes.post('/json/multimedia/:idMultimedia/request-download', requestDownloadToken);
+routes.get('/api/download/:token', verifyAndDownload);
 
 export default routes

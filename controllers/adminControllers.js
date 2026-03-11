@@ -1,12 +1,19 @@
-import { Usuarios, Artistas, Album, Generos, Multimedia, MultimediaGeneros, ArtistaGeneros } from '../models/index.js'
+import { Usuarios, Artistas, Album, Generos, Multimedia, MultimediaGeneros, ArtistaGeneros, HistorialDescargas } from '../models/index.js'
 import multimediaQueue from '../queues/multimediaQueue.js';
 import db from "../config/bd.js";
+import s3Client from "../config/r2.js";
+import redisClient from "../config/redis.js";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import crypto from 'crypto';
 import dotenv from "dotenv";
 import path from 'path';
 import { Op } from 'sequelize';
 
 import * as mm from 'music-metadata'; // Para BPM y Duración
 dotenv.config();
+
+const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL;
 
 const dashboard = (req, res) => {
     return res.status(200).render('../views/app/dashboard', {
@@ -43,14 +50,56 @@ const multimediaPanel = (req, res) => {
 
 
 
-//MUESTRO LA HOOJA DE PERFIL DEL MULTIMEDIA
-const mediafile = (req, res) => {
-    return res.status(200).render('../views/app/mediafile', {
-        tituloPagina: "Biblioteca Multimedia",
-        subtitulo: "Panel principal de la biblioteca multimedia",
-        active: 'multimedia',
-        csrfToken: req.csrfToken()
-    })
+//MUESTRO LA HOJA DE PERFIL DEL MULTIMEDIA
+const mediafile = async (req, res) => {
+    try {
+        const { idMultimedia } = req.params;
+
+        const multimedia = await Multimedia.findByPk(idMultimedia, {
+            include: [
+                { model: Artistas, attributes: ['idArtista', 'nombreArtista', 'cover'] },
+                { model: Album, attributes: ['idAlbum', 'nombreAlbum', 'cover'] },
+                { model: Generos, attributes: ['genero_id', 'nombre'], through: { attributes: [] } }
+            ]
+        });
+
+        if (!multimedia) {
+            return res.redirect('/app/dash/multimedia');
+        }
+
+        // Cover fallback: album → artista → default
+        let coverUrl = '/img/dj_latino_en_fiesta.webp';
+        if (multimedia.ALBUM?.cover) {
+            coverUrl = `${R2_PUBLIC_URL}/images/covers/${multimedia.ALBUM.cover}`;
+        } else if (multimedia.ARTISTA?.cover) {
+            coverUrl = `${R2_PUBLIC_URL}/images/covers/${multimedia.ARTISTA.cover}`;
+        }
+
+        // Últimas 6 descargas
+        const ultimasDescargas = await HistorialDescargas.findAll({
+            where: { idMultimedia },
+            include: [{ model: Usuarios, attributes: ['nombreUsuario', 'apellidoUsuario', 'emailUsuario'] }],
+            order: [['fechaDescarga', 'DESC']],
+            limit: 6
+        });
+
+        const totalDescargas = await HistorialDescargas.count({ where: { idMultimedia } });
+
+        return res.status(200).render('../views/app/mediafile', {
+            tituloPagina: multimedia.nombreComposicion,
+            subtitulo: `Perfil de ${multimedia.tipoAsset === 'AUDIO' ? 'audio' : 'video'}`,
+            active: 'multimedia',
+            csrfToken: req.csrfToken(),
+            multimedia: multimedia.toJSON(),
+            coverUrl,
+            ultimasDescargas: ultimasDescargas.map(d => d.toJSON()),
+            totalDescargas,
+            R2_PUBLIC_URL
+        });
+    } catch (error) {
+        console.error('Error en mediafile:', error);
+        return res.redirect('/app/dash/multimedia');
+    }
 }
 
 
@@ -447,6 +496,89 @@ const getMultimediaStatus = async (req, res) => {
 };
 
 
+// ==========================================
+// TOGGLE ESTADO MULTIMEDIA (ENABLE/DISABLE)
+// ==========================================
+const toggleMultimediaEstado = async (req, res) => {
+    try {
+        const { idMultimedia } = req.params;
+        const multimedia = await Multimedia.findByPk(idMultimedia);
+        if (!multimedia) return res.status(404).json({ ok: false, msg: 'Multimedia no encontrado' });
+
+        const nuevoEstado = multimedia.estado === 'ENABLE' ? 'DISABLE' : 'ENABLE';
+        await multimedia.update({ estado: nuevoEstado });
+
+        res.json({ ok: true, nuevoEstado });
+    } catch (error) {
+        console.error('Error toggleMultimediaEstado:', error);
+        res.status(500).json({ ok: false, msg: 'Error al cambiar estado' });
+    }
+};
+
+// ==========================================
+// SOLICITAR TOKEN DE DESCARGA (OTP Redis)
+// ==========================================
+const requestDownloadToken = async (req, res) => {
+    try {
+        const { idMultimedia } = req.params;
+        const multimedia = await Multimedia.findByPk(idMultimedia);
+        if (!multimedia) return res.status(404).json({ ok: false, msg: 'Multimedia no encontrado' });
+        if (!multimedia.keyOriginal) return res.status(400).json({ ok: false, msg: 'Archivo original no disponible' });
+
+        const token = crypto.randomUUID();
+        await redisClient.setEx(`download:${token}`, 60, JSON.stringify({
+            idMultimedia,
+            idUsuario: req.usuario.idUsuario
+        }));
+
+        res.json({ ok: true, token });
+    } catch (error) {
+        console.error('Error requestDownloadToken:', error);
+        res.status(500).json({ ok: false, msg: 'Error al generar token de descarga' });
+    }
+};
+
+// ==========================================
+// VERIFICAR TOKEN Y REDIRIGIR A DESCARGA
+// ==========================================
+const verifyAndDownload = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const data = await redisClient.get(`download:${token}`);
+
+        if (!data) {
+            return res.status(403).json({ ok: false, msg: 'Token expirado o inválido' });
+        }
+
+        // Eliminar token (un solo uso)
+        await redisClient.del(`download:${token}`);
+
+        const { idMultimedia, idUsuario } = JSON.parse(data);
+        const multimedia = await Multimedia.findByPk(idMultimedia);
+
+        if (!multimedia || !multimedia.keyOriginal) {
+            return res.status(404).json({ ok: false, msg: 'Archivo no encontrado' });
+        }
+
+        // Registrar descarga
+        await HistorialDescargas.create({ idMultimedia, idUsuario });
+        await multimedia.increment('descargas');
+
+        // Generar presigned URL para descarga
+        const command = new GetObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: `multimedia/originals/${multimedia.keyOriginal}`,
+            ResponseContentDisposition: `attachment; filename="${multimedia.nombreComposicion}.${multimedia.formato}"`
+        });
+        const downloadUrl = await getSignedUrl(s3Client, command, { expiresIn: 30 });
+
+        res.redirect(downloadUrl);
+    } catch (error) {
+        console.error('Error verifyAndDownload:', error);
+        res.status(500).json({ ok: false, msg: 'Error al procesar descarga' });
+    }
+};
+
 export {
     dashboard,
     usersPanel,
@@ -457,4 +589,7 @@ export {
     jsonCheckArtistByName,
     getMultimediaList,
     getMultimediaStatus,
+    toggleMultimediaEstado,
+    requestDownloadToken,
+    verifyAndDownload,
 }

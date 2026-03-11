@@ -3,52 +3,33 @@ include ../components/mixins/form-field.pug
 include ../components/mixins/layouts.pug
 block contenedor
 
+div(class="flex min-h-screen")
 
-    // ================================================
-    // NAVBAR
-    // ================================================
-//include ./navBar.pug
-div(class="flex min-h-screen ")
-    
     //-MENU LATERAL
     include layout/leftMenu.pug
     main(class="flex-1 lg:ml-72 min-h-screen")
-        // HEADER 
-        
-        
+
         include layout/headerAdmin.pug
 
         //BODY
-        div(class="mx-auto  pb-32")  
+        div(class="mx-auto pb-32")
 
-            //STATS
             div(class="flex flex-col lg:flex-row min-h-screen")
-                include layout/audioProfile.pug
-                //include layout/videoProfile.pug
-             
+                if multimedia && multimedia.tipoAsset === 'AUDIO'
+                    include layout/audioProfile.pug
+                else if multimedia && multimedia.tipoAsset === 'VIDEO'
+                    include layout/videoProfile.pug
 
-           
+        include layout/footer.pug
 
-            div(class="space-y-6 mt-5")
-               // include  layout/listadoMultimedia.pug
-
-           
-                
-
-        include layout/footer.pug 
-
-
-            
-
-                        
-
-
-
-            
-
-                
-        //FOOTER
-
-
-    // ================================================
-    // footer
+    //- Data para el JS
+    script.
+        window.__MEDIAFILE__ = {
+            idMultimedia: "#{multimedia.idMultimedia}",
+            tipoAsset: "#{multimedia.tipoAsset}",
+            estado: "#{multimedia.estado}",
+            csrfToken: "#{csrfToken}",
+            previewUrl: "#{R2_PUBLIC_URL}/multimedia/previews/#{multimedia.keyPreview || ''}",
+            hasPreview: #{multimedia.keyPreview ? 'true' : 'false'}
+        };
+    script(src="/js/mediafileProfile.js")
