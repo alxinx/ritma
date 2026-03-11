@@ -94,6 +94,11 @@ body {
 }
 
 
+
+
+.video-glow {
+                box-shadow: 0 0 50px -10px rgba(201, 218, 43, 0.2);
+            }
 .vu-meter-peak {
             background: #FF3131;
             box-shadow: 0 0 10px rgba(255, 49, 49, 0.6);
@@ -279,6 +284,17 @@ body {
   .ritma-input-field:focus + .ritma-input-icon {
     @apply text-primary scale-110;
     filter: drop-shadow(0 0 5px rgba(201, 218, 43, 0.5));
+  }
+
+  .boxStatsVideo {
+   @apply  border border-white/10 p-2 hover:bg-primary transition-colors cursor-default
+  } 
+  .boxStatsVideo p {
+    @apply text-[10px] uppercase tracking-widest text-slate-500 group-hover:text-black/70 text-center
+  }
+
+  .boxStatsVideo span {
+    @apply text-xl font-display font-bold text-white group-hover:text-black tracking-tight text-center
   }
 
 
