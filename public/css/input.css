@@ -59,6 +59,11 @@
   color: white;
 }
 
+/* SweetAlert siempre encima de modales (z-[3000]) */
+.swal2-container {
+  z-index: 5000 !important;
+}
+
 
 body {
     background: radial-gradient(circle at top left, #2D0054 0%, #001F3F 50%, #000000 100%);

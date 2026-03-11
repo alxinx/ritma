@@ -761,14 +761,21 @@ const streamPreview = async (req, res) => {
     try {
         const { idMultimedia } = req.params;
         const multimedia = await Multimedia.findByPk(idMultimedia, {
-            attributes: ['idMultimedia', 'keyPreview', 'formato', 'tipoAsset']
+            attributes: ['idMultimedia', 'keyPreview', 'keyOriginal', 'formato', 'tipoAsset']
         });
 
-        if (!multimedia || !multimedia.keyPreview) {
+        if (!multimedia) return res.status(404).end();
+
+        // Use preview if available, fallback to original (for videos uploaded before worker update)
+        let r2Key;
+        if (multimedia.keyPreview) {
+            r2Key = `multimedia/previews/${multimedia.keyPreview}`;
+        } else if (multimedia.keyOriginal) {
+            r2Key = `multimedia/originals/${multimedia.keyOriginal}`;
+        } else {
             return res.status(404).end();
         }
 
-        const r2Key = `multimedia/previews/${multimedia.keyPreview}`;
         const contentType = multimedia.tipoAsset === 'VIDEO' ? 'video/mp4' : 'audio/mpeg';
         const rangeHeader = req.headers.range;
 
