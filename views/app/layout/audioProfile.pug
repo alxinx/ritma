@@ -6,13 +6,16 @@ aside(class="w-full lg:w-3/5 xl:w-[35%] relative overflow-hidden lg:h-180 border
 
   div(class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent")
 
-  div(class="absolute bottom-12 left-12 z-10")
+  div(class="absolute bottom-28 left-12 z-10")
     div(class="mb-4 inline-block bg-primary px-3 py-1 text-black font-display font-black text-[10px] uppercase tracking-widest")
       | Artista
     h2(class="font-display font-black text-6xl xl:text-6xl uppercase leading-none tracking-tighter")
       | #{multimedia.ARTISTA ? multimedia.ARTISTA.nombreArtista : 'Sin artista'}
 
-  div(class="absolute bottom-0 w-full left-0 z-10")
+  div(class="absolute bottom-0 w-full left-0 z-10 flex flex-col")
+    button(id="btn-editar-datos" class="btn btn-green w-full")
+      span(class="material-symbols-outlined mr-2") edit
+      h4 Editar Datos
     if multimedia.estado === 'ENABLE'
       button(id="btn-toggle-estado" class="btn btn-danger w-full")
         h4 Suspender Multimedia
@@ -121,3 +124,42 @@ div(class="p-8 lg:p-3 max-w-5xl")
       div(class="flex items-center justify-between p-4 bg-surface-accent border border-white/5 hover:border-primary/40 transition-all col-span-1 md:col-span-6 opacity-60 hover:opacity-100")
         span(class="text-[10px] font-bold uppercase tracking-widest") + #{totalDescargas - 6} descargas
         button(class="text-primary text-[10px] font-bold uppercase underline tracking-widest") Ver todas las descargas
+
+//- Modal Editar Datos
+div(id="modal-editar-datos" class="fixed inset-0 z-[3000] bg-black/80 backdrop-blur-sm hidden items-center justify-center")
+  div(class="glass-card w-full max-w-lg mx-4 p-8 border border-white/10 relative")
+    //- Close button
+    button(id="modal-close" class="absolute top-4 right-4 text-white/40 hover:text-white p-0 bg-transparent hover:bg-transparent")
+      span(class="material-symbols-outlined") close
+
+    h3(class="font-display font-black text-xl uppercase tracking-tighter mb-6") Editar Datos
+
+    div(class="space-y-5")
+      //- Nombre composición
+      div
+        label(for="edit-nombre") Nombre de la composición
+        input(id="edit-nombre" type="text" class="ritma-input-field" placeholder="Nombre...")
+
+      //- Costo créditos
+      div
+        label(for="edit-creditos") Créditos
+        input(id="edit-creditos" type="number" class="ritma-input-field" placeholder="10" min="0")
+
+      //- Album search
+      div
+        label(for="edit-album") Álbum
+        div(class="relative")
+          input(id="edit-album" type="text" class="ritma-input-field" placeholder="Buscar álbum..." autocomplete="off")
+          div(id="album-autocomplete" class="absolute top-full left-0 w-full mt-1 bg-surface-dark border border-primary/20 shadow-lg z-50 hidden max-h-40 overflow-y-auto")
+        input(id="edit-album-id" type="hidden")
+
+      //- Géneros (checkboxes)
+      div
+        label Géneros
+        div(id="generos-container" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto custom-scrollbar p-2 border border-white/10 bg-black/20")
+          //- Populated by JS
+
+    //- Actions
+    div(class="flex items-center justify-end gap-4 mt-8")
+      button(id="modal-cancel" class="btn-small btn-ghost") Cancelar
+      button(id="modal-save" class="btn-small btn-green") Guardar
