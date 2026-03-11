@@ -12,7 +12,7 @@ main(class="pt-4 pb-20 relative")
       //- Video Player Column
       div(class="lg:col-span-3 space-y-6")
         div(class="relative aspect-video bg-surface-dark border border-white/10 video-glow overflow-hidden group")
-          if multimedia.keyPreview
+          if multimedia.keyPreview || multimedia.keyOriginal
             video(id="video-player" class="w-full h-full object-cover" src=`/app/dash/api/preview/${multimedia.idMultimedia}` poster=coverUrl preload="metadata")
           else
             video(id="video-player" class="w-full h-full object-cover" poster=coverUrl preload="none")
