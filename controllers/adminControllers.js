@@ -67,12 +67,13 @@ const mediafile = async (req, res) => {
             return res.redirect('/app/dash/multimedia');
         }
 
-        // Cover fallback: album → artista → default
+
+
         let coverUrl = '/img/dj_latino_en_fiesta.webp';
         if (multimedia.ALBUM?.cover) {
-            coverUrl = `${R2_PUBLIC_URL}/images/covers/${multimedia.ALBUM.cover}`;
+            coverUrl = `${R2_PUBLIC_URL}/${multimedia.ALBUM.cover}`;
         } else if (multimedia.ARTISTA?.cover) {
-            coverUrl = `${R2_PUBLIC_URL}/images/covers/${multimedia.ARTISTA.cover}`;
+            coverUrl = `${R2_PUBLIC_URL}/${multimedia.ARTISTA.cover}`;
         }
 
         // Últimas 6 descargas
@@ -579,6 +580,42 @@ const verifyAndDownload = async (req, res) => {
     }
 };
 
+// ==========================================
+// PROXY STREAMING DE PREVIEW (no expone R2 URL)
+// ==========================================
+const streamPreview = async (req, res) => {
+    try {
+        const { idMultimedia } = req.params;
+        const multimedia = await Multimedia.findByPk(idMultimedia, {
+            attributes: ['idMultimedia', 'keyPreview', 'formato', 'tipoAsset']
+        });
+
+        if (!multimedia || !multimedia.keyPreview) {
+            return res.status(404).end();
+        }
+
+        const command = new GetObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: `multimedia/previews/${multimedia.keyPreview}`
+        });
+
+        const r2Response = await s3Client.send(command);
+
+        // Set content headers
+        const contentType = multimedia.tipoAsset === 'VIDEO' ? 'video/mp4' : 'audio/mpeg';
+        res.set('Content-Type', contentType);
+        if (r2Response.ContentLength) res.set('Content-Length', r2Response.ContentLength);
+        res.set('Accept-Ranges', 'bytes');
+        res.set('Cache-Control', 'private, max-age=3600');
+
+        // Pipe the stream
+        r2Response.Body.pipe(res);
+    } catch (error) {
+        console.error('Error streamPreview:', error);
+        res.status(500).end();
+    }
+};
+
 export {
     dashboard,
     usersPanel,
@@ -592,4 +629,5 @@ export {
     toggleMultimediaEstado,
     requestDownloadToken,
     verifyAndDownload,
+    streamPreview,
 }

@@ -107,7 +107,7 @@ import Swal from 'sweetalert2';
         // ==========================================
         // AUDIO PLAYER (waveform + playhead)
         // ==========================================
-        if (tipoAsset === 'AUDIO' && config.hasPreview) {
+        if (tipoAsset === 'AUDIO') {
             const container = document.getElementById('waveform-container');
             const playhead = document.getElementById('playhead');
             const progress = document.getElementById('waveform-progress');
@@ -115,11 +115,17 @@ import Swal from 'sweetalert2';
             const playIcon = document.getElementById('play-icon');
             const currentTimeEl = document.getElementById('current-time');
 
-            if (!container || !playhead) return;
+            if (!container || !playhead || !btnPlay) return;
 
-            const audio = new Audio(config.previewUrl);
+            // Audio source: proxy endpoint (no R2 URL exposed)
+            const audio = new Audio(`/app/dash/api/preview/${idMultimedia}`);
+            audio.preload = 'auto';
             let isPlaying = false;
             let isDragging = false;
+
+            // Ensure playhead starts at 0
+            playhead.style.left = '0%';
+            if (progress) progress.style.width = '0%';
 
             function formatTime(s) {
                 const m = Math.floor(s / 60);
@@ -131,7 +137,7 @@ import Swal from 'sweetalert2';
                 if (!isDragging && audio.duration) {
                     const pct = (audio.currentTime / audio.duration) * 100;
                     playhead.style.left = pct + '%';
-                    progress.style.width = pct + '%';
+                    if (progress) progress.style.width = pct + '%';
                     if (currentTimeEl) currentTimeEl.textContent = formatTime(audio.currentTime);
                 }
                 if (isPlaying) requestAnimationFrame(updatePlayhead);
@@ -150,17 +156,21 @@ import Swal from 'sweetalert2';
                 }
             }
 
-            if (btnPlay) btnPlay.addEventListener('click', togglePlay);
+            // Play/pause button — stopPropagation to avoid triggering seek
+            btnPlay.addEventListener('click', (e) => {
+                e.stopPropagation();
+                togglePlay();
+            });
 
             // Click on waveform to seek
             container.addEventListener('click', (e) => {
                 if (isDragging) return;
                 const rect = container.getBoundingClientRect();
-                const pct = (e.clientX - rect.left) / rect.width;
+                const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
                 if (audio.duration) {
                     audio.currentTime = pct * audio.duration;
                     playhead.style.left = (pct * 100) + '%';
-                    progress.style.width = (pct * 100) + '%';
+                    if (progress) progress.style.width = (pct * 100) + '%';
                     if (!isPlaying) togglePlay();
                 }
             });
@@ -178,7 +188,7 @@ import Swal from 'sweetalert2';
                 let pct = (e.clientX - rect.left) / rect.width;
                 pct = Math.max(0, Math.min(1, pct));
                 playhead.style.left = (pct * 100) + '%';
-                progress.style.width = (pct * 100) + '%';
+                if (progress) progress.style.width = (pct * 100) + '%';
                 if (audio.duration && currentTimeEl) {
                     currentTimeEl.textContent = formatTime(pct * audio.duration);
                 }
@@ -197,7 +207,7 @@ import Swal from 'sweetalert2';
                 isPlaying = false;
                 if (playIcon) playIcon.textContent = 'play_arrow';
                 playhead.style.left = '0%';
-                progress.style.width = '0%';
+                if (progress) progress.style.width = '0%';
                 if (currentTimeEl) currentTimeEl.textContent = '00:00';
             });
         }

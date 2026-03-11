@@ -13,7 +13,7 @@ main(class="pt-4 pb-20 relative")
       div(class="lg:col-span-3 space-y-6")
         div(class="relative aspect-video bg-surface-dark border border-white/10 video-glow overflow-hidden group")
           if multimedia.keyPreview
-            video(id="video-player" class="w-full h-full object-cover" src=`${R2_PUBLIC_URL}/multimedia/previews/${multimedia.keyPreview}` poster=coverUrl preload="metadata")
+            video(id="video-player" class="w-full h-full object-cover" src=`/app/dash/api/preview/${multimedia.idMultimedia}` poster=coverUrl preload="metadata")
           else
             img(alt="Video Preview" class="w-full h-full object-cover" src=coverUrl)
 

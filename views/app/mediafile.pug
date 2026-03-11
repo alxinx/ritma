@@ -22,14 +22,13 @@ div(class="flex min-h-screen")
 
         include layout/footer.pug
 
-    //- Data para el JS
+    //- Data para el JS (sin exponer URLs de R2)
     script.
         window.__MEDIAFILE__ = {
             idMultimedia: "#{multimedia.idMultimedia}",
             tipoAsset: "#{multimedia.tipoAsset}",
             estado: "#{multimedia.estado}",
             csrfToken: "#{csrfToken}",
-            previewUrl: "#{R2_PUBLIC_URL}/multimedia/previews/#{multimedia.keyPreview || ''}",
             hasPreview: #{multimedia.keyPreview ? 'true' : 'false'}
         };
     script(src="/js/mediafileProfile.js")
