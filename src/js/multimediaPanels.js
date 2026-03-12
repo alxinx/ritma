@@ -47,17 +47,25 @@ import Swal from 'sweetalert2';
             <div class="col-span-1 flex items-center justify-center pb-3">
                 <span class="numero-fila text-[10px] font-mono text-primary font-bold">${nuevoIndice.toString().padStart(2, '0')}</span>
             </div>
-            <div class="col-span-4 space-y-2">
-                <div class="relative group">
-                    <label class="subTittle text-primary"> ¿Cómo se llama la obra?</label>
-                        <input class="ritma-input-field" type="text" name="titulo[]" placeholder="¿Cómo se llama  el disco?">
-                        <span class="material-symbols-outlined ritma-input-icon pt-2">music_note</span>
+            <div class="col-span-6 flex gap-4">
+                <div class="w-[40%] space-y-2">
+                    <div class="relative group">
+                        <label class="subTittle text-primary"> ¿Cómo se llama la obra?</label>
+                            <input class="ritma-input-field" type="text" name="titulo[]" placeholder="¿Cómo se llama  el disco?">
+                            <span class="material-symbols-outlined ritma-input-icon pt-2">music_note</span>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="col-span-2 space-y-2">
-                <label class="subTittle text-primary"> VALOR EN CRÉDITOS</label>
-                    <input class="ritma-input-field" type="number" name="costoCreditos[]" min="0" max="100" placeholder="10">
+                <div class="w-[30%] space-y-2">
+                    <div class="relative group">
+                        <label class="subTittle text-primary"> BPM</label>
+                            <input class="ritma-input-field" type="number" name="bpm[]" min="20" max="200" placeholder="128">
+                            <span class="material-symbols-outlined ritma-input-icon pt-2">speed</span>
+                    </div>
+                </div>
+                <div class="w-[30%] space-y-2">
+                    <label class="subTittle text-primary"> Créditos</label>
+                        <input class="ritma-input-field" type="number" name="costoCreditos[]" min="0" max="100" placeholder="10">
+                </div>
             </div>
             
             <div class="col-span-2 space-y-2 flex items-center justify-center pt-3">

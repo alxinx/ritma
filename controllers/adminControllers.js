@@ -131,6 +131,7 @@ const postUploadMultimedia = async (req, res) => {
             keysTracks,
             titulos,
             costos,
+            bpms,
             subtitulos,
             metadatos
         } = req.body;
@@ -188,6 +189,10 @@ const postUploadMultimedia = async (req, res) => {
                 duracion: meta ? meta.duracion : 0,
 
                 costoCreditos: (Array.isArray(costos) ? costos[i] : costos) || 0,
+                bpm: (() => {
+                    const val = parseInt(Array.isArray(bpms) ? bpms[i] : bpms);
+                    return val >= 20 && val <= 200 ? val : null;
+                })(),
                 subtitulos: Array.isArray(subtitulos) && subtitulos[i] === 'on',
                 keyTemp: meta.nombreFinal || keyTemp.split('/').pop(),
                 estado_ingesta: 'processing'
@@ -383,6 +388,8 @@ const getMultimediaList = async (req, res) => {
             buscarpor = 'artista',
             formato = 'all',
             generos = '',
+            bpmMin = '',
+            bpmMax = '',
             page = 1,
             limit = 20
         } = req.query;
@@ -422,6 +429,17 @@ const getMultimediaList = async (req, res) => {
             catch { generoIds = generos.split(',').filter(Boolean); }
         }
 
+        // Filtro por rango de BPM
+        const bpmMinVal = parseInt(bpmMin);
+        const bpmMaxVal = parseInt(bpmMax);
+        if (!isNaN(bpmMinVal) && !isNaN(bpmMaxVal)) {
+            where.bpm = { [Op.between]: [bpmMinVal, bpmMaxVal] };
+        } else if (!isNaN(bpmMinVal)) {
+            where.bpm = { [Op.gte]: bpmMinVal };
+        } else if (!isNaN(bpmMaxVal)) {
+            where.bpm = { [Op.lte]: bpmMaxVal };
+        }
+
         if (generoIds.length > 0) {
             const multimediaConGenero = await MultimediaGeneros.findAll({
                 where: { idGenero: { [Op.in]: generoIds } },
@@ -449,7 +467,7 @@ const getMultimediaList = async (req, res) => {
             ],
             attributes: [
                 'idMultimedia', 'nombreComposicion', 'formato', 'tipoAsset',
-                'descargas', 'estado', 'estado_ingesta', 'duracion',
+                'descargas', 'estado', 'estado_ingesta', 'duracion', 'bpm',
                 'createdAt'
             ],
             order: [['createdAt', 'DESC']],

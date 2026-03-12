@@ -18,6 +18,21 @@ div(class="space-y-6")
           {label: "Video", value: "video"}
       ])
 
+      //- Filtro por rango de BPM (Double Range Slider)
+      div(class="flex items-end pt-4 min-w-[180px]")
+        div(class="w-full space-y-1")
+          label(class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest block") BPM
+          div(class="bpm-range-slider relative w-full" data-min="20" data-max="200")
+            //- Tooltip
+            div(id="bpm-tooltip" class="bpm-tooltip hidden")
+              span(id="bpm-tooltip-text" class="text-[11px] font-mono font-bold text-black")
+            //- Track
+            div(class="bpm-track")
+              div(id="bpm-track-fill" class="bpm-track-fill")
+            //- Range inputs
+            input(type="range" id="bpmMin" min="20" max="200" value="20" class="bpm-thumb bpm-thumb-min")
+            input(type="range" id="bpmMax" min="20" max="200" value="200" class="bpm-thumb bpm-thumb-max")
+
       //- Boton para abrir modal de generos
       div(class="pt-4 flex flex-col gap-6 w-full")
         button(type="button" id="btn-abrir-generos" class="btn-green w-full group relative overflow-hidden")

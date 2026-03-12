@@ -41,10 +41,14 @@
             const generos = selectedGeneros.length > 0
                 ? JSON.stringify(selectedGeneros.map(g => g.id))
                 : '';
+            const bpmMinEl = document.getElementById('bpmMin');
+            const bpmMaxEl = document.getElementById('bpmMax');
+            const bpmMin = bpmMinEl && bpmMinEl.value !== bpmMinEl.min ? bpmMinEl.value : '';
+            const bpmMax = bpmMaxEl && bpmMaxEl.value !== bpmMaxEl.max ? bpmMaxEl.value : '';
 
             try {
                 const params = new URLSearchParams({
-                    q, buscarpor, formato, generos,
+                    q, buscarpor, formato, generos, bpmMin, bpmMax,
                     page: currentPage,
                     limit: LIMIT
                 });
@@ -111,7 +115,10 @@
                         <span class="material-symbols-outlined ${trendClass} text-xl">${trendIcon}</span>
                     </td>
                     <td class="px-8 py-5 font-bold text-white">${escapeHtml(artistName)}</td>
-                    <td class="px-8 py-5 text-gray-300">${escapeHtml(item.nombreComposicion)}</td>
+                    <td class="px-8 py-5">
+                        <span class="text-gray-300">${escapeHtml(item.nombreComposicion)}</span>
+                        <p class="text-[10px] text-gray-500 font-mono mt-1">${item.bpm ? item.bpm + ' BPM' : ''}</p>
+                    </td>
                     <td class="px-8 py-5">${formatPill}</td>
                     <td class="px-8 py-5">
                         <span class="status-pill" data-id="${item.idMultimedia}">${statusHtml}</span>
@@ -220,6 +227,60 @@
                 fetchMultimedia();
             }, 400);
         });
+
+        // BPM Double Range Slider
+        const bpmSliderMin = document.getElementById('bpmMin');
+        const bpmSliderMax = document.getElementById('bpmMax');
+        const bpmTrackFill = document.getElementById('bpm-track-fill');
+        const bpmTooltip = document.getElementById('bpm-tooltip');
+        const bpmTooltipText = document.getElementById('bpm-tooltip-text');
+
+        function updateBpmSlider() {
+            if (!bpmSliderMin || !bpmSliderMax) return;
+            let minVal = parseInt(bpmSliderMin.value);
+            let maxVal = parseInt(bpmSliderMax.value);
+            const rangeMin = parseInt(bpmSliderMin.min);
+            const rangeMax = parseInt(bpmSliderMin.max);
+
+            // Prevent crossing
+            if (minVal > maxVal) {
+                [minVal, maxVal] = [maxVal, minVal];
+                bpmSliderMin.value = minVal;
+                bpmSliderMax.value = maxVal;
+            }
+
+            const total = rangeMax - rangeMin;
+            const leftPct = ((minVal - rangeMin) / total) * 100;
+            const rightPct = ((maxVal - rangeMin) / total) * 100;
+
+            if (bpmTrackFill) {
+                bpmTrackFill.style.left = leftPct + '%';
+                bpmTrackFill.style.width = (rightPct - leftPct) + '%';
+            }
+
+            // Tooltip
+            const isDefault = minVal === rangeMin && maxVal === rangeMax;
+            if (bpmTooltip && bpmTooltipText) {
+                if (isDefault) {
+                    bpmTooltip.classList.add('hidden');
+                } else {
+                    bpmTooltip.classList.remove('hidden');
+                    bpmTooltipText.textContent = minVal + ' - ' + maxVal;
+                    const centerPct = (leftPct + rightPct) / 2;
+                    bpmTooltip.style.left = centerPct + '%';
+                }
+            }
+        }
+
+        function onBpmSliderInput() {
+            updateBpmSlider();
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => { currentPage = 1; fetchMultimedia(); }, 400);
+        }
+
+        bpmSliderMin?.addEventListener('input', onBpmSliderInput);
+        bpmSliderMax?.addEventListener('input', onBpmSliderInput);
+        updateBpmSlider();
 
         // Detectar cambios en los customSelect (delegacion de eventos)
         // Los onclick de .ritma-option usan stopPropagation, asi que

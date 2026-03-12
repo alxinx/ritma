@@ -220,6 +220,7 @@ async function enviarRegistroFinalDB(formData, keysSubidas, metadatosExtraidos) 
         metadatos: metadatosExtraidos.filter(m => m !== null),
         titulos: formData.getAll('titulo[]'),
         costos: formData.getAll('costoCreditos[]'),
+        bpms: formData.getAll('bpm[]'),
         subtitulos: subtitulosArray
     };
 
