@@ -183,10 +183,14 @@ div(id="modal-editar-datos" class="fixed inset-0 z-[3000] bg-black/80 backdrop-b
         label(for="edit-nombre") Nombre de la composición
         input(id="edit-nombre" type="text" class="ritma-input-field" placeholder="Nombre...")
 
-      //- Costo créditos
-      div
-        label(for="edit-creditos") Créditos
-        input(id="edit-creditos" type="number" class="ritma-input-field" placeholder="10" min="0")
+      //- BPM + Créditos (side by side)
+      div(class="flex gap-4")
+        div(class="flex-1")
+          label(for="edit-bpm") BPM
+          input(id="edit-bpm" type="number" class="ritma-input-field" placeholder="128" min="20" max="200")
+        div(class="flex-1")
+          label(for="edit-creditos") Créditos
+          input(id="edit-creditos" type="number" class="ritma-input-field" placeholder="10" min="0")
 
       //- Album search
       div

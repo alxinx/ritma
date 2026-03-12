@@ -7,6 +7,7 @@ import ArtistaGeneros from './ArtistaGeneros.js';
 import MultimediaGeneros from './MultimediaGeneros.js'
 import LogErrores from './LogErrores.js'
 import HistorialDescargas from './HistorialDescargas.js'
+import Aspirantes from './Aspirantes.js'
 
 
 
@@ -45,5 +46,5 @@ HistorialDescargas.belongsTo(Usuarios, { foreignKey: 'idUsuario' });
 
 
 export {
-        Usuarios, Generos, Artistas, Album, Multimedia, ArtistaGeneros, MultimediaGeneros, LogErrores, HistorialDescargas
+        Usuarios, Generos, Artistas, Album, Multimedia, ArtistaGeneros, MultimediaGeneros, LogErrores, HistorialDescargas, Aspirantes
 }

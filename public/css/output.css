@@ -456,9 +456,6 @@
   .col-span-2 {
     grid-column: span 2 / span 2;
   }
-  .col-span-3 {
-    grid-column: span 3 / span 3;
-  }
   .col-span-4 {
     grid-column: span 4 / span 4;
   }
@@ -572,6 +569,9 @@
   }
   .ml-1 {
     margin-left: calc(var(--spacing) * 1);
+  }
+  .ml-\[60px\] {
+    margin-left: 60px;
   }
   .block {
     display: block;
@@ -4913,16 +4913,21 @@ body {
 }
 @media (max-width: 1023px) {
   #sidebar {
-    width: 80px;
+    width: 60px;
+    overflow: hidden;
+    transition: width 100ms ease;
+  }
+  #sidebar .sidebar-footer, #sidebar .sidebar-text {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 100ms ease;
   }
   #sidebar.open {
     width: 260px;
   }
-  #sidebar .sidebar-text {
-    display: none;
-  }
-  #sidebar.open .sidebar-text {
-    display: block;
+  #sidebar.open .sidebar-footer, #sidebar.open .sidebar-text {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 @property --tw-translate-x {

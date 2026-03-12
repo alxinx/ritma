@@ -371,6 +371,7 @@ import Swal from 'sweetalert2';
             const modalCancel = document.getElementById('modal-cancel');
             const modalSave = document.getElementById('modal-save');
             const editNombre = document.getElementById('edit-nombre');
+            const editBpm = document.getElementById('edit-bpm');
             const editCreditos = document.getElementById('edit-creditos');
             const editAlbum = document.getElementById('edit-album');
             const editAlbumId = document.getElementById('edit-album-id');
@@ -383,6 +384,7 @@ import Swal from 'sweetalert2';
             function openModal() {
                 // Prefill from config
                 if (editNombre) editNombre.value = config.nombreComposicion || '';
+                if (editBpm) editBpm.value = config.bpm || '';
                 if (editCreditos) editCreditos.value = config.costoCreditos || 0;
                 if (editAlbumId) editAlbumId.value = config.idAlbum || '';
                 if (editAlbum) editAlbum.value = '';
@@ -487,8 +489,10 @@ import Swal from 'sweetalert2';
 
                         const body = {
                             nombreComposicion: editNombre ? editNombre.value : '',
+                            bpm: editBpm ? parseInt(editBpm.value) || null : null,
                             costoCreditos: editCreditos ? parseInt(editCreditos.value) : 0,
                             idAlbum: editAlbumId ? editAlbumId.value : '',
+                            albumNombre: editAlbum ? editAlbum.value.trim() : '',
                             generos: selectedGeneros
                         };
 

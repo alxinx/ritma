@@ -764,20 +764,29 @@ body {
 
 
 @media (max-width: 1023px) {
+  /* Collapsed: only logo visible */
   #sidebar {
-    width: 80px;
+    width: 60px;
+    overflow: hidden;
+    transition: width 100ms ease;
   }
 
+  #sidebar .sidebar-footer,
+  #sidebar .sidebar-text {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 100ms ease;
+  }
+
+  /* Expanded: full menu */
   #sidebar.open {
     width: 260px;
   }
 
-  #sidebar .sidebar-text {
-    display: none;
-  }
-
+  #sidebar.open .sidebar-footer,
   #sidebar.open .sidebar-text {
-    display: block;
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 

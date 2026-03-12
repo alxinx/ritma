@@ -7,7 +7,7 @@ div(class="flex min-h-screen")
 
     //-MENU LATERAL
     include layout/leftMenu.pug
-    main(class="flex-1 lg:ml-72 min-h-screen")
+    main(class="flex-1 ml-[60px] lg:ml-72 min-h-screen")
 
         include layout/headerAdmin.pug
 
@@ -33,6 +33,7 @@ div(class="flex min-h-screen")
             idArtista: "#{multimedia.idArtista || ''}",
             nombreComposicion: "#{multimedia.nombreComposicion}",
             costoCreditos: #{multimedia.costoCreditos || 0},
+            bpm: #{multimedia.bpm || 0},
             idAlbum: "#{multimedia.idAlbum || ''}",
             generosActuales: !{JSON.stringify((multimedia.GENEROs || []).map(g => g.genero_id))}
         };

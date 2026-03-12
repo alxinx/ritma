@@ -60,9 +60,43 @@ const checkUploadMultimedia = [
 ];
 
 
+const checkAcceso = [
+    check('full_name')
+        .trim()
+        .escape()
+        .notEmpty().withMessage('El nombre es obligatorio')
+        .isLength({ min: 2, max: 200 }).withMessage('Nombre inválido'),
+
+    check('user_email')
+        .trim()
+        .isEmail().withMessage('Email inválido')
+        .normalizeEmail(),
+
+    check('whatsapp_num')
+        .trim()
+        .escape()
+        .notEmpty().withMessage('WhatsApp es obligatorio'),
+
+    check('city')
+        .optional({ checkFalsy: true })
+        .trim()
+        .escape(),
+
+    check('instagram_handle')
+        .optional({ checkFalsy: true })
+        .trim()
+        .escape(),
+
+    check('tiktok_handle')
+        .optional({ checkFalsy: true })
+        .trim()
+        .escape()
+];
+
 export {
 loginValidation,
 checkPasswords,
 emailValidation,
-checkUploadMultimedia
+checkUploadMultimedia,
+checkAcceso
 }

@@ -3,7 +3,7 @@ import multimediaQueue from '../queues/multimediaQueue.js';
 import db from "../config/bd.js";
 import s3Client from "../config/r2.js";
 import redisClient from "../config/redis.js";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from 'crypto';
 import dotenv from "dotenv";
@@ -605,7 +605,7 @@ const updateMultimediaData = async (req, res) => {
     const t = await db.transaction();
     try {
         const { idMultimedia } = req.params;
-        const { nombreComposicion, costoCreditos, idAlbum, generos } = req.body;
+        const { nombreComposicion, bpm, costoCreditos, idAlbum, albumNombre, generos } = req.body;
 
         const multimedia = await Multimedia.findByPk(idMultimedia, { transaction: t });
         if (!multimedia) {
@@ -616,8 +616,31 @@ const updateMultimediaData = async (req, res) => {
         // Update basic fields
         const updateFields = {};
         if (nombreComposicion !== undefined) updateFields.nombreComposicion = nombreComposicion.trim();
+        if (bpm !== undefined) updateFields.bpm = bpm ? Math.min(200, Math.max(20, parseInt(bpm))) : null;
         if (costoCreditos !== undefined) updateFields.costoCreditos = parseInt(costoCreditos) || 0;
-        if (idAlbum !== undefined) updateFields.idAlbum = idAlbum || null;
+
+        // Album logic: resolve idAlbum, albumNombre, or auto-assign "Single"
+        const artistaId = multimedia.idArtista;
+        if (idAlbum) {
+            // User selected an existing album from autocomplete
+            updateFields.idAlbum = idAlbum;
+        } else if (albumNombre && albumNombre.trim()) {
+            // User typed a new album name — find or create it
+            const [album] = await Album.findOrCreate({
+                where: { nombreAlbum: albumNombre.trim(), idArtista: artistaId },
+                defaults: { nombreAlbum: albumNombre.trim(), idArtista: artistaId },
+                transaction: t
+            });
+            updateFields.idAlbum = album.idAlbum;
+        } else if (artistaId) {
+            // No album provided — auto-assign "Single" for this artist
+            const [singleAlbum] = await Album.findOrCreate({
+                where: { nombreAlbum: 'Single', idArtista: artistaId },
+                defaults: { nombreAlbum: 'Single', idArtista: artistaId },
+                transaction: t
+            });
+            updateFields.idAlbum = singleAlbum.idAlbum;
+        }
 
         await multimedia.update(updateFields, { transaction: t });
 
@@ -712,33 +735,33 @@ const streamVideo = async (req, res) => {
         const r2Key = `multimedia/previews/${multimedia.keyPreview}`;
         const contentType = multimedia.tipoAsset === 'VIDEO' ? 'video/mp4' : 'audio/mpeg';
 
-        // Check Range header
+        // Get file size via HEAD (no body download)
+        const headCommand = new HeadObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: r2Key
+        });
+        const headResponse = await s3Client.send(headCommand);
+        const fileSize = headResponse.ContentLength;
+
         const rangeHeader = req.headers.range;
 
         if (rangeHeader) {
-            // First get file size with a HEAD-like request
-            const headCommand = new GetObjectCommand({
-                Bucket: process.env.R2_BUCKET_NAME,
-                Key: r2Key
-            });
-            const headResponse = await s3Client.send(headCommand);
-            const fileSize = headResponse.ContentLength;
-            // Destroy the body we don't need
-            headResponse.Body.destroy();
-
-            // Parse range
             const parts = rangeHeader.replace(/bytes=/, '').split('-');
             const start = parseInt(parts[0], 10);
             const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
             const chunkSize = end - start + 1;
 
-            // Fetch range from R2
             const rangeCommand = new GetObjectCommand({
                 Bucket: process.env.R2_BUCKET_NAME,
                 Key: r2Key,
                 Range: `bytes=${start}-${end}`
             });
             const rangeResponse = await s3Client.send(rangeCommand);
+
+            // Cleanup R2 stream if client disconnects mid-seek
+            req.on('close', () => {
+                rangeResponse.Body.destroy();
+            });
 
             res.writeHead(206, {
                 'Content-Range': `bytes ${start}-${end}/${fileSize}`,
@@ -748,26 +771,31 @@ const streamVideo = async (req, res) => {
                 'Cache-Control': 'private, no-store'
             });
 
+            rangeResponse.Body.on('error', () => res.end());
             rangeResponse.Body.pipe(res);
         } else {
-            // Full file request
             const command = new GetObjectCommand({
                 Bucket: process.env.R2_BUCKET_NAME,
                 Key: r2Key
             });
             const r2Response = await s3Client.send(command);
 
+            req.on('close', () => {
+                r2Response.Body.destroy();
+            });
+
             res.set('Content-Type', contentType);
-            if (r2Response.ContentLength) res.set('Content-Length', r2Response.ContentLength);
+            res.set('Content-Length', fileSize);
             res.set('Accept-Ranges', 'bytes');
             res.set('Cache-Control', 'private, no-store');
             res.set('Content-Disposition', 'inline');
 
+            r2Response.Body.on('error', () => res.end());
             r2Response.Body.pipe(res);
         }
     } catch (error) {
         console.error('Error streamVideo:', error);
-        res.status(500).end();
+        if (!res.headersSent) res.status(500).end();
     }
 };
 
@@ -795,18 +823,18 @@ const streamPreview = async (req, res) => {
         }
 
         const contentType = multimedia.tipoAsset === 'VIDEO' ? 'video/mp4' : 'audio/mpeg';
+
+        // Get file size via HEAD (no body download)
+        const headCommand = new HeadObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: r2Key
+        });
+        const headResponse = await s3Client.send(headCommand);
+        const fileSize = headResponse.ContentLength;
+
         const rangeHeader = req.headers.range;
 
         if (rangeHeader) {
-            // Get file size first
-            const headCommand = new GetObjectCommand({
-                Bucket: process.env.R2_BUCKET_NAME,
-                Key: r2Key
-            });
-            const headResponse = await s3Client.send(headCommand);
-            const fileSize = headResponse.ContentLength;
-            headResponse.Body.destroy();
-
             const parts = rangeHeader.replace(/bytes=/, '').split('-');
             const start = parseInt(parts[0], 10);
             const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
@@ -819,6 +847,11 @@ const streamPreview = async (req, res) => {
             });
             const rangeResponse = await s3Client.send(rangeCommand);
 
+            // Cleanup R2 stream if client disconnects mid-seek
+            req.on('close', () => {
+                rangeResponse.Body.destroy();
+            });
+
             res.writeHead(206, {
                 'Content-Range': `bytes ${start}-${end}/${fileSize}`,
                 'Accept-Ranges': 'bytes',
@@ -827,6 +860,7 @@ const streamPreview = async (req, res) => {
                 'Cache-Control': 'private, max-age=3600'
             });
 
+            rangeResponse.Body.on('error', () => res.end());
             rangeResponse.Body.pipe(res);
         } else {
             const command = new GetObjectCommand({
@@ -835,16 +869,21 @@ const streamPreview = async (req, res) => {
             });
             const r2Response = await s3Client.send(command);
 
+            req.on('close', () => {
+                r2Response.Body.destroy();
+            });
+
             res.set('Content-Type', contentType);
-            if (r2Response.ContentLength) res.set('Content-Length', r2Response.ContentLength);
+            res.set('Content-Length', fileSize);
             res.set('Accept-Ranges', 'bytes');
             res.set('Cache-Control', 'private, max-age=3600');
 
+            r2Response.Body.on('error', () => res.end());
             r2Response.Body.pipe(res);
         }
     } catch (error) {
         console.error('Error streamPreview:', error);
-        res.status(500).end();
+        if (!res.headersSent) res.status(500).end();
     }
 };
 
