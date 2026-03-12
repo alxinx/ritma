@@ -1,0 +1,14 @@
+div(class="glass-card rounded-3xl p-8 flex flex-col justify-center relative overflow-hidden group border-ritma-red/20 glow-red")
+  div(class="absolute inset-0 pixel-pattern opacity-5")
+
+  div(class="relative z-10 text-center")
+    h3(class="text-[11px] font-bold text-error-red uppercase tracking-[0.3em] mb-6") Error Logs (24h)
+
+    div(class="inline-flex items-center justify-center size-24 rounded-full bg-ritma-red/10 border border-ritma-red/30 mb-6")
+      span(class="text-5xl font-accent font-extrabold text-ritma-red") 12
+
+    p(class="text-xs font-bold text-white mb-2") CRITICAL: 500 ERRORS DETECTED
+    p(class="text-[10px] text-ritma-red/70 font-mono tracking-tighter") TIMESTAMP: 2023-10-27T14:22:11Z
+
+    button(class="mt-8 w-full py-3 bg-ritma-red text-white text-[10px] font-black rounded-xl uppercase tracking-widest hover:brightness-110 transition-all")
+      | Inspect Failures

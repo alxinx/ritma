@@ -1,0 +1,27 @@
+div(class="glass-card rounded-3xl p-8 relative overflow-hidden group")
+  h3(class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-4") Nuevos este mes
+  div(class="flex items-center gap-3 mb-6")
+    span(class="text-4xl font-display  font-extrabold") +842
+    span(class="text-primary text-xs font-bold flex items-center")
+      span(class="material-symbols-outlined text-sm") trending_up
+      |  12.4%
+  div(class="relative h-24 w-full")
+    svg(class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 30")
+      path(
+        d="M0 25 Q10 22 20 25 T40 18 T60 22 T80 12 T100 5"
+        fill="none"
+        stroke="#C9DA2B"
+        stroke-width="2"
+        vector-effect="non-scaling-stroke"
+      )
+      path(
+        d="M0 25 Q10 22 20 25 T40 18 T60 22 T80 12 T100 5 V30 H0 Z"
+        fill="url(#gradient-chart)"
+        opacity="0.1"
+      )
+      defs
+        linearGradient(id="gradient-chart" x1="0" x2="0" y1="0" y2="1")
+          stop(offset="0%" stop-color="#C9DA2B")
+          stop(offset="100%" stop-color="transparent")
+    div(class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity")
+      span(class="text-[9px] bg-black/60 px-2 py-1 rounded-md border border-white/10 backdrop-blur-sm") View 30d Trend

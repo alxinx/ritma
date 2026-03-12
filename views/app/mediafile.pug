@@ -1,0 +1,39 @@
+include ../layout/head.pug
+include ../components/mixins/form-field.pug
+include ../components/mixins/layouts.pug
+block contenedor
+
+div(class="flex min-h-screen")
+
+    //-MENU LATERAL
+    include layout/leftMenu.pug
+    main(class="flex-1 lg:ml-72 min-h-screen")
+
+        include layout/headerAdmin.pug
+
+        //BODY
+        div(class="mx-auto pb-32")
+
+            div(class="flex flex-col lg:flex-row min-h-screen")
+                if multimedia && multimedia.tipoAsset === 'AUDIO'
+                    include layout/audioProfile.pug
+                else if multimedia && multimedia.tipoAsset === 'VIDEO'
+                    include layout/videoProfile.pug
+
+        include layout/footer.pug
+
+    //- Data para el JS (sin exponer URLs de R2)
+    script.
+        window.__MEDIAFILE__ = {
+            idMultimedia: "#{multimedia.idMultimedia}",
+            tipoAsset: "#{multimedia.tipoAsset}",
+            estado: "#{multimedia.estado}",
+            csrfToken: "#{csrfToken}",
+            hasPreview: #{multimedia.keyPreview ? 'true' : 'false'},
+            idArtista: "#{multimedia.idArtista || ''}",
+            nombreComposicion: "#{multimedia.nombreComposicion}",
+            costoCreditos: #{multimedia.costoCreditos || 0},
+            idAlbum: "#{multimedia.idAlbum || ''}",
+            generosActuales: !{JSON.stringify((multimedia.GENEROs || []).map(g => g.genero_id))}
+        };
+    script(src="/js/mediafileProfile.js")

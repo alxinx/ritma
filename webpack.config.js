@@ -3,7 +3,13 @@ import path from "path"
 export default {
     mode : 'development',
     entry : {
-       
+        basicValidator : './src/js/basicValidator.js',
+        controlPanel : './src/js/controlPanel.js',
+        multimediaPanels : './src/js/multimediaPanels.js',
+        monitorUpload : './src/js/monitorUpload.js',
+        listadoMultimedia : './src/js/listadoMultimedia.js',
+        mediafileProfile : './src/js/mediafileProfile.js',
+
     },
     output : {
         filename : '[name].js',

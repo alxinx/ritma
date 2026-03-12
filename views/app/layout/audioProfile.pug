@@ -1,0 +1,165 @@
+aside(class="w-full lg:w-3/5 xl:w-[35%] relative overflow-hidden lg:h-180 border-r border-white/10")
+
+  img(alt=multimedia.ARTISTA ? multimedia.ARTISTA.nombreArtista : 'Artista' class="absolute inset-0 w-full h-full object-cover" src=coverUrl)
+
+  div(class="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent")
+
+  div(class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent")
+
+  div(class="absolute bottom-28 left-12 z-10")
+    div(class="mb-4 inline-block bg-primary px-3 py-1 text-black font-display font-black text-[10px] uppercase tracking-widest")
+      | Artista
+    h2(class="font-display font-black text-6xl xl:text-6xl uppercase leading-none tracking-tighter")
+      | #{multimedia.ARTISTA ? multimedia.ARTISTA.nombreArtista : 'Sin artista'}
+
+  div(class="absolute bottom-0 w-full left-0 z-10 flex flex-col")
+    button(id="btn-editar-datos" class="btn btn-green w-full")
+      span(class="material-symbols-outlined mr-2") edit
+      h4 Editar Datos
+    if multimedia.estado === 'ENABLE'
+      button(id="btn-toggle-estado" class="btn btn-danger w-full")
+        h4 Suspender Multimedia
+    else
+      button(id="btn-toggle-estado" class="btn btn-green w-full")
+        h4 Habilitar Multimedia
+
+  div(class="absolute top-12 left-12 flex flex-col gap-2")
+    div(class="sidebar-line w-1 h-32 opacity-50")
+    span(class="text-[10px] font-mono rotate-90 origin-left translate-x-3 translate-y-4 text-slate-500 tracking-[0.3em]")
+      | #{multimedia.ALBUM ? multimedia.ALBUM.nombreAlbum : 'Single'}
+
+section(class="mb-5")
+
+div(class="p-8 lg:p-3 max-w-5xl")
+  div(class="flex flex-col gap-2 mb-12")
+    div(class="flex items-center gap-4 text-slate-500 text-[10px] font-bold tracking-[0.2em] uppercase")
+      span Artista : #{multimedia.ARTISTA ? multimedia.ARTISTA.nombreArtista : 'N/A'}
+      span(class="w-1 h-1 bg-white/20 rounded-full")
+      span Album: #{multimedia.ALBUM ? multimedia.ALBUM.nombreAlbum : 'Single'}
+
+    h1(class="font-display font-black text-5xl lg:text-7xl uppercase tracking-tighter mb-4 glow-primary")
+      | #{multimedia.nombreComposicion}
+
+    div(class="grid grid-cols-2 md:grid-cols-5 gap-4 py-8 border-y border-white/10")
+      div(class="flex flex-col")
+        span(class="text-slate-500 text-[10px] text-center uppercase tracking-widest mb-1") Créditos
+        span(class="text-2xl font-display font-bold text-center") #{multimedia.costoCreditos}
+
+      div(class="flex flex-col border-l border-white/10 pl-4")
+        span(class="text-slate-500 text-[10px] uppercase tracking-widest mb-1 text-center") Nro Descargas
+        span(class="text-2xl font-display font-bold text-ritma-cyan text-center") #{multimedia.descargas}
+
+      div(class="flex flex-col border-l border-white/10 pl-4")
+        span(class="text-slate-500 text-[10px] uppercase tracking-widest mb-1 text-center") Generos
+        span(class="text-2xs font-display font-bold")
+          if multimedia.GENEROs && multimedia.GENEROs.length
+            | #{multimedia.GENEROs.map(g => g.nombre).join(', ')}
+          else
+            | Sin género
+
+      div(class="flex flex-col border-l border-white/10 pl-4")
+        span(class="text-slate-500 text-[10px] uppercase tracking-widest mb-1 text-center") Formato
+        span(class="text-2xl font-display font-bold text-center") #{multimedia.formato ? multimedia.formato.toUpperCase() : 'N/A'}
+
+      div(class="flex flex-col border-l border-white/10 pl-4")
+        span(class="text-slate-500 text-[10px] uppercase tracking-widest mb-1 text-center") Última descarga
+        span(class="text-1xs font-display font-bold text-center")
+          if ultimasDescargas && ultimasDescargas.length
+            | #{new Date(ultimasDescargas[0].fechaDescarga).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+          else
+            | Sin descargas
+
+  //- Waveform Player Section
+  div(id="waveform-container" class="relative w-full h-40 bg-surface-accent border border-white/10 mb-2 cursor-pointer")
+    div(class="absolute inset-0 bg-primary/5")
+
+    //- Playhead / Marker
+    div(id="playhead" class="absolute top-0 bottom-0 w-px bg-primary z-20 shadow-[0_0_15px_#C9DA2B]" style="left: 0%")
+      div(class="absolute -top-3 -left-[5px] w-3 h-3 bg-primary rotate-45")
+
+    //- Waveform Backgrounds
+    div(class="absolute inset-0 waveform-massive bg-white/10 opacity-30")
+    div(id="waveform-progress" class="absolute inset-y-0 left-0 waveform-massive bg-primary" style="width: 0%")
+
+    //- Play/Pause Button (always visible, centered)
+    div(class="absolute inset-0 flex items-center justify-center z-30 pointer-events-none")
+      button(id="btn-play-pause" class="w-16 h-16 bg-primary text-black flex items-center justify-center pointer-events-auto hover:scale-110 transition-transform")
+        span(id="play-icon" class="material-symbols-outlined text-4xl text-black") play_arrow
+
+  //- Time display
+  div(class="flex justify-between text-[10px] text-slate-500 font-mono mb-4")
+    span(id="current-time") 00:00
+    span(id="total-time")
+      if multimedia.duracion
+        - const mins = Math.floor(multimedia.duracion / 60)
+        - const secs = multimedia.duracion % 60
+        | #{String(mins).padStart(2,'0')}:#{String(secs).padStart(2,'0')}
+      else
+        | --:--
+
+  div(class="flex items-center w-full gap-4 mb-8")
+    div(class="flex items-center justify-center w-full p-4 bg-surface-accent border border-white/5 hover:border-primary/40 transition-all")
+      div(class="flex items-center gap-3")
+      button(id="btn-request-download" class="btn btn-green w-full")
+        span(class="material-symbols-outlined") download
+        |  Genera Link de descarga
+
+  div(class="flex items-center gap-4 mb-4")
+    h3(class="font-display font-black text-xl uppercase tracking-tighter") Últimas descargas
+    div(class="flex-grow h-px bg-white/10")
+
+  div(class="grid grid-cols-1 md:grid-cols-6 gap-2")
+    if ultimasDescargas && ultimasDescargas.length
+      each descarga in ultimasDescargas
+        div(class="flex items-center justify-between p-4 bg-surface-accent border border-white/5 hover:border-primary/40 transition-all")
+          div
+            h4(class="text-sm font-bold tracking-wide") #{descarga.USUARIO ? descarga.USUARIO.nombreUsuario + ' ' + descarga.USUARIO.apellidoUsuario : 'Usuario'}
+            p(class="text-[10px] text-slate-500 uppercase font-mono mt-1") #{descarga.USUARIO ? descarga.USUARIO.emailUsuario : ''}
+            p(class="text-[10px] text-slate-500 uppercase font-mono mt-1") #{new Date(descarga.fechaDescarga).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+    else
+      div(class="col-span-6 text-center text-slate-500 text-sm py-8") Sin descargas registradas
+
+    //- Footer / Ver descargas
+    if totalDescargas > 6
+      div(class="flex items-center justify-between p-4 bg-surface-accent border border-white/5 hover:border-primary/40 transition-all col-span-1 md:col-span-6 opacity-60 hover:opacity-100")
+        span(class="text-[10px] font-bold uppercase tracking-widest") + #{totalDescargas - 6} descargas
+        button(class="text-primary text-[10px] font-bold uppercase underline tracking-widest") Ver todas las descargas
+
+//- Modal Editar Datos
+div(id="modal-editar-datos" class="fixed inset-0 z-[3000] bg-black/80 backdrop-blur-sm hidden items-center justify-center")
+  div(class="glass-card w-full max-w-lg mx-4 p-8 border border-white/10 relative")
+    //- Close button
+    button(id="modal-close" class="absolute top-4 right-4 text-white/40 hover:text-white p-0 bg-transparent hover:bg-transparent")
+      span(class="material-symbols-outlined") close
+
+    h3(class="font-display font-black text-xl uppercase tracking-tighter mb-6") Editar Datos
+
+    div(class="space-y-5")
+      //- Nombre composición
+      div
+        label(for="edit-nombre") Nombre de la composición
+        input(id="edit-nombre" type="text" class="ritma-input-field" placeholder="Nombre...")
+
+      //- Costo créditos
+      div
+        label(for="edit-creditos") Créditos
+        input(id="edit-creditos" type="number" class="ritma-input-field" placeholder="10" min="0")
+
+      //- Album search
+      div
+        label(for="edit-album") Álbum
+        div(class="relative")
+          input(id="edit-album" type="text" class="ritma-input-field" placeholder="Buscar álbum..." autocomplete="off")
+          div(id="album-autocomplete" class="absolute top-full left-0 w-full mt-1 bg-surface-dark border border-primary/20 shadow-lg z-50 hidden max-h-40 overflow-y-auto")
+        input(id="edit-album-id" type="hidden")
+
+      //- Géneros (checkboxes)
+      div
+        label Géneros
+        div(id="generos-container" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto custom-scrollbar p-2 border border-white/10 bg-black/20")
+          //- Populated by JS
+
+    //- Actions
+    div(class="flex items-center justify-end gap-4 mt-8")
+      button(id="modal-cancel" class="btn-small btn-ghost") Cancelar
+      button(id="modal-save" class="btn-small btn-green") Guardar
