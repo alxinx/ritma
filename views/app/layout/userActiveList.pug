@@ -1,0 +1,20 @@
+div(class="glass-card rounded-3xl p-8 lg:col-span-2")
+  h3(class="text-[11px] font-bold text-primary uppercase tracking-[0.3em] mb-4") Miembros Activos
+  div(class="ritma-input-container mb-4")
+    div(class="flex-1 min-w-[200px] relative")
+      +ritmaInput("searchUser", "searchUser", type='search', "", required=false, "Nombre o email del usuario", icon='search', autocompleteType='off')
+
+  table(class="w-full text-left border-collapse")
+    thead
+      tr(class="border-b border-white/5 bg-white/2")
+        th(class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest") Nombre / Apellido
+        th(class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest") Créditos Disponibles
+        th(class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest") Nro Descargas
+        th(class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest") Última Descarga
+        th(class="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center") Acción
+    tbody(id="members-tbody" class="divide-y divide-white/5 font-mono text-sm")
+      //- Rendered by JS
+
+  div(id="members-pagination" class="px-6 py-4 bg-black/40 flex items-center justify-between mt-2 rounded-b-xl")
+    span(id="members-total" class="subTittle tracking-widest text-[10px]") Cargando...
+    div(id="members-pages" class="flex gap-2")

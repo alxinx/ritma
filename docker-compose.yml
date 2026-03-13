@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    # Mapeamos el puerto de tu .env (2028)
+    ports:
+      - "2028:2028"
+    env_file:
+      - .env
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      - MYSQL_DATABASE=ritma
+      - MYSQL_ROOT_PASSWORD=ritmapass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6381:6379"  # <--- Cambia el 6379 de la izquierda por 6381
+
+volumes:
+  mysql_data:

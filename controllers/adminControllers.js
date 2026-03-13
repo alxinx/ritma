@@ -1,8 +1,8 @@
-import { Usuarios, Artistas, Album, Generos, Multimedia, MultimediaGeneros, ArtistaGeneros, HistorialDescargas } from '../models/index.js'
+import { Usuarios, Artistas, Album, Generos, Multimedia, MultimediaGeneros, ArtistaGeneros, HistorialDescargas, Aspirantes, RitmaCoins } from '../models/index.js'
 import multimediaQueue from '../queues/multimediaQueue.js';
 import db from "../config/bd.js";
 import s3Client from "../config/r2.js";
-import redisClient from "../config/redis.js";
+import redisClient, { redisSub } from "../config/redis.js";
 import { GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from 'crypto';
@@ -25,13 +25,40 @@ const dashboard = (req, res) => {
 }
 
 
-const usersPanel = (req, res) => {
-    return res.status(200).render('../views/app/userPanel', {
-        tituloPagina: "Usuarios",
-        subtitulo: "Panel de control de los usuarios",
-        active: 'users',
-        csrfToken: req.csrfToken()
-    })
+const usersPanel = async (req, res) => {
+    try {
+        // Miembros activos (no admin)
+        const miembrosActivos = await Usuarios.count({ where: { permisos: 'USUARIO' } });
+
+        // Créditos en circulación (sum cantidadActual > 0)
+        const creditosCirculacion = await RitmaCoins.sum('cantidadActual', {
+            where: { cantidadActual: { [Op.gt]: 0 } }
+        }) || 0;
+
+        // Descargas hoy
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const descargasHoy = await HistorialDescargas.count({
+            where: { fechaDescarga: { [Op.gte]: hoy } }
+        });
+
+        // Nuevas solicitudes (estado = aspirante)
+        const nuevasSolicitudes = await Aspirantes.count({ where: { estadoAspirante: 'aspirante' } });
+
+        return res.status(200).render('../views/app/userPanel', {
+            tituloPagina: "Usuarios",
+            subtitulo: "Panel de control de los usuarios",
+            active: 'users',
+            csrfToken: req.csrfToken(),
+            miembrosActivos,
+            creditosCirculacion,
+            descargasHoy,
+            nuevasSolicitudes
+        });
+    } catch (error) {
+        console.error('Error usersPanel:', error);
+        return res.status(500).send('Error cargando panel de usuarios');
+    }
 }
 
 
@@ -887,6 +914,256 @@ const streamPreview = async (req, res) => {
     }
 };
 
+// ==========================================
+// PANEL DE USUARIOS — Miembros Activos (paginado)
+// ==========================================
+const getActiveMembers = async (req, res) => {
+    try {
+        const limit = parseInt(process.env.MAX_ROWS_FOR_PAGE) || 10;
+        const page = parseInt(req.query.page) || 1;
+        const offset = (page - 1) * limit;
+        const search = req.query.search || '';
+
+        const where = { permisos: 'USUARIO' };
+        if (search) {
+            where[Op.or] = [
+                { nombreUsuario: { [Op.like]: `%${search}%` } },
+                { apellidoUsuario: { [Op.like]: `%${search}%` } },
+                { emailUsuario: { [Op.like]: `%${search}%` } }
+            ];
+        }
+
+        const { count, rows: usuarios } = await Usuarios.findAndCountAll({
+            where,
+            attributes: ['idUsuario', 'nombreUsuario', 'apellidoUsuario', 'emailUsuario', 'createdAt'],
+            limit,
+            offset,
+            order: [['createdAt', 'DESC']]
+        });
+
+        // Build enriched data for each user
+        const data = await Promise.all(usuarios.map(async (u) => {
+            // Credits: sum cantidadActual where cantidadActual > 0
+            const creditosResult = await RitmaCoins.sum('cantidadActual', {
+                where: { idUsuario: u.idUsuario, cantidadActual: { [Op.gt]: 0 } }
+            });
+
+            // Download count
+            const nroDescargas = await HistorialDescargas.count({
+                where: { idUsuario: u.idUsuario }
+            });
+
+            // Last download date
+            const ultimaDescarga = await HistorialDescargas.findOne({
+                where: { idUsuario: u.idUsuario },
+                order: [['fechaDescarga', 'DESC']],
+                attributes: ['fechaDescarga']
+            });
+
+            return {
+                idUsuario: u.idUsuario,
+                nombre: u.nombreUsuario,
+                apellido: u.apellidoUsuario,
+                email: u.emailUsuario,
+                creditos: creditosResult || 0,
+                nroDescargas,
+                ultimaDescarga: ultimaDescarga ? ultimaDescarga.fechaDescarga : null
+            };
+        }));
+
+        res.json({
+            ok: true,
+            data,
+            total: count,
+            page,
+            totalPages: Math.ceil(count / limit)
+        });
+    } catch (error) {
+        console.error('Error getActiveMembers:', error);
+        res.status(500).json({ ok: false, msg: 'Error al obtener miembros' });
+    }
+};
+
+// ==========================================
+// PANEL DE USUARIOS — Solicitudes (aspirantes)
+// ==========================================
+const getAspirantes = async (req, res) => {
+    try {
+        const aspirantes = await Aspirantes.findAll({
+            where: { estadoAspirante: 'aspirante' },
+            order: [['createdAt', 'DESC']]
+        });
+
+        const codeAdmin = process.env.CODEADMIN || '';
+
+        const data = aspirantes.map(a => ({
+            idAspirante: a.idAspirante,
+            nombre: a.nombreAspirante,
+            apellido: a.apellidoAspirante,
+            email: a.emailAspirante,
+            whatsapp: a.whatsappAspirante,
+            ciudad: a.ciudadAspirante,
+            instagram: a.instagramAspirante,
+            tiktok: a.tiktokAspirante,
+            codigo: a.codigo,
+            verificado: a.codigo === codeAdmin && !!a.codigo,
+            fecha: a.createdAt
+        }));
+
+        res.json({ ok: true, data });
+    } catch (error) {
+        console.error('Error getAspirantes:', error);
+        res.status(500).json({ ok: false, msg: 'Error al obtener solicitudes' });
+    }
+};
+
+// ==========================================
+// APROBAR ASPIRANTE → crea usuario + envía email
+// ==========================================
+const aprobarAspirante = async (req, res) => {
+    const t = await db.transaction();
+    try {
+        const { idAspirante } = req.params;
+
+        const aspirante = await Aspirantes.findByPk(idAspirante, { transaction: t });
+        if (!aspirante) {
+            await t.rollback();
+            return res.status(404).json({ ok: false, msg: 'Aspirante no encontrado' });
+        }
+        if (aspirante.estadoAspirante !== 'aspirante') {
+            await t.rollback();
+            return res.status(400).json({ ok: false, msg: 'Este aspirante ya fue procesado' });
+        }
+
+        // Check if email already exists as user
+        const existeUsuario = await Usuarios.findOne({
+            where: { emailUsuario: aspirante.emailAspirante },
+            transaction: t
+        });
+        if (existeUsuario) {
+            await t.rollback();
+            return res.status(400).json({ ok: false, msg: 'Ya existe un usuario con ese correo' });
+        }
+
+        // Create user — password is whatsapp (bcrypt hook auto-hashes)
+        const nuevoUsuario = await Usuarios.create({
+            nombreUsuario: aspirante.nombreAspirante,
+            apellidoUsuario: aspirante.apellidoAspirante,
+            emailUsuario: aspirante.emailAspirante,
+            password: aspirante.whatsappAspirante,
+            permisos: 'USUARIO',
+            token: (await import('../helpers/genToken.js')).generarId()
+        }, { transaction: t });
+
+        // Update aspirante status
+        await aspirante.update({ estadoAspirante: 'aceptado' }, { transaction: t });
+
+        await t.commit();
+
+        // Send welcome email (async, don't block response)
+        try {
+            const { mailBienvenida } = await import('../helpers/mailBienvenida.js');
+            await mailBienvenida({
+                emailUsuario: aspirante.emailAspirante,
+                nombreUsuario: aspirante.nombreAspirante,
+                password: aspirante.whatsappAspirante
+            });
+        } catch (emailErr) {
+            console.error('[USERS] Error enviando email de bienvenida:', emailErr);
+        }
+
+        res.json({ ok: true, msg: `Usuario ${aspirante.nombreAspirante} creado exitosamente` });
+    } catch (error) {
+        if (t && !t.finished) await t.rollback();
+        console.error('Error aprobarAspirante:', error);
+        res.status(500).json({ ok: false, msg: 'Error al aprobar aspirante' });
+    }
+};
+
+// ==========================================
+// RECHAZAR ASPIRANTE
+// ==========================================
+const rechazarAspirante = async (req, res) => {
+    try {
+        const { idAspirante } = req.params;
+        const aspirante = await Aspirantes.findByPk(idAspirante);
+        if (!aspirante) return res.status(404).json({ ok: false, msg: 'Aspirante no encontrado' });
+
+        await aspirante.update({ estadoAspirante: 'rechazado' });
+        res.json({ ok: true, msg: 'Aspirante rechazado' });
+    } catch (error) {
+        console.error('Error rechazarAspirante:', error);
+        res.status(500).json({ ok: false, msg: 'Error al rechazar' });
+    }
+};
+
+// ==========================================
+// HELPER: Obtener stats del user panel
+// ==========================================
+async function getUserPanelStats() {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const [miembrosActivos, creditosCirculacion, descargasHoy, nuevasSolicitudes] = await Promise.all([
+        Usuarios.count({ where: { permisos: 'USUARIO' } }),
+        RitmaCoins.sum('cantidadActual', { where: { cantidadActual: { [Op.gt]: 0 } } }).then(v => v || 0),
+        HistorialDescargas.count({ where: { fechaDescarga: { [Op.gte]: hoy } } }),
+        Aspirantes.count({ where: { estadoAspirante: 'aspirante' } })
+    ]);
+
+    return { miembrosActivos, creditosCirculacion, descargasHoy, nuevasSolicitudes };
+}
+
+// ==========================================
+// SSE — User Panel real-time updates
+// ==========================================
+const sseUserPanel = async (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+
+    // Send initial stats
+    try {
+        const stats = await getUserPanelStats();
+        res.write(`event: stats-update\ndata: ${JSON.stringify(stats)}\n\n`);
+    } catch (err) {
+        console.error('SSE initial stats error:', err);
+    }
+
+    // Keep-alive every 30s
+    const keepAlive = setInterval(() => {
+        res.write(': keepalive\n\n');
+    }, 30000);
+
+    // Subscribe to Redis channel
+    const channel = 'admin:userpanel';
+    const listener = async (message) => {
+        try {
+            const payload = JSON.parse(message);
+
+            if (payload.type === 'new-aspirante') {
+                res.write(`event: new-aspirante\ndata: ${JSON.stringify(payload.data)}\n\n`);
+            }
+
+            // Always send fresh stats after any event
+            const stats = await getUserPanelStats();
+            res.write(`event: stats-update\ndata: ${JSON.stringify(stats)}\n\n`);
+        } catch (err) {
+            console.error('SSE message error:', err);
+        }
+    };
+
+    await redisSub.subscribe(channel, listener);
+
+    // Cleanup on disconnect
+    req.on('close', async () => {
+        clearInterval(keepAlive);
+        await redisSub.unsubscribe(channel, listener);
+    });
+};
+
 export {
     dashboard,
     usersPanel,
@@ -904,4 +1181,9 @@ export {
     requestStreamToken,
     streamVideo,
     streamPreview,
+    getActiveMembers,
+    getAspirantes,
+    aprobarAspirante,
+    rechazarAspirante,
+    sseUserPanel,
 }

@@ -8,6 +8,7 @@ import MultimediaGeneros from './MultimediaGeneros.js'
 import LogErrores from './LogErrores.js'
 import HistorialDescargas from './HistorialDescargas.js'
 import Aspirantes from './Aspirantes.js'
+import RitmaCoins from './RitmaCoins.js'
 
 
 
@@ -44,7 +45,11 @@ HistorialDescargas.belongsTo(Multimedia, { foreignKey: 'idMultimedia' });
 Usuarios.hasMany(HistorialDescargas, { foreignKey: 'idUsuario' });
 HistorialDescargas.belongsTo(Usuarios, { foreignKey: 'idUsuario' });
 
+// --- 4. RITMA COINS ---
+Usuarios.hasMany(RitmaCoins, { foreignKey: 'idUsuario' });
+RitmaCoins.belongsTo(Usuarios, { foreignKey: 'idUsuario' });
+
 
 export {
-        Usuarios, Generos, Artistas, Album, Multimedia, ArtistaGeneros, MultimediaGeneros, LogErrores, HistorialDescargas, Aspirantes
+        Usuarios, Generos, Artistas, Album, Multimedia, ArtistaGeneros, MultimediaGeneros, LogErrores, HistorialDescargas, Aspirantes, RitmaCoins
 }

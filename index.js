@@ -10,7 +10,7 @@ import cookieParser from "cookie-parser";
 import securityHeaders from "./middlewares/securityHeaders.js";
 
 import db from "./config/bd.js";
-import redisClient from './config/redis.js';
+import redisClient, { redisSub } from './config/redis.js';
 
 import pageRoutes from "./routes/pageRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
@@ -100,9 +100,10 @@ async function startServer() {
     if (process.env.DB_SYNC === "true") await db.sync();
     console.log("Conexión a la base de datos establecida correctamente.");
 
-    // Conectar Redis
+    // Conectar Redis (commands + subscriber)
     await redisClient.connect();
-    console.log('Redis conectado');
+    await redisSub.connect();
+    console.log('Redis conectado (commands + pub/sub)');
 
     // Iniciar servidor Express
     const PORT = process.env.APP_PORT || 5050;

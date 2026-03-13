@@ -23,4 +23,9 @@ redisClient.on('error', async (err) => {
     console.error('Redis error:', err);
 });
 
+// Cliente dedicado para Pub/Sub (Redis no permite sub + commands en el mismo cliente)
+const redisSub = redisClient.duplicate();
+redisSub.on('error', (err) => console.error('Redis Sub error:', err));
+
 export default redisClient;
+export { redisSub };

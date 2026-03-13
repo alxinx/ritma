@@ -1,6 +1,7 @@
 import { Aspirantes } from '../models/index.js';
 import { validationResult } from 'express-validator';
 import { mailAspirante } from '../helpers/mailAspirante.js';
+import redisClient from '../config/redis.js';
 
 const home =(req,res)=>{
     res.status(200).render('../views/layout/main',{
@@ -63,6 +64,21 @@ const accesoPost = async (req, res) => {
             instagramAspirante: instagram_handle || null,
             tiktokAspirante: tiktok_handle || null
         });
+
+        // Notificar panel admin en tiempo real vía Redis Pub/Sub
+        try {
+            await redisClient.publish('admin:userpanel', JSON.stringify({
+                type: 'new-aspirante',
+                data: {
+                    nombre: nombreAspirante,
+                    apellido: apellidoAspirante,
+                    email: user_email,
+                    whatsapp: whatsapp_num,
+                    ciudad: city || null,
+                    fecha: new Date().toISOString()
+                }
+            }));
+        } catch (_) { /* non-blocking */ }
 
         // Enviar email (no bloquear si falla)
         try {

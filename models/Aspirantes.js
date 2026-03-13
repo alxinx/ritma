@@ -37,6 +37,10 @@ const Aspirantes = db.define('ASPIRANTES', {
         type: DataTypes.STRING(100),
         allowNull: true
     },
+    codigo: {
+        type: DataTypes.STRING(30),
+        allowNull: true
+    },
     estadoAspirante: {
         type: DataTypes.ENUM('aspirante', 'rechazado', 'aceptado'),
         defaultValue: 'aspirante',
