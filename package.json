@@ -8,7 +8,10 @@
     "start": "nodemon index.js",
     "js": "webpack",
     "db:importar": "node ./seed/seeder.js -i",
-    "css": "npx @tailwindcss/cli -i ./public/css/input.css -o ./public/css/output.css --watch"
+    "css": "npx @tailwindcss/cli -i ./public/css/input.css -o ./public/css/output.css --watch",
+    "docker:db": "docker compose exec db mysql -u root -p",
+    "docker:log": "docker compose logs -f app",
+    "docker:shell": "docker compose exec app sh"
   },
   "author": "Codream",
   "license": "ISC",

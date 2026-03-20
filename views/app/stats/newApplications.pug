@@ -4,7 +4,14 @@ div(class="stats-crystal glass-card ")
     span.subTittle Nuevas Solicitudes
     span(class="material-symbols-outlined  ") mood_heart
   div(class="mt-4 relative z-10")
-    span(class="text-4xl font-display font-extrabold text-primary") #{nuevasSolicitudes || 0}
-    div(class="mt-1 flex items-center gap-1.5 text-[10px] font-mono")
-      span(class="material-symbols-outlined text-primary") trending_up
-      span.text-primary +0.2% vs último mes 
+    span#stat-solicitudes(class="text-4xl font-display font-extrabold text-primary") #{nuevasSolicitudes || 0}
+    div#trend-solicitudes(class="mt-1 flex items-center gap-1.5 text-[10px] font-mono")
+      if tendencia && tendencia.direccion === 'up'
+        span(class="material-symbols-outlined text-green-400") trending_up
+        span.text-green-400 +#{tendencia.porcentaje}% vs semana anterior
+      else if tendencia && tendencia.direccion === 'down'
+        span(class="material-symbols-outlined text-red-400") trending_down
+        span.text-red-400 -#{tendencia.porcentaje}% vs semana anterior
+      else
+        span(class="material-symbols-outlined text-white/40") trending_flat
+        span(class="text-white/40") Sin cambios vs semana anterior

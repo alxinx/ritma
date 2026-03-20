@@ -4,7 +4,7 @@ div(class="stats-crystal glass-card ")
     span.subTittle Miembros Activos
     span(class="material-symbols-outlined  ") face
   div(class="mt-4 relative z-10")
-    span(class="text-4xl font-display font-extrabold text-primary") #{miembrosActivos || 0}
+    span#stat-miembros(class="text-4xl font-display font-extrabold text-primary") #{miembrosActivos || 0}
     div(class="mt-1 flex items-center gap-1.5 text-[10px] font-mono")
       span(class="material-symbols-outlined text-primary") trending_up
       span.text-primary +0.2% vs último mes 

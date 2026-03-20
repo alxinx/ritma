@@ -6,7 +6,7 @@ import validarErrores  from '../middlewares/validarErrores.js'
 import {checkUploadMultimedia} from '../middlewares/validationFields.js';
 import  {getPresignedUrl}  from '../controllers/uploadController.js';
 
-import { dashboard, usersPanel, multimediaPanel, uploadboard, mediafile, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus, toggleMultimediaEstado, requestDownloadToken, verifyAndDownload, updateMultimediaData, requestStreamToken, streamVideo, streamPreview, getActiveMembers, getAspirantes, aprobarAspirante, rechazarAspirante, sseUserPanel } from '../controllers/adminControllers.js'
+import { dashboard, usersPanel, multimediaPanel, uploadboard, mediafile, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus, toggleMultimediaEstado, requestDownloadToken, verifyAndDownload, updateMultimediaData, requestStreamToken, streamVideo, streamPreview, getActiveMembers, getAspirantes, aprobarAspirante, rechazarAspirante, sseUserPanel, getSolicitudesPendientes } from '../controllers/adminControllers.js'
 const routes = express.Router();
 dotenv.config();
 
@@ -69,5 +69,6 @@ routes.get('/json/users/members', getActiveMembers);
 routes.get('/json/users/aspirantes', getAspirantes);
 routes.post('/json/users/aspirantes/:idAspirante/aprobar', aprobarAspirante);
 routes.post('/json/users/aspirantes/:idAspirante/rechazar', rechazarAspirante);
+routes.get('/json/solicitudes-pendientes', getSolicitudesPendientes);
 
 export default routes

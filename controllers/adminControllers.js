@@ -5,6 +5,7 @@ import s3Client from "../config/r2.js";
 import redisClient, { redisSub } from "../config/redis.js";
 import { GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { pipeline } from 'stream/promises';
 import crypto from 'crypto';
 import dotenv from "dotenv";
 import path from 'path';
@@ -15,13 +16,27 @@ dotenv.config();
 
 const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL;
 
-const dashboard = (req, res) => {
-    return res.status(200).render('../views/app/dashboard', {
-        tituloPagina: "Panel de control Principal",
-        subtitulo: "Bienvenido",
-        active: 'dashboard',
-        csrfToken: req.csrfToken()
-    })
+const dashboard = async (req, res) => {
+    try {
+        const aspirantesEnEspera = await Aspirantes.count({ where: { estadoAspirante: 'aspirante' } });
+
+        return res.status(200).render('../views/app/dashboard', {
+            tituloPagina: "Panel de control Principal",
+            subtitulo: "Bienvenido",
+            active: 'dashboard',
+            csrfToken: req.csrfToken(),
+            aspirantesEnEspera
+        });
+    } catch (error) {
+        console.error('Error dashboard:', error);
+        return res.status(200).render('../views/app/dashboard', {
+            tituloPagina: "Panel de control Principal",
+            subtitulo: "Bienvenido",
+            active: 'dashboard',
+            csrfToken: req.csrfToken(),
+            aspirantesEnEspera: 0
+        });
+    }
 }
 
 
@@ -45,6 +60,9 @@ const usersPanel = async (req, res) => {
         // Nuevas solicitudes (estado = aspirante)
         const nuevasSolicitudes = await Aspirantes.count({ where: { estadoAspirante: 'aspirante' } });
 
+        // Tendencia semanal de solicitudes
+        const tendencia = await calcularTendenciaSolicitudes();
+
         return res.status(200).render('../views/app/userPanel', {
             tituloPagina: "Usuarios",
             subtitulo: "Panel de control de los usuarios",
@@ -53,7 +71,8 @@ const usersPanel = async (req, res) => {
             miembrosActivos,
             creditosCirculacion,
             descargasHoy,
-            nuevasSolicitudes
+            nuevasSolicitudes,
+            tendencia
         });
     } catch (error) {
         console.error('Error usersPanel:', error);
@@ -145,9 +164,9 @@ const uploadboard = (req, res) => {
 /// INGRESO EL MULTIMEDIA
 
 const postUploadMultimedia = async (req, res) => {
-    const t = await db.transaction();
-
+    let t;
     try {
+        t = await db.transaction();
         const {
             nombreArtista,
             nombreAlbum,
@@ -289,7 +308,7 @@ const postUploadMultimedia = async (req, res) => {
         res.status(200).json({ ok: true, msg: '¡Registro en Ritma completado! 😌' });
 
     } catch (error) {
-        if (t) await t.rollback();
+        if (t && !t.finished) await t.rollback();
         console.error('Error Sequelize:', error.name, error.message);
         res.status(500).json({ ok: false, msg: 'Error al guardar en la base de datos: ' + error.message });
     }
@@ -418,11 +437,11 @@ const getMultimediaList = async (req, res) => {
             bpmMin = '',
             bpmMax = '',
             page = 1,
-            limit = 20
+            limit = process.env.MAX_ROWS_FOR_PAGE
         } = req.query;
 
         const pageNum  = Math.max(1, parseInt(page)  || 1);
-        const limitNum = Math.min(50, Math.max(1, parseInt(limit) || 20));
+        const limitNum = Math.min(50, Math.max(1, parseInt(limit) || 10));
         const offset   = (pageNum - 1) * limitNum;
 
         const where = {};
@@ -629,8 +648,9 @@ const verifyAndDownload = async (req, res) => {
 // ACTUALIZAR DATOS DE MULTIMEDIA (EDIT MODAL)
 // ==========================================
 const updateMultimediaData = async (req, res) => {
-    const t = await db.transaction();
+    let t;
     try {
+        t = await db.transaction();
         const { idMultimedia } = req.params;
         const { nombreComposicion, bpm, costoCreditos, idAlbum, albumNombre, generos } = req.body;
 
@@ -690,7 +710,7 @@ const updateMultimediaData = async (req, res) => {
         await t.commit();
         res.json({ ok: true, msg: 'Datos actualizados correctamente' });
     } catch (error) {
-        if (t) await t.rollback();
+        if (t && !t.finished) await t.rollback();
         console.error('Error updateMultimediaData:', error);
         res.status(500).json({ ok: false, msg: 'Error al actualizar datos' });
     }
@@ -785,11 +805,6 @@ const streamVideo = async (req, res) => {
             });
             const rangeResponse = await s3Client.send(rangeCommand);
 
-            // Cleanup R2 stream if client disconnects mid-seek
-            req.on('close', () => {
-                rangeResponse.Body.destroy();
-            });
-
             res.writeHead(206, {
                 'Content-Range': `bytes ${start}-${end}/${fileSize}`,
                 'Accept-Ranges': 'bytes',
@@ -798,8 +813,8 @@ const streamVideo = async (req, res) => {
                 'Cache-Control': 'private, no-store'
             });
 
-            rangeResponse.Body.on('error', () => res.end());
-            rangeResponse.Body.pipe(res);
+            // pipeline() auto-destruye ambos streams en error o disconnect
+            await pipeline(rangeResponse.Body, res);
         } else {
             const command = new GetObjectCommand({
                 Bucket: process.env.R2_BUCKET_NAME,
@@ -807,21 +822,19 @@ const streamVideo = async (req, res) => {
             });
             const r2Response = await s3Client.send(command);
 
-            req.on('close', () => {
-                r2Response.Body.destroy();
-            });
-
             res.set('Content-Type', contentType);
             res.set('Content-Length', fileSize);
             res.set('Accept-Ranges', 'bytes');
             res.set('Cache-Control', 'private, no-store');
             res.set('Content-Disposition', 'inline');
 
-            r2Response.Body.on('error', () => res.end());
-            r2Response.Body.pipe(res);
+            await pipeline(r2Response.Body, res);
         }
     } catch (error) {
-        console.error('Error streamVideo:', error);
+        // pipeline throws on client disconnect (ERR_STREAM_PREMATURE_CLOSE) — normal for seeking
+        if (error.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
+            console.error('Error streamVideo:', error);
+        }
         if (!res.headersSent) res.status(500).end();
     }
 };
@@ -874,11 +887,6 @@ const streamPreview = async (req, res) => {
             });
             const rangeResponse = await s3Client.send(rangeCommand);
 
-            // Cleanup R2 stream if client disconnects mid-seek
-            req.on('close', () => {
-                rangeResponse.Body.destroy();
-            });
-
             res.writeHead(206, {
                 'Content-Range': `bytes ${start}-${end}/${fileSize}`,
                 'Accept-Ranges': 'bytes',
@@ -887,8 +895,7 @@ const streamPreview = async (req, res) => {
                 'Cache-Control': 'private, max-age=3600'
             });
 
-            rangeResponse.Body.on('error', () => res.end());
-            rangeResponse.Body.pipe(res);
+            await pipeline(rangeResponse.Body, res);
         } else {
             const command = new GetObjectCommand({
                 Bucket: process.env.R2_BUCKET_NAME,
@@ -896,20 +903,17 @@ const streamPreview = async (req, res) => {
             });
             const r2Response = await s3Client.send(command);
 
-            req.on('close', () => {
-                r2Response.Body.destroy();
-            });
-
             res.set('Content-Type', contentType);
             res.set('Content-Length', fileSize);
             res.set('Accept-Ranges', 'bytes');
             res.set('Cache-Control', 'private, max-age=3600');
 
-            r2Response.Body.on('error', () => res.end());
-            r2Response.Body.pipe(res);
+            await pipeline(r2Response.Body, res);
         }
     } catch (error) {
-        console.error('Error streamPreview:', error);
+        if (error.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
+            console.error('Error streamPreview:', error);
+        }
         if (!res.headersSent) res.status(500).end();
     }
 };
@@ -1098,20 +1102,57 @@ const rechazarAspirante = async (req, res) => {
 };
 
 // ==========================================
+// HELPER: Tendencia semanal de solicitudes
+// Compara últimos 7 días vs los 7 días previos
+// ==========================================
+async function calcularTendenciaSolicitudes() {
+    const ahora = new Date();
+    const hace7dias = new Date(ahora);
+    hace7dias.setDate(hace7dias.getDate() - 7);
+    const hace14dias = new Date(ahora);
+    hace14dias.setDate(hace14dias.getDate() - 14);
+
+    const [semanaActual, semanaPasada] = await Promise.all([
+        Aspirantes.count({ where: { createdAt: { [Op.gte]: hace7dias } } }),
+        Aspirantes.count({ where: { createdAt: { [Op.gte]: hace14dias, [Op.lt]: hace7dias } } })
+    ]);
+
+    let porcentaje = 0;
+    let direccion = 'flat'; // 'up', 'down', 'flat'
+
+    if (semanaPasada > 0) {
+        porcentaje = ((semanaActual - semanaPasada) / semanaPasada) * 100;
+    } else if (semanaActual > 0) {
+        porcentaje = 100;
+    }
+
+    if (porcentaje > 0) direccion = 'up';
+    else if (porcentaje < 0) direccion = 'down';
+
+    return {
+        semanaActual,
+        semanaPasada,
+        porcentaje: Math.abs(porcentaje).toFixed(1),
+        direccion
+    };
+}
+
+// ==========================================
 // HELPER: Obtener stats del user panel
 // ==========================================
 async function getUserPanelStats() {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    const [miembrosActivos, creditosCirculacion, descargasHoy, nuevasSolicitudes] = await Promise.all([
+    const [miembrosActivos, creditosCirculacion, descargasHoy, nuevasSolicitudes, tendencia] = await Promise.all([
         Usuarios.count({ where: { permisos: 'USUARIO' } }),
         RitmaCoins.sum('cantidadActual', { where: { cantidadActual: { [Op.gt]: 0 } } }).then(v => v || 0),
         HistorialDescargas.count({ where: { fechaDescarga: { [Op.gte]: hoy } } }),
-        Aspirantes.count({ where: { estadoAspirante: 'aspirante' } })
+        Aspirantes.count({ where: { estadoAspirante: 'aspirante' } }),
+        calcularTendenciaSolicitudes()
     ]);
 
-    return { miembrosActivos, creditosCirculacion, descargasHoy, nuevasSolicitudes };
+    return { miembrosActivos, creditosCirculacion, descargasHoy, nuevasSolicitudes, tendencia };
 }
 
 // ==========================================
@@ -1134,12 +1175,13 @@ const sseUserPanel = async (req, res) => {
 
     // Keep-alive every 30s
     const keepAlive = setInterval(() => {
-        res.write(': keepalive\n\n');
+        if (!res.writableEnded) res.write(': keepalive\n\n');
     }, 30000);
 
     // Subscribe to Redis channel
     const channel = 'admin:userpanel';
     const listener = async (message) => {
+        if (res.writableEnded) return;
         try {
             const payload = JSON.parse(message);
 
@@ -1164,6 +1206,22 @@ const sseUserPanel = async (req, res) => {
     });
 };
 
+// ==========================================
+// API: Solicitudes pendientes + tendencia
+// ==========================================
+const getSolicitudesPendientes = async (req, res) => {
+    try {
+        const [count, tendencia] = await Promise.all([
+            Aspirantes.count({ where: { estadoAspirante: 'aspirante' } }),
+            calcularTendenciaSolicitudes()
+        ]);
+        res.json({ ok: true, count, tendencia });
+    } catch (error) {
+        console.error('Error getSolicitudesPendientes:', error);
+        res.status(500).json({ ok: false, msg: 'Error al consultar solicitudes' });
+    }
+};
+
 export {
     dashboard,
     usersPanel,
@@ -1186,4 +1244,5 @@ export {
     aprobarAspirante,
     rechazarAspirante,
     sseUserPanel,
+    getSolicitudesPendientes,
 }

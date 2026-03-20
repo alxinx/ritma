@@ -253,8 +253,119 @@ import Swal from 'sweetalert2';
             }
         }
 
+        // ==========================================
+        // SSE — REAL-TIME UPDATES
+        // ==========================================
+        const statMiembros = document.getElementById('stat-miembros');
+        const statCreditos = document.getElementById('stat-creditos');
+        const statDescargas = document.getElementById('stat-descargas');
+        const statSolicitudes = document.getElementById('stat-solicitudes');
+
+        let sseRetries = 0;
+        const SSE_MAX_RETRIES = 5;
+
+        function connectSSE() {
+            const evtSource = new EventSource('/app/dash/sse/userpanel');
+
+            evtSource.addEventListener('open', () => {
+                sseRetries = 0; // Reset on successful connection
+            });
+
+            evtSource.addEventListener('stats-update', (e) => {
+                try {
+                    const stats = JSON.parse(e.data);
+                    if (statMiembros) statMiembros.textContent = stats.miembrosActivos;
+                    if (statCreditos) statCreditos.textContent = stats.creditosCirculacion;
+                    if (statDescargas) statDescargas.textContent = stats.descargasHoy;
+                    if (statSolicitudes) statSolicitudes.textContent = stats.nuevasSolicitudes;
+
+                    // Actualizar tendencia semanal
+                    if (stats.tendencia) {
+                        const trendContainer = document.getElementById('trend-solicitudes');
+                        if (trendContainer) {
+                            const t = stats.tendencia;
+                            const iconMap = { up: 'trending_up', down: 'trending_down', flat: 'trending_flat' };
+                            const colorMap = { up: 'text-green-400', down: 'text-red-400', flat: 'text-white/40' };
+                            const signMap = { up: '+', down: '-', flat: '' };
+                            const labelMap = { up: `${signMap[t.direccion]}${t.porcentaje}% vs semana anterior`, down: `${signMap[t.direccion]}${t.porcentaje}% vs semana anterior`, flat: 'Sin cambios vs semana anterior' };
+
+                            trendContainer.innerHTML = `
+                                <span class="material-symbols-outlined ${colorMap[t.direccion]}">${iconMap[t.direccion]}</span>
+                                <span class="${colorMap[t.direccion]}">${labelMap[t.direccion]}</span>`;
+                        }
+                    }
+                } catch (err) {
+                    console.error('[SSE] Error parsing stats:', err);
+                }
+            });
+
+            evtSource.addEventListener('new-aspirante', (e) => {
+                try {
+                    const a = JSON.parse(e.data);
+                    if (!aspirantesList) return;
+
+                    // Ocultar empty state
+                    if (aspirantesEmpty) aspirantesEmpty.classList.add('hidden');
+
+                    const fecha = new Date(a.fecha).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+
+                    const card = document.createElement('div');
+                    card.className = 'p-4 bg-white/3 border border-white/5 rounded-xl hover:border-primary/20 transition-all aspirante-new';
+                    card.innerHTML = `
+                        <div class="flex items-start justify-between mb-2">
+                            <div>
+                                <p class="font-bold text-white text-sm">${a.nombre} ${a.apellido}</p>
+                                <p class="text-[10px] text-white/40">${a.email}</p>
+                            </div>
+                            <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30 rounded-full">Sin Verificar</span>
+                        </div>
+                        <div class="flex gap-3 text-[10px] text-white/30 mb-3 flex-wrap">
+                            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">phone_iphone</span>${a.whatsapp}</span>
+                            ${a.ciudad ? `<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">location_on</span>${a.ciudad}</span>` : ''}
+                            <span>${fecha}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn-aprobar flex-1 py-2 text-[10px] font-bold uppercase tracking-widest bg-primary/10 text-primary border border-primary/30 rounded-lg hover:bg-primary/20 transition-all" data-id="${a.idAspirante || ''}" data-nombre="${a.nombre} ${a.apellido}">
+                                <span class="material-symbols-outlined text-sm align-middle mr-1">check</span> Aprobar
+                            </button>
+                            <button class="btn-rechazar py-2 px-3 text-[10px] font-bold uppercase tracking-widest bg-red-500/10 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/20 transition-all" data-id="${a.idAspirante || ''}" data-nombre="${a.nombre} ${a.apellido}">
+                                <span class="material-symbols-outlined text-sm align-middle">close</span>
+                            </button>
+                        </div>`;
+
+                    // Insertar al inicio
+                    aspirantesList.prepend(card);
+
+                    // Bind buttons
+                    const btnA = card.querySelector('.btn-aprobar');
+                    const btnR = card.querySelector('.btn-rechazar');
+                    if (btnA) btnA.addEventListener('click', () => handleAprobar(btnA.dataset.id, btnA.dataset.nombre));
+                    if (btnR) btnR.addEventListener('click', () => handleRechazar(btnR.dataset.id, btnR.dataset.nombre));
+
+                    // Remover animación glow después de 3s
+                    setTimeout(() => card.classList.remove('aspirante-new'), 3000);
+                } catch (err) {
+                    console.error('[SSE] Error parsing new-aspirante:', err);
+                }
+            });
+
+            evtSource.onerror = () => {
+                evtSource.close();
+                sseRetries++;
+                if (sseRetries <= SSE_MAX_RETRIES) {
+                    // Backoff exponencial: 2s, 4s, 8s, 16s, 32s
+                    const delay = Math.min(2000 * Math.pow(2, sseRetries - 1), 30000);
+                    setTimeout(connectSSE, delay);
+                }
+            };
+
+            // Limpiar al salir
+            window.addEventListener('pagehide', () => evtSource.close(), { once: true });
+        }
+
         // Init
         loadMembers(1);
         loadAspirantes();
+        connectSSE();
     });
 })();

@@ -5,6 +5,10 @@ import Swal from 'sweetalert2';
  * Integra optimización de imagen, monitor de progreso y handshake final.
  */
 let progresoArchivos = {};
+
+// Limpiar estado global al salir de la página para evitar memory leak
+window.addEventListener('pagehide', () => { progresoArchivos = {}; });
+
 window.inicializarMonitor = async function (formData) {
     progresoArchivos = {}; // Reiniciamos en cada carga
     // 1. LIMPIAR Y PREPARAR HEADER
@@ -59,40 +63,50 @@ window.inicializarMonitor = async function (formData) {
     } catch (error) {
         console.error("Fallo crítico en el flujo:", error);
         Swal.fire({ icon: 'error', title: 'RTM-ENGINE ERROR', text: error.message, background: '#0a0a0c', color: '#fff' });
+    } finally {
+        progresoArchivos = {}; // Liberar referencias al terminar (éxito o error)
     }
 };
 
 /**
  * Optimiza la imagen a 1000x1000 WebP (Reemplazo de Middleware Sharp)
- * FIX: Usa createObjectURL en vez de readAsDataURL para evitar el string base64 en memoria
+ * Usa OffscreenCanvas + createImageBitmap para no bloquear el main thread.
+ * Fallback a canvas normal si OffscreenCanvas no está disponible.
  */
 async function optimizarImagenWebP(file) {
-    return new Promise((resolve) => {
-        const objectUrl = URL.createObjectURL(file);
-        const img = new Image();
-        img.src = objectUrl;
-        img.onload = () => {
-            URL.revokeObjectURL(objectUrl);
+    const SIZE = 1000;
+    const bitmap = await createImageBitmap(file);
 
-            const canvas = document.createElement('canvas');
-            const SIZE = 1000;
-            canvas.width = SIZE;
-            canvas.height = SIZE;
-            const ctx = canvas.getContext('2d');
+    // Calcular cover/center
+    const scale = Math.max(SIZE / bitmap.width, SIZE / bitmap.height);
+    const x = (SIZE / 2) - (bitmap.width / 2) * scale;
+    const y = (SIZE / 2) - (bitmap.height / 2) * scale;
 
-            // Efecto Cover/Center
-            const scale = Math.max(SIZE / img.width, SIZE / img.height);
-            const x = (SIZE / 2) - (img.width / 2) * scale;
-            const y = (SIZE / 2) - (img.height / 2) * scale;
-            ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+    let blob;
 
-            canvas.toBlob((blob) => {
-                canvas.width = 0;
-                canvas.height = 0;
-                resolve(new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), { type: 'image/webp' }));
-            }, 'image/webp', 0.8);
-        };
-    });
+    if (typeof OffscreenCanvas !== 'undefined') {
+        // OffscreenCanvas: no bloquea el main thread
+        const offscreen = new OffscreenCanvas(SIZE, SIZE);
+        const ctx = offscreen.getContext('2d');
+        ctx.drawImage(bitmap, x, y, bitmap.width * scale, bitmap.height * scale);
+        bitmap.close();
+        blob = await offscreen.convertToBlob({ type: 'image/webp', quality: 0.8 });
+    } else {
+        // Fallback para navegadores sin OffscreenCanvas
+        const canvas = document.createElement('canvas');
+        canvas.width = SIZE;
+        canvas.height = SIZE;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, x, y, bitmap.width * scale, bitmap.height * scale);
+        bitmap.close();
+        blob = await new Promise(resolve => {
+            canvas.toBlob(resolve, 'image/webp', 0.8);
+            canvas.width = 0;
+            canvas.height = 0;
+        });
+    }
+
+    return new File([blob], file.name.replace(/\.[^/.]+$/, ".webp"), { type: 'image/webp' });
 }
 
 /**

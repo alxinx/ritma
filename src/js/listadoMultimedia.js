@@ -447,6 +447,14 @@
             }, 5000); // Poll cada 5 segundos
         }
 
+        // Limpiar polling al salir de la página para evitar intervalos huérfanos
+        window.addEventListener('pagehide', () => {
+            if (statusPollInterval) {
+                clearInterval(statusPollInterval);
+                statusPollInterval = null;
+            }
+        });
+
         // ==========================================
         // INIT - Cargar primera pagina
         // ==========================================

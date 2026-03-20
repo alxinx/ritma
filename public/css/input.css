@@ -790,3 +790,15 @@ body {
   }
 }
 
+/* Glow animation para nuevos aspirantes via SSE */
+@keyframes aspiranteGlow {
+  0% { box-shadow: 0 0 0 0 rgba(201, 218, 43, 0.6); }
+  50% { box-shadow: 0 0 20px 4px rgba(201, 218, 43, 0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(201, 218, 43, 0); }
+}
+
+.aspirante-new {
+  animation: aspiranteGlow 1s ease-in-out 3;
+  border-color: rgba(201, 218, 43, 0.4) !important;
+}
+

@@ -59,7 +59,7 @@ app.use(cookieParser());
 ====================== */
 const csrfProtection = csrf({ cookie: true });
 app.use((req, res, next) => {
-  if (req.path.startsWith('/app/dash/api/upload/sign')) return next();
+  if (req.path.startsWith('/app/dash/api/upload/sign') || req.path.startsWith('/app/dash/sse/')) return next();
   try {
     csrfProtection(req, res, () => {
       res.locals.csrfToken = req.csrfToken();
@@ -93,7 +93,7 @@ app.use((err, req, res, next) => {
 /* ======================
    INICIO DEL SERVIDOR
 ====================== */
-async function startServer() {
+async function startServer() {  
   try {
     // Conectar base de datos
     await db.authenticate();
