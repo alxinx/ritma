@@ -6,7 +6,7 @@ import validarErrores  from '../middlewares/validarErrores.js'
 import {checkUploadMultimedia} from '../middlewares/validationFields.js';
 import  {getPresignedUrl}  from '../controllers/uploadController.js';
 
-import { dashboard, usersPanel, multimediaPanel, uploadboard, mediafile, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus, toggleMultimediaEstado, requestDownloadToken, verifyAndDownload, updateMultimediaData, requestStreamToken, streamVideo, streamPreview, getActiveMembers, getAspirantes, aprobarAspirante, rechazarAspirante, sseUserPanel, getSolicitudesPendientes, userProfile, getUserDownloads, addUserCredits, updateUserData, toggleUserStatus, getUserWishlist, getUserCreditHistory } from '../controllers/adminControllers.js'
+import { dashboard, usersPanel, multimediaPanel, uploadboard, mediafile, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus, toggleMultimediaEstado, requestDownloadToken, verifyAndDownload, updateMultimediaData, requestStreamToken, streamVideo, streamPreview, getActiveMembers, getAspirantes, aprobarAspirante, rechazarAspirante, sseUserPanel, getSolicitudesPendientes, userProfile, getUserDownloads, addUserCredits, updateUserData, toggleUserStatus, getUserWishlist, getUserCreditHistory, downloadsPanel, getTopGeneros } from '../controllers/adminControllers.js'
 const routes = express.Router();
 dotenv.config();
 
@@ -15,7 +15,7 @@ dotenv.config();
 //PANEL CONTROLLERS
 routes.get("/", dashboard)
 routes.get("/users", usersPanel)
-routes.get("/downloads", dashboard)
+routes.get("/downloads", downloadsPanel)
 routes.get("/credits", dashboard)
 routes.get("/multimedia", multimediaPanel)
     routes.get("/uploadboard", uploadboard)
@@ -79,5 +79,8 @@ routes.patch('/json/users/:idUsuario/update', updateUserData);
 routes.patch('/json/users/:idUsuario/toggle-status', toggleUserStatus);
 routes.get('/json/users/:idUsuario/wishlist', getUserWishlist);
 routes.get('/json/users/:idUsuario/credit-history', getUserCreditHistory);
+
+// Analytics
+routes.get('/json/analytics/top-generos', getTopGeneros);
 
 export default routes

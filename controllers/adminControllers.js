@@ -83,7 +83,204 @@ const usersPanel = async (req, res) => {
 
 
 
-//PANEL DE MULTIMEDIA. 
+// ==========================================
+// PANEL DE DESCARGAS — Analíticas
+// ==========================================
+const downloadsPanel = async (req, res) => {
+    try {
+        const hace30 = new Date();
+        hace30.setDate(hace30.getDate() - 30);
+        const hace60 = new Date();
+        hace60.setDate(hace60.getDate() - 60);
+        const hace7 = new Date();
+        hace7.setDate(hace7.getDate() - 7);
+        const hace14 = new Date();
+        hace14.setDate(hace14.getDate() - 14);
+
+        // --- Todas las queries en paralelo ---
+        const [
+            gbSemanal,
+            gbSemanaAnterior,
+            topArchivos,
+            topUsuarios,
+            topGeneros,
+            topAudios,
+            topVideos
+        ] = await Promise.all([
+
+            // 1. GB descargados última semana
+            db.query(`
+                SELECT COALESCE(SUM(m.tamano), 0) AS totalBytes
+                FROM HISTORIAL_DESCARGAS_MULTIMEDIA hd
+                JOIN MULTIMEDIA m ON hd.idMultimedia = m.idMultimedia
+                WHERE hd.fechaDescarga >= :hace7
+            `, { replacements: { hace7 }, type: db.QueryTypes.SELECT }),
+
+            // GB semana anterior (para tendencia)
+            db.query(`
+                SELECT COALESCE(SUM(m.tamano), 0) AS totalBytes
+                FROM HISTORIAL_DESCARGAS_MULTIMEDIA hd
+                JOIN MULTIMEDIA m ON hd.idMultimedia = m.idMultimedia
+                WHERE hd.fechaDescarga >= :hace14 AND hd.fechaDescarga < :hace7
+            `, { replacements: { hace14, hace7 }, type: db.QueryTypes.SELECT }),
+
+            // 2. Top 3 archivos más descargados (30 días)
+            db.query(`
+                SELECT m.idMultimedia, m.nombreComposicion, m.tipoAsset, m.tamano, m.formato,
+                       COUNT(*) AS descargas
+                FROM HISTORIAL_DESCARGAS_MULTIMEDIA hd
+                JOIN MULTIMEDIA m ON hd.idMultimedia = m.idMultimedia
+                WHERE hd.fechaDescarga >= :hace30
+                GROUP BY m.idMultimedia
+                ORDER BY descargas DESC
+                LIMIT 3
+            `, { replacements: { hace30 }, type: db.QueryTypes.SELECT }),
+
+            // 3. Top 3 usuarios que más descargan (30 días)
+            db.query(`
+                SELECT u.idUsuario, u.nombreUsuario, u.apellidoUsuario,
+                       COUNT(*) AS descargas,
+                       COALESCE(SUM(m.tamano), 0) AS totalBytes
+                FROM HISTORIAL_DESCARGAS_MULTIMEDIA hd
+                JOIN USUARIOS u ON hd.idUsuario = u.idUsuario
+                JOIN MULTIMEDIA m ON hd.idMultimedia = m.idMultimedia
+                WHERE hd.fechaDescarga >= :hace30
+                GROUP BY u.idUsuario
+                ORDER BY descargas DESC
+                LIMIT 3
+            `, { replacements: { hace30 }, type: db.QueryTypes.SELECT }),
+
+            // 4. Top 4 géneros más descargados (30 días)
+            db.query(`
+                SELECT g.nombre AS nombreGenero, g.genero_id AS idGenero,
+                       COUNT(*) AS descargas
+                FROM HISTORIAL_DESCARGAS_MULTIMEDIA hd
+                JOIN MULTIMEDIA m ON hd.idMultimedia = m.idMultimedia
+                JOIN MULTIMEDIA_GENEROS mg ON m.idMultimedia = mg.idMultimedia
+                JOIN GENEROS g ON mg.idGenero = g.genero_id
+                WHERE hd.fechaDescarga >= :hace30
+                GROUP BY g.genero_id, g.nombre
+                ORDER BY descargas DESC
+                LIMIT 4
+            `, { replacements: { hace30 }, type: db.QueryTypes.SELECT }),
+
+            // 5. Top 5 audios más descargados (30 días)
+            db.query(`
+                SELECT m.nombreComposicion, m.formato, COUNT(*) AS descargas
+                FROM HISTORIAL_DESCARGAS_MULTIMEDIA hd
+                JOIN MULTIMEDIA m ON hd.idMultimedia = m.idMultimedia
+                WHERE hd.fechaDescarga >= :hace30 AND m.tipoAsset = 'AUDIO'
+                GROUP BY m.idMultimedia
+                ORDER BY descargas DESC
+                LIMIT 5
+            `, { replacements: { hace30 }, type: db.QueryTypes.SELECT }),
+
+            // 6. Top 5 videos más descargados (30 días)
+            db.query(`
+                SELECT m.nombreComposicion, m.formato, COUNT(*) AS descargas
+                FROM HISTORIAL_DESCARGAS_MULTIMEDIA hd
+                JOIN MULTIMEDIA m ON hd.idMultimedia = m.idMultimedia
+                WHERE hd.fechaDescarga >= :hace30 AND m.tipoAsset = 'VIDEO'
+                GROUP BY m.idMultimedia
+                ORDER BY descargas DESC
+                LIMIT 5
+            `, { replacements: { hace30 }, type: db.QueryTypes.SELECT })
+        ]);
+
+        // Procesar GB semanal
+        const bytesEstaSemana = Number(gbSemanal[0]?.totalBytes || 0);
+        const bytesSemanaAnterior = Number(gbSemanaAnterior[0]?.totalBytes || 0);
+        const gbDescargados = (bytesEstaSemana / (1024 ** 3)).toFixed(1);
+
+        // Tendencia semanal
+        let tendenciaGB = { porcentaje: '0.0', direccion: 'flat' };
+        if (bytesSemanaAnterior > 0) {
+            const cambio = ((bytesEstaSemana - bytesSemanaAnterior) / bytesSemanaAnterior) * 100;
+            tendenciaGB = {
+                porcentaje: Math.abs(cambio).toFixed(1),
+                direccion: cambio > 0 ? 'up' : cambio < 0 ? 'down' : 'flat'
+            };
+        } else if (bytesEstaSemana > 0) {
+            tendenciaGB = { porcentaje: '100', direccion: 'up' };
+        }
+
+        // Formatear tamaños
+        function formatBytes(bytes) {
+            const b = Number(bytes);
+            if (b >= 1024 ** 3) return (b / (1024 ** 3)).toFixed(1) + ' GB';
+            if (b >= 1024 ** 2) return (b / (1024 ** 2)).toFixed(0) + ' MB';
+            return (b / 1024).toFixed(0) + ' KB';
+        }
+
+        function formatCount(n) {
+            const num = Number(n);
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+            return num.toString();
+        }
+
+        // Procesar géneros con porcentaje
+        const totalDescargasGeneros = topGeneros.reduce((s, g) => s + Number(g.descargas), 0);
+        const generosConPct = topGeneros.map(g => ({
+            ...g,
+            porcentaje: totalDescargasGeneros > 0 ? Math.round((Number(g.descargas) / totalDescargasGeneros) * 100) : 0
+        }));
+
+        return res.status(200).render('../views/app/downloadsPanel', {
+            tituloPagina: "Analíticas de Descargas",
+            subtitulo: "Panel de descargas",
+            active: 'downloads',
+            csrfToken: req.csrfToken(),
+            gbDescargados,
+            tendenciaGB,
+            topArchivos: topArchivos.map(a => ({ ...a, tamanoFmt: formatBytes(a.tamano), descargasFmt: formatCount(a.descargas) })),
+            topUsuarios: topUsuarios.map(u => ({ ...u, totalFmt: formatBytes(u.totalBytes), descargasFmt: formatCount(u.descargas) })),
+            topGeneros: generosConPct,
+            topAudios: topAudios.map(a => ({ ...a, descargasFmt: formatCount(a.descargas) })),
+            topVideos: topVideos.map(v => ({ ...v, descargasFmt: formatCount(v.descargas) }))
+        });
+    } catch (error) {
+        console.error('Error downloadsPanel:', error);
+        return res.status(500).render('../views/app/dashboard', { tituloPagina: 'Error', csrfToken: req.csrfToken() });
+    }
+};
+
+// ==========================================
+// API: Top Géneros descargados (reutilizable)
+// ==========================================
+const getTopGeneros = async (req, res) => {
+    try {
+        const dias = parseInt(req.query.dias) || 30;
+        const limit = parseInt(req.query.limit) || 5;
+        const desde = new Date();
+        desde.setDate(desde.getDate() - dias);
+
+        const topGeneros = await db.query(`
+            SELECT g.nombre AS nombreGenero, g.genero_id AS idGenero,
+                   COUNT(*) AS descargas
+            FROM HISTORIAL_DESCARGAS_MULTIMEDIA hd
+            JOIN MULTIMEDIA m ON hd.idMultimedia = m.idMultimedia
+            JOIN MULTIMEDIA_GENEROS mg ON m.idMultimedia = mg.idMultimedia
+            JOIN GENEROS g ON mg.idGenero = g.genero_id
+            WHERE hd.fechaDescarga >= :desde
+            GROUP BY g.genero_id, g.nombre
+            ORDER BY descargas DESC
+            LIMIT :limit
+        `, { replacements: { desde, limit }, type: db.QueryTypes.SELECT });
+
+        const total = topGeneros.reduce((s, g) => s + Number(g.descargas), 0);
+        const data = topGeneros.map(g => ({
+            ...g,
+            porcentaje: total > 0 ? Math.round((Number(g.descargas) / total) * 100) : 0
+        }));
+
+        res.json({ ok: true, data, total });
+    } catch (error) {
+        console.error('Error getTopGeneros:', error);
+        res.status(500).json({ ok: false, msg: 'Error al consultar géneros' });
+    }
+};
+
+//PANEL DE MULTIMEDIA.
 const multimediaPanel = (req, res) => {
     return res.status(200).render('../views/app/multimediaPanel', {
         tituloPagina: "Biblioteca Multimedia",
@@ -1581,4 +1778,6 @@ export {
     toggleUserStatus,
     getUserWishlist,
     getUserCreditHistory,
+    downloadsPanel,
+    getTopGeneros,
 }

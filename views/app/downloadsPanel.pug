@@ -3,42 +3,162 @@ include ../components/mixins/form-field.pug
 include ../components/mixins/layouts.pug
 block contenedor
 
+    div(class="flex min-h-screen")
 
-    // ================================================
-    // NAVBAR
-    // ================================================
-//include ./navBar.pug
-div(class="flex min-h-screen ")
-    
-    //-MENU LATERAL
-    include layout/leftMenu.pug
-    main(class="flex-1 ml-[60px] lg:ml-72 min-h-screen")
-        // HEADER 
-        
-        
-        include layout/headerAdmin.pug
+        //- MENU LATERAL
+        include layout/leftMenu.pug
+        main(class="flex-1 ml-[60px] lg:ml-72 min-h-screen")
+            //- HEADER
+            include layout/headerAdmin.pug
 
-        //BODY
-        div(class="mx-auto p-4 pb-32")   
+            //- BODY
+            div(class="mx-auto p-4 pb-32")
 
-           
-                
+                //- TITULO + STAT GB SEMANAL
+                section(class="flex flex-col lg:flex-row lg:items-end justify-between mb-10")
+                    div
+                        h1(class="text-5xl lg:text-6xl font-display font-black uppercase tracking-tighter") Anal&iacute;ticas de Descargas
+                        p(class="text-[10px] font-mono text-white/30 uppercase tracking-widest mt-2") system_version: 4.2.0 // last_updated: #{new Date().toISOString().split('T')[0]}
 
-        include layout/footer.pug 
+                    //- STAT: GB descargados semanalmente
+                    div(class="glass-card rounded-3xl p-6 mt-6 lg:mt-0 lg:w-80 relative overflow-hidden")
+                        div(class="absolute inset-0 pixel-pattern opacity-5")
+                        div(class="relative z-10")
+                            div(class="flex items-center justify-between mb-2")
+                                span(class="text-[9px] font-bold text-white/30 uppercase tracking-[0.3em]") GB Descargados Semanalmente
+                                if tendenciaGB && tendenciaGB.direccion === 'up'
+                                    span(class="material-symbols-outlined text-primary text-xl") trending_up
+                                else if tendenciaGB && tendenciaGB.direccion === 'down'
+                                    span(class="material-symbols-outlined text-red-400 text-xl") trending_down
+                                else
+                                    span(class="material-symbols-outlined text-white/30 text-xl") trending_flat
+                            div(class="flex items-baseline gap-2")
+                                span(class="text-4xl font-display font-extrabold text-primary") #{gbDescargados}
+                                span(class="text-sm font-bold text-white/40") GB
+                            if tendenciaGB
+                                div(class="mt-2 flex items-center gap-1.5")
+                                    if tendenciaGB.direccion === 'up'
+                                        span(class="text-[9px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full") +#{tendenciaGB.porcentaje}%
+                                    else if tendenciaGB.direccion === 'down'
+                                        span(class="text-[9px] font-bold bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full") -#{tendenciaGB.porcentaje}%
+                                    span(class="text-[9px] text-white/30 font-mono") vs prev week
 
+                //- ROW 1: Archivos más descargados + Usuarios Top
+                section(class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8")
 
-            
+                    //- ARCHIVOS MÁS DESCARGADOS
+                    div(class="lg:col-span-8")
+                        div(class="glass-card rounded-3xl p-8 relative overflow-hidden h-full")
+                            div(class="absolute inset-0 pixel-pattern opacity-5")
+                            div(class="relative z-10")
+                                div(class="flex items-center justify-between mb-8")
+                                    h3(class="text-sm font-display font-black uppercase tracking-widest") Archivos M&aacute;s Descargados
+                                    span(class="text-[9px] font-bold bg-white/5 text-white/40 px-3 py-1 rounded-full border border-white/10 uppercase tracking-widest") all_media
+                                div(class="space-y-4")
+                                    if topArchivos && topArchivos.length > 0
+                                        each archivo in topArchivos
+                                            div(class="flex items-center gap-4 bg-white/3 p-4 rounded-2xl border border-white/5 hover:border-primary/20 transition-all")
+                                                //- Icono tipo
+                                                div(class="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0")
+                                                    if archivo.tipoAsset === 'VIDEO'
+                                                        span(class="material-symbols-outlined text-primary") videocam
+                                                    else
+                                                        span(class="material-symbols-outlined text-primary") headphones
+                                                div(class="flex-1 min-w-0")
+                                                    p(class="font-bold text-white text-sm uppercase tracking-wider truncate") #{archivo.nombreComposicion}.#{archivo.formato}
+                                                    p(class="text-[10px] text-white/30 font-mono uppercase tracking-widest mt-0.5") #{archivo.tipoAsset} // #{archivo.tamanoFmt}
+                                                div(class="text-right flex-shrink-0 ml-4")
+                                                    p(class="font-display font-extrabold text-primary text-lg") #{archivo.descargasFmt}
+                                                    p(class="text-[9px] text-white/30 font-mono uppercase tracking-widest") downloads
+                                    else
+                                        div(class="text-center py-10 text-white/20 text-[10px] font-bold uppercase tracking-widest")
+                                            span(class="material-symbols-outlined text-3xl block mb-2") cloud_off
+                                            | Sin datos de descargas
 
-                        
+                    //- USUARIOS TOP
+                    div(class="lg:col-span-4")
+                        div(class="glass-card rounded-3xl p-8 relative overflow-hidden h-full")
+                            div(class="absolute inset-0 pixel-pattern opacity-5")
+                            div(class="relative z-10")
+                                div(class="flex items-center justify-between mb-8")
+                                    h3(class="text-sm font-display font-black uppercase tracking-widest") Usuarios Top
+                                    span(class="material-symbols-outlined text-primary") leaderboard
+                                div(class="space-y-5")
+                                    if topUsuarios && topUsuarios.length > 0
+                                        each usuario, idx in topUsuarios
+                                            div(class="flex items-center gap-4")
+                                                //- Avatar placeholder con ranking
+                                                div(class="relative flex-shrink-0")
+                                                    div(class="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center")
+                                                        span(class="material-symbols-outlined text-white/40") person
+                                                    div(class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary text-black text-[9px] font-black flex items-center justify-center") #{idx + 1}
+                                                div(class="flex-1 min-w-0")
+                                                    p(class="font-bold text-white text-sm truncate") #{usuario.nombreUsuario} #{usuario.apellidoUsuario}
+                                                    p(class="text-[10px] text-white/30 font-mono uppercase tracking-widest") #{usuario.descargas} descargas
+                                                div(class="text-right flex-shrink-0")
+                                                    span(class="font-display font-bold text-primary text-sm") #{usuario.totalFmt}
+                                    else
+                                        div(class="text-center py-10 text-white/20 text-[10px] font-bold uppercase tracking-widest")
+                                            | Sin datos
 
+                //- ROW 2: Géneros + Audios Top + Videos Top
+                section(class="grid grid-cols-1 lg:grid-cols-3 gap-8")
 
+                    //- GÉNEROS MÁS DESCARGADOS
+                    div
+                        div(class="glass-card rounded-3xl p-8 relative overflow-hidden h-full")
+                            div(class="absolute inset-0 pixel-pattern opacity-5")
+                            div(class="relative z-10")
+                                h3(class="text-sm font-display font-black uppercase tracking-widest mb-8") G&eacute;neros M&aacute;s Descargados
+                                div(class="space-y-5")
+                                    if topGeneros && topGeneros.length > 0
+                                        each genero in topGeneros
+                                            div
+                                                div(class="flex items-center justify-between mb-1.5")
+                                                    span(class="text-xs font-bold text-white uppercase tracking-wider") #{genero.nombreGenero}
+                                                    span(class="text-xs font-bold text-primary") #{genero.porcentaje}%
+                                                div(class="w-full bg-white/5 rounded-full h-2")
+                                                    div(class="bg-primary h-2 rounded-full transition-all" style=`width: ${genero.porcentaje}%`)
+                                    else
+                                        div(class="text-center py-10 text-white/20 text-[10px] font-bold uppercase tracking-widest")
+                                            | Sin datos
 
-            
+                    //- AUDIOS TOP
+                    div
+                        div(class="glass-card rounded-3xl p-8 relative overflow-hidden h-full")
+                            div(class="absolute inset-0 pixel-pattern opacity-5")
+                            div(class="relative z-10")
+                                div(class="flex items-center gap-2 mb-8")
+                                    span(class="material-symbols-outlined text-primary") headphones
+                                    h3(class="text-sm font-display font-black uppercase tracking-widest") Audios Top
+                                div(class="space-y-4")
+                                    if topAudios && topAudios.length > 0
+                                        each audio in topAudios
+                                            div(class="flex items-center justify-between py-2 border-b border-white/5 last:border-0")
+                                                span(class="text-xs font-bold text-white uppercase tracking-wider truncate mr-4") #{audio.nombreComposicion}.#{audio.formato}
+                                                span(class="text-sm font-display font-bold text-primary flex-shrink-0") #{audio.descargasFmt}
+                                    else
+                                        div(class="text-center py-10 text-white/20 text-[10px] font-bold uppercase tracking-widest")
+                                            | Sin audios
 
-                
-        //FOOTER
-    
-    script(src="/js/controlPanel.js") 
+                    //- VIDEOS TOP
+                    div
+                        div(class="glass-card rounded-3xl p-8 relative overflow-hidden h-full")
+                            div(class="absolute inset-0 pixel-pattern opacity-5")
+                            div(class="relative z-10")
+                                div(class="flex items-center gap-2 mb-8")
+                                    span(class="material-symbols-outlined text-primary") videocam
+                                    h3(class="text-sm font-display font-black uppercase tracking-widest") Videos Top
+                                div(class="space-y-4")
+                                    if topVideos && topVideos.length > 0
+                                        each video in topVideos
+                                            div(class="flex items-center justify-between py-2 border-b border-white/5 last:border-0")
+                                                span(class="text-xs font-bold text-white uppercase tracking-wider truncate mr-4") #{video.nombreComposicion}.#{video.formato}
+                                                span(class="text-sm font-display font-bold text-primary flex-shrink-0") #{video.descargasFmt}
+                                    else
+                                        div(class="text-center py-10 text-white/20 text-[10px] font-bold uppercase tracking-widest")
+                                            | Sin videos
 
-    // ================================================
-    // footer
+            include layout/footer.pug
+
+    script(src="/js/controlPanel.js")

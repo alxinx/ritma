@@ -73,23 +73,23 @@ body {
     background: linear-gradient(135deg, #1A0B2E 0%, #002B36 50%, #001A33 100%);
 }
 .glass-card {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    /* backdrop-filter removido: causa alto consumo GPU con múltiples cards */
 }
 .glass-sidebar {
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(20px);
+    background: rgba(0, 0, 0, 0.92);
     border-right: 1px solid rgba(255, 255, 255, 0.05);
+    /* backdrop-filter removido: capa permanente costosa en GPU */
 }
 .glass-header {
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(15px);
+    background: rgba(0, 0, 0, 0.88);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    /* backdrop-filter removido: capa permanente costosa en GPU */
 }
 .pixel-pattern {
     background-image: radial-gradient(var(--primary-color) 1px, transparent 1px);
-    background-size: 4px 4px;
+    background-size: 8px 8px; /* 4x menos puntos (8px vs 4px) */
 }
 .vu-meter-bar {
     width: 4px;
@@ -174,7 +174,7 @@ body {
   }
    .pixel-pattern {
     background-image: radial-gradient(var(--color-primary) 1px, transparent 1px);
-    background-size: 4px 4px;
+    background-size: 8px 8px;
   }
 
 
