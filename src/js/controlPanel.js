@@ -67,9 +67,9 @@ import Swal from 'sweetalert2';
                             <td class="px-6 py-4 text-white/70">${u.nroDescargas}</td>
                             <td class="px-6 py-4 text-white/50 text-xs">${fecha}</td>
                             <td class="px-6 py-4 text-center">
-                                <button class="text-white/40 hover:text-primary transition-colors">
+                                <a href="/app/dash/users/profile/${u.idUsuario}" class="text-white/40 hover:text-primary transition-colors">
                                     <span class="material-symbols-outlined text-lg">visibility</span>
-                                </button>
+                                </a>
                             </td>
                         </tr>`;
                     }).join('');

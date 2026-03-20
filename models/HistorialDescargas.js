@@ -28,6 +28,12 @@ const HistorialDescargas = db.define('HISTORIAL_DESCARGAS_MULTIMEDIA', {
     fechaDescarga: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW
+    },
+    creditos: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+        validate: { min: 0 }
     }
 }, {
     timestamps: false,

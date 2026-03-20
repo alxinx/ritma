@@ -1,4 +1,4 @@
-import { Usuarios, Artistas, Album, Generos, Multimedia, MultimediaGeneros, ArtistaGeneros, HistorialDescargas, Aspirantes, RitmaCoins } from '../models/index.js'
+import { Usuarios, Artistas, Album, Generos, Multimedia, MultimediaGeneros, ArtistaGeneros, HistorialDescargas, Aspirantes, RitmaCoins, Wishlist } from '../models/index.js'
 import multimediaQueue from '../queues/multimediaQueue.js';
 import db from "../config/bd.js";
 import s3Client from "../config/r2.js";
@@ -1222,6 +1222,335 @@ const getSolicitudesPendientes = async (req, res) => {
     }
 };
 
+// ==========================================
+// PERFIL DE USUARIO — Vista principal
+// ==========================================
+const userProfile = async (req, res) => {
+    try {
+        const { idUsuario } = req.params;
+        const usuario = await Usuarios.findByPk(idUsuario, {
+            attributes: ['idUsuario', 'nombreUsuario', 'apellidoUsuario', 'emailUsuario', 'estado', 'createdAt']
+        });
+        if (!usuario) return res.status(404).render('../views/app/dashboard', { tituloPagina: 'Usuario no encontrado' });
+
+        // Datos del aspirante (whatsapp, ciudad, instagram, tiktok, imagen)
+        const aspirante = await Aspirantes.findOne({
+            where: { emailAspirante: usuario.emailUsuario },
+            attributes: ['whatsappAspirante', 'ciudadAspirante', 'instagramAspirante', 'tiktokAspirante', 'imagen']
+        });
+
+        // Stats
+        const [rawDisponibles, rawComprados, nroDescargas, wishlistCount] = await Promise.all([
+            RitmaCoins.sum('cantidadActual', { where: { idUsuario } }),
+            RitmaCoins.sum('cantidadComprada', { where: { idUsuario } }),
+            HistorialDescargas.count({ where: { idUsuario } }),
+            Wishlist.count({ where: { idUsuario, estado: 'en lista' } })
+        ]);
+        const creditosDisponibles = rawDisponibles || 0;
+        const creditosComprados = rawComprados || 0;
+
+        // Tendencia descargas último mes vs anterior
+        const ahora = new Date();
+        const hace30 = new Date(ahora); hace30.setDate(hace30.getDate() - 30);
+        const hace60 = new Date(ahora); hace60.setDate(hace60.getDate() - 60);
+
+        const [descMesActual, descMesPasado] = await Promise.all([
+            HistorialDescargas.count({ where: { idUsuario, fechaDescarga: { [Op.gte]: hace30 } } }),
+            HistorialDescargas.count({ where: { idUsuario, fechaDescarga: { [Op.gte]: hace60, [Op.lt]: hace30 } } })
+        ]);
+
+        let tendenciaDescargas = { porcentaje: '0.0', direccion: 'flat' };
+        if (descMesPasado > 0) {
+            const cambio = ((descMesActual - descMesPasado) / descMesPasado) * 100;
+            tendenciaDescargas = {
+                porcentaje: Math.abs(cambio).toFixed(1),
+                direccion: cambio > 0 ? 'up' : cambio < 0 ? 'down' : 'flat'
+            };
+        } else if (descMesActual > 0) {
+            tendenciaDescargas = { porcentaje: '100', direccion: 'up' };
+        }
+
+        // Top 5 géneros
+        const topGeneros = await db.query(`
+            SELECT g.nombre AS nombreGenero, COUNT(*) as total
+            FROM HISTORIAL_DESCARGAS_MULTIMEDIA hd
+            JOIN MULTIMEDIA m ON hd.idMultimedia = m.idMultimedia
+            JOIN MULTIMEDIA_GENEROS mg ON m.idMultimedia = mg.idMultimedia
+            JOIN GENEROS g ON mg.idGenero = g.genero_id
+            WHERE hd.idUsuario = :idUsuario
+            GROUP BY g.genero_id, g.nombre
+            ORDER BY total DESC
+            LIMIT 5
+        `, { replacements: { idUsuario }, type: db.QueryTypes.SELECT });
+
+        // Top 5 artistas
+        const topArtistas = await db.query(`
+            SELECT a.nombreArtista, COUNT(*) as total
+            FROM HISTORIAL_DESCARGAS_MULTIMEDIA hd
+            JOIN MULTIMEDIA m ON hd.idMultimedia = m.idMultimedia
+            JOIN ARTISTAS a ON m.idArtista = a.idArtista
+            WHERE hd.idUsuario = :idUsuario
+            GROUP BY a.idArtista, a.nombreArtista
+            ORDER BY total DESC
+            LIMIT 5
+        `, { replacements: { idUsuario }, type: db.QueryTypes.SELECT });
+
+        // Imagen de perfil
+        const imagenUsuario = aspirante?.imagen
+            ? `${R2_PUBLIC_URL}/images/users/${aspirante.imagen}`
+            : '/img/generico.webp';
+
+        return res.status(200).render('../views/app/userProfile', {
+            tituloPagina: `${usuario.nombreUsuario} ${usuario.apellidoUsuario}`,
+            subtitulo: 'Perfil de usuario',
+            active: 'users',
+            csrfToken: req.csrfToken(),
+            usuario: usuario.toJSON(),
+            aspirante: aspirante ? aspirante.toJSON() : null,
+            imagenUsuario,
+            creditosDisponibles,
+            creditosGastados: Math.max(0, creditosComprados - creditosDisponibles),
+            nroDescargas,
+            tendenciaDescargas,
+            topGeneros,
+            topArtistas,
+            wishlistCount
+        });
+    } catch (error) {
+        console.error('Error userProfile:', error);
+        res.status(500).render('../views/app/dashboard', { tituloPagina: 'Error' });
+    }
+};
+
+// ==========================================
+// PERFIL DE USUARIO — Descargas paginadas
+// ==========================================
+const getUserDownloads = async (req, res) => {
+    try {
+        const { idUsuario } = req.params;
+        const limit = parseInt(process.env.MAX_ROWS_FOR_PAGE) || 10;
+        const page = parseInt(req.query.page) || 1;
+        const offset = (page - 1) * limit;
+
+        const { count, rows } = await HistorialDescargas.findAndCountAll({
+            where: { idUsuario },
+            include: [{
+                model: Multimedia,
+                attributes: ['idMultimedia', 'nombreComposicion', 'formato', 'tipoAsset'],
+                include: [{ model: Artistas, attributes: ['nombreArtista'] }]
+            }],
+            order: [['fechaDescarga', 'DESC']],
+            limit,
+            offset
+        });
+
+        const data = rows.map(d => ({
+            idDescarga: d.idDescarga,
+            nombreComposicion: d.MULTIMEDIA?.nombreComposicion || '—',
+            artista: d.MULTIMEDIA?.ARTISTA?.nombreArtista || '—',
+            formato: d.MULTIMEDIA?.formato?.toUpperCase() || '—',
+            tipoAsset: d.MULTIMEDIA?.tipoAsset || 'AUDIO',
+            fechaDescarga: d.fechaDescarga,
+            creditos: d.creditos || 0
+        }));
+
+        res.json({
+            ok: true,
+            data,
+            total: count,
+            page,
+            totalPages: Math.ceil(count / limit)
+        });
+    } catch (error) {
+        console.error('Error getUserDownloads:', error);
+        res.status(500).json({ ok: false, msg: 'Error al consultar descargas' });
+    }
+};
+
+// ==========================================
+// PERFIL DE USUARIO — Agregar créditos
+// ==========================================
+const addUserCredits = async (req, res) => {
+    try {
+        const { idUsuario } = req.params;
+        const { cantidad, codigoAdmin } = req.body;
+
+        const cant = parseInt(cantidad);
+        if (!cant || cant <= 0) return res.status(400).json({ ok: false, msg: 'Cantidad inválida' });
+
+        // Verificar cuántos créditos se han asignado hoy a este usuario
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        const creditosHoy = await RitmaCoins.sum('cantidadComprada', {
+            where: {
+                idUsuario,
+                fechaCompra: { [Op.gte]: hoy }
+            }
+        }) || 0;
+
+        // Si supera 500 en el día, requiere código admin
+        if ((creditosHoy + cant) > 500) {
+            if (!codigoAdmin || codigoAdmin !== process.env.CODEADMIN) {
+                return res.status(403).json({
+                    ok: false,
+                    requireCode: true,
+                    msg: `Se superan los 500 créditos diarios (hoy: ${creditosHoy}). Ingrese código de administrador.`
+                });
+            }
+        }
+
+        await RitmaCoins.create({
+            idUsuario,
+            cantidadComprada: cant,
+            cantidadActual: cant,
+            fechaCompra: new Date()
+        });
+
+        // Recalcular totales
+        const creditosDisponibles = await RitmaCoins.sum('cantidadActual', { where: { idUsuario } }) || 0;
+        const totalComprado = await RitmaCoins.sum('cantidadComprada', { where: { idUsuario } }) || 0;
+
+        res.json({
+            ok: true,
+            msg: `${cant} créditos asignados correctamente`,
+            creditosDisponibles,
+            creditosGastados: Math.max(0, totalComprado - creditosDisponibles)
+        });
+    } catch (error) {
+        console.error('Error addUserCredits:', error);
+        res.status(500).json({ ok: false, msg: 'Error al agregar créditos' });
+    }
+};
+
+// ==========================================
+// PERFIL DE USUARIO — Editar datos
+// ==========================================
+const updateUserData = async (req, res) => {
+    try {
+        const { idUsuario } = req.params;
+        const { nombreUsuario, apellidoUsuario, password, whatsapp, ciudad, instagram, tiktok } = req.body;
+
+        const usuario = await Usuarios.findByPk(idUsuario);
+        if (!usuario) return res.status(404).json({ ok: false, msg: 'Usuario no encontrado' });
+
+        // Actualizar datos en USUARIOS
+        const updateFields = {};
+        if (nombreUsuario?.trim()) updateFields.nombreUsuario = nombreUsuario.trim();
+        if (apellidoUsuario?.trim()) updateFields.apellidoUsuario = apellidoUsuario.trim();
+        if (password?.trim()) updateFields.password = password.trim();
+
+        if (Object.keys(updateFields).length > 0) {
+            await usuario.update(updateFields);
+        }
+
+        // Actualizar datos en ASPIRANTES (por email)
+        const aspirante = await Aspirantes.findOne({ where: { emailAspirante: usuario.emailUsuario } });
+        if (aspirante) {
+            const aspUpdate = {};
+            if (whatsapp?.trim()) aspUpdate.whatsappAspirante = whatsapp.trim();
+            if (ciudad !== undefined) aspUpdate.ciudadAspirante = ciudad?.trim() || null;
+            if (instagram !== undefined) aspUpdate.instagramAspirante = instagram?.trim() || null;
+            if (tiktok !== undefined) aspUpdate.tiktokAspirante = tiktok?.trim() || null;
+
+            if (Object.keys(aspUpdate).length > 0) {
+                await aspirante.update(aspUpdate);
+            }
+        }
+
+        res.json({ ok: true, msg: 'Datos actualizados correctamente' });
+    } catch (error) {
+        console.error('Error updateUserData:', error);
+        res.status(500).json({ ok: false, msg: 'Error al actualizar datos' });
+    }
+};
+
+// ==========================================
+// PERFIL DE USUARIO — Suspender / Activar
+// ==========================================
+const toggleUserStatus = async (req, res) => {
+    try {
+        const { idUsuario } = req.params;
+        const usuario = await Usuarios.findByPk(idUsuario);
+        if (!usuario) return res.status(404).json({ ok: false, msg: 'Usuario no encontrado' });
+
+        const nuevoEstado = usuario.estado === 'activo' ? 'suspendido' : 'activo';
+        await usuario.update({ estado: nuevoEstado });
+
+        res.json({
+            ok: true,
+            estado: nuevoEstado,
+            msg: nuevoEstado === 'suspendido' ? 'Usuario suspendido' : 'Usuario activado'
+        });
+    } catch (error) {
+        console.error('Error toggleUserStatus:', error);
+        res.status(500).json({ ok: false, msg: 'Error al cambiar estado' });
+    }
+};
+
+// ==========================================
+// PERFIL DE USUARIO — Wishlist
+// ==========================================
+const getUserWishlist = async (req, res) => {
+    try {
+        const { idUsuario } = req.params;
+
+        const items = await Wishlist.findAll({
+            where: { idUsuario, estado: 'en lista' },
+            include: [{
+                model: Multimedia,
+                attributes: ['idMultimedia', 'nombreComposicion', 'formato', 'tipoAsset', 'costoCreditos'],
+                include: [{ model: Artistas, attributes: ['nombreArtista'] }]
+            }],
+            order: [['fechaCreacion', 'DESC']]
+        });
+
+        const data = items.map(w => ({
+            idWishlist: w.idWishlist,
+            idMultimedia: w.MULTIMEDIA?.idMultimedia,
+            nombreComposicion: w.MULTIMEDIA?.nombreComposicion || '—',
+            artista: w.MULTIMEDIA?.ARTISTA?.nombreArtista || '—',
+            formato: w.MULTIMEDIA?.formato?.toUpperCase() || '—',
+            tipoAsset: w.MULTIMEDIA?.tipoAsset || 'AUDIO',
+            costoCreditos: w.MULTIMEDIA?.costoCreditos || 0,
+            fechaCreacion: w.fechaCreacion
+        }));
+
+        res.json({ ok: true, data, total: data.length });
+    } catch (error) {
+        console.error('Error getUserWishlist:', error);
+        res.status(500).json({ ok: false, msg: 'Error al consultar wishlist' });
+    }
+};
+
+// ==========================================
+// PERFIL DE USUARIO — Historial de Créditos
+// ==========================================
+const getUserCreditHistory = async (req, res) => {
+    try {
+        const { idUsuario } = req.params;
+
+        const registros = await RitmaCoins.findAll({
+            where: { idUsuario },
+            attributes: ['idRitma', 'cantidadComprada', 'cantidadActual', 'fechaCompra', 'fechaUltimaCompra'],
+            order: [['fechaCompra', 'DESC']]
+        });
+
+        const data = registros.map(r => ({
+            idRitma: r.idRitma,
+            cantidadComprada: r.cantidadComprada,
+            cantidadActual: r.cantidadActual,
+            fechaCompra: r.fechaCompra,
+            fechaUltimaCompra: r.fechaUltimaCompra
+        }));
+
+        res.json({ ok: true, data });
+    } catch (error) {
+        console.error('Error getUserCreditHistory:', error);
+        res.status(500).json({ ok: false, msg: 'Error al consultar historial de créditos' });
+    }
+};
+
 export {
     dashboard,
     usersPanel,
@@ -1245,4 +1574,11 @@ export {
     rechazarAspirante,
     sseUserPanel,
     getSolicitudesPendientes,
+    userProfile,
+    getUserDownloads,
+    addUserCredits,
+    updateUserData,
+    toggleUserStatus,
+    getUserWishlist,
+    getUserCreditHistory,
 }

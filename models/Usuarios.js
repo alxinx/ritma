@@ -38,7 +38,12 @@ const Usuarios =  db.define('USUARIOS', {
     },
     expiracion: {
         type: DataTypes.DATE,
-        allowNull: true, 
+        allowNull: true,
+    },
+    estado: {
+        type: DataTypes.ENUM('activo', 'suspendido'),
+        defaultValue: 'activo',
+        allowNull: false
     }
 },
 {

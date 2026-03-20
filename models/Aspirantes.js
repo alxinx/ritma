@@ -41,6 +41,10 @@ const Aspirantes = db.define('ASPIRANTES', {
         type: DataTypes.STRING(30),
         allowNull: true
     },
+    imagen: {
+        type: DataTypes.STRING(200),
+        allowNull: true
+    },
     estadoAspirante: {
         type: DataTypes.ENUM('aspirante', 'rechazado', 'aceptado'),
         defaultValue: 'aspirante',
