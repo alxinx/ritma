@@ -154,7 +154,137 @@ const getGeneros = async (req, res) => {
     }
 };
 
+// ==========================================
+// API: Busqueda de multimedia (paginada + filtros)
+// ==========================================
+const searchMultimedia = async (req, res) => {
+    try {
+        const idUsuario = req.usuario.idUsuario;
+        const limit = parseInt(process.env.MAX_ROWS_FOR_PAGE) || 10;
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const offset = (page - 1) * limit;
+
+        // Sanitizar inputs — solo permitir caracteres seguros
+        const rawSearch = (req.query.search || '').trim();
+        const search = rawSearch.replace(/[^\w\sáéíóúñÁÉÍÓÚÑüÜ.\-]/gi, '').substring(0, 100);
+
+        const tipo = ['audio', 'video'].includes(req.query.tipo) ? req.query.tipo : 'all';
+
+        // BPM range — forzar numeros validos
+        const bpmMin = Math.max(20, Math.min(200, parseInt(req.query.bpmMin) || 20));
+        const bpmMax = Math.max(20, Math.min(200, parseInt(req.query.bpmMax) || 200));
+
+        // Generos — parsear y validar como array de enteros
+        let generos = [];
+        try {
+            const parsed = JSON.parse(req.query.generos || '[]');
+            if (Array.isArray(parsed)) {
+                generos = parsed.map(g => parseInt(g)).filter(g => !isNaN(g) && g > 0);
+            }
+        } catch {}
+
+        // Construir WHERE
+        const where = { estado: 'ENABLE' };
+
+        // Filtro tipo
+        if (tipo === 'audio') where.tipoAsset = 'AUDIO';
+        else if (tipo === 'video') where.tipoAsset = 'VIDEO';
+
+        // Filtro BPM (solo si no es el rango completo)
+        if (bpmMin > 20 || bpmMax < 200) {
+            where.bpm = { [Op.between]: [bpmMin, bpmMax] };
+        }
+
+        // Filtro busqueda por nombre de composicion o artista
+        const include = [
+            {
+                model: Artistas,
+                attributes: ['nombreArtista'],
+                ...(search ? { where: {}, required: false } : {})
+            }
+        ];
+
+        // Busqueda: nombre de composicion OR nombre de artista
+        if (search) {
+            const { Op: SeqOp } = await import('sequelize');
+            where[Op.or] = [
+                { nombreComposicion: { [Op.like]: `%${search}%` } }
+            ];
+            // Para buscar por artista, hacemos un subquery
+            // Primero buscamos IDs de artistas que coincidan
+            const artistasMatch = await Artistas.findAll({
+                where: { nombreArtista: { [Op.like]: `%${search}%` } },
+                attributes: ['idArtista'],
+                raw: true
+            });
+            if (artistasMatch.length > 0) {
+                where[Op.or].push({
+                    idArtista: { [Op.in]: artistasMatch.map(a => a.idArtista) }
+                });
+            }
+        }
+
+        // Filtro generos — buscar idMultimedia que tengan esos generos
+        if (generos.length > 0) {
+            const { MultimediaGeneros: MG } = await import('../models/index.js');
+            const multimediaConGenero = await MG.findAll({
+                where: { idGenero: { [Op.in]: generos } },
+                attributes: ['idMultimedia'],
+                group: ['idMultimedia'],
+                raw: true
+            });
+            const idsConGenero = multimediaConGenero.map(m => m.idMultimedia);
+            if (idsConGenero.length > 0) {
+                where.idMultimedia = where.idMultimedia
+                    ? { [Op.and]: [where.idMultimedia, { [Op.in]: idsConGenero }] }
+                    : { [Op.in]: idsConGenero };
+            } else {
+                // No hay multimedia con esos generos
+                return res.json({ ok: true, data: [], total: 0, page, totalPages: 0 });
+            }
+        }
+
+        const { count, rows } = await Multimedia.findAndCountAll({
+            where,
+            include: [{ model: Artistas, attributes: ['nombreArtista'] }],
+            attributes: ['idMultimedia', 'nombreComposicion', 'tipoAsset', 'formato', 'costoCreditos', 'bpm'],
+            order: [['createdAt', 'DESC']],
+            limit,
+            offset,
+            distinct: true
+        });
+
+        // Creditos disponibles del usuario (para saber si puede descargar)
+        const creditosDisponibles = await RitmaCoins.sum('cantidadActual', { where: { idUsuario } }) || 0;
+
+        const data = rows.map(m => ({
+            idMultimedia: m.idMultimedia,
+            nombreComposicion: m.nombreComposicion,
+            artista: m.ARTISTA ? m.ARTISTA.nombreArtista : '—',
+            tipoAsset: m.tipoAsset,
+            formato: (m.formato || '').toUpperCase(),
+            costoCreditos: m.costoCreditos || 0,
+            bpm: m.bpm || null,
+            puedeDescargar: creditosDisponibles >= (m.costoCreditos || 0)
+        }));
+
+        res.json({
+            ok: true,
+            data,
+            total: count,
+            page,
+            totalPages: Math.ceil(count / limit),
+            creditosDisponibles
+        });
+
+    } catch (error) {
+        console.error('Error searchMultimedia:', error);
+        res.status(500).json({ ok: false, msg: 'Error en la busqueda' });
+    }
+};
+
 export {
     dashboard,
-    getGeneros
+    getGeneros,
+    searchMultimedia
 }

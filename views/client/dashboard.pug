@@ -95,10 +95,33 @@ block content
             //- RESULTADOS DE BUSQUEDA
             //- ==========================================
             div#search-results(class="modular-card p-6")
-                div(class="text-center py-16")
+                //- Empty state (visible por defecto)
+                div#search-empty(class="text-center py-16")
                     span(class="material-symbols-outlined text-6xl text-white/5 mb-4 block") manage_search
                     h3(class="text-lg font-display font-bold text-white/15 mb-2") Explora el catalogo
                     p(class="text-white/20 text-xs font-mono uppercase tracking-widest max-w-md mx-auto") Digita el nombre de un artista o una cancion para comenzar tu busqueda
+
+                //- Loading spinner
+                div#search-loading(class="text-center py-16 hidden")
+                    div(class="inline-block size-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin mb-4")
+                    p(class="text-white/20 text-xs font-mono uppercase tracking-widest") Buscando...
+
+                //- Tabla de resultados
+                div#search-table-wrapper(class="hidden")
+                    table(class="w-full text-left")
+                        thead
+                            tr(class="border-b border-white/10")
+                                th(class="px-4 py-3 text-[9px] font-mono text-primary uppercase" style="width:25%") Artista
+                                th(class="px-4 py-3 text-[9px] font-mono text-primary uppercase" style="width:35%") Composicion
+                                th(class="px-4 py-3 text-[9px] font-mono text-primary uppercase" style="width:12%") Formato
+                                th(class="px-4 py-3 text-[9px] font-mono text-primary uppercase" style="width:12%") Costo
+                                th(class="px-4 py-3 text-[9px] font-mono text-primary uppercase text-center" style="width:16%") Acciones
+                        tbody#search-tbody
+
+                    //- Paginacion
+                    div(class="flex items-center justify-between mt-4 pt-4 border-t border-white/5")
+                        span#search-total(class="text-[10px] font-mono text-white/30")
+                        div#search-pages(class="flex gap-1")
 
         //- ==========================================
         //- COLUMNA DERECHA (30%)
@@ -124,7 +147,7 @@ block content
                                 div(class="flex-1 min-w-0")
                                     p(class="text-xs font-bold text-white truncate group-hover:text-primary transition-colors") #{r.nombreComposicion}
                                     div(class="flex items-center gap-2 mt-0.5")
-                                        span(class="text-[9px] text-white/30 font-mono truncate") #{r.Artista ? r.Artista.nombreArtista : '—'}
+                                        span(class="text-[9px] text-white/30 font-mono truncate") #{r.ARTISTA ? r.ARTISTA.nombreArtista : '—'}
                                         if r.bpm
                                             span(class="text-[8px] font-mono text-primary/50 font-bold shrink-0") #{r.bpm} BPM
                                 //- Acciones
