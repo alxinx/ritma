@@ -1,6 +1,7 @@
 import {validationResult } from "express-validator";
 import {Usuarios} from '../models/index.js'
-import {generarJwt} from '../helpers/genToken.js'
+import {generarJwt, generarRefreshToken} from '../helpers/genToken.js'
+import redisClient from '../config/redis.js'
 import redirection from '../helpers/redirection.js'
 import crypto from "crypto"
 import nodemailer from "nodemailer"
@@ -87,6 +88,14 @@ const loginPost = async (req, res)=>{
             });
         }
 
+        // Verificar si el usuario está suspendido
+        if (usuario.estado === 'suspendido') {
+            return res.status(403).render('./auth/login', {
+                tituloPagina: 'Login',
+                mensaje: '⛔ Tu cuenta ha sido suspendida. Contacta a soporte.'
+            });
+        }
+
         //Compruebo que la contraseña sea correcta
         const passwordCorrecto = await usuario.checkPassword(password);
         if (!passwordCorrecto) {
@@ -96,15 +105,28 @@ const loginPost = async (req, res)=>{
             });
         }
 
-        //GENERO EN JWT
+        //GENERO ACCESS TOKEN (15min) + REFRESH TOKEN (7 días en Redis)
         const tkn = generarJwt({id : usuario.idUsuario, name : usuario.nombreUsuario, rol : usuario.permisos});
+        const refreshToken = generarRefreshToken();
+
+        // Guardar refresh token en Redis con TTL de 7 días
+        await redisClient.setEx(
+            `refresh:${refreshToken}`,
+            60 * 60 * 24 * 7, // 7 días
+            JSON.stringify({ id: usuario.idUsuario, rol: usuario.permisos })
+        );
+
         const urlRedireccion = redirection(usuario.permisos);
-        return res.cookie('_token', tkn, {
-            httpOnly : true,
-            secure : process.env.COOKIE_SECURE === 'true',
-            sameSite: 'strict',
-            maxAge: 1000 * 60 * 60 * 8
-        }).redirect(urlRedireccion)
+        const cookieOpts = {
+            httpOnly: true,
+            secure: process.env.COOKIE_SECURE === 'true',
+            sameSite: 'strict'
+        };
+
+        return res
+            .cookie('_token', tkn, { ...cookieOpts, maxAge: 1000 * 60 * 15 }) // 15 min
+            .cookie('_refresh', refreshToken, { ...cookieOpts, maxAge: 1000 * 60 * 60 * 24 * 7 }) // 7 días
+            .redirect(urlRedireccion)
 
     } catch (error) {
         console.error('Error en loginPost:', error.message);
@@ -229,9 +251,13 @@ const resetPassword = async (req, res)=>{
 
 
 
-const logout = (req, res) => {
-    return res.clearCookie('_token').redirect('/');
-
+const logout = async (req, res) => {
+    // Invalidar refresh token en Redis
+    const refreshToken = req.cookies?._refresh;
+    if (refreshToken) {
+        await redisClient.del(`refresh:${refreshToken}`).catch(() => {});
+    }
+    return res.clearCookie('_token').clearCookie('_refresh').redirect('/');
 }
 
 

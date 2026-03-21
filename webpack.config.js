@@ -11,6 +11,7 @@ export default {
         mediafileProfile : './src/js/mediafileProfile.js',
         userProfile : './src/js/userProfile.js',
         multiArtistUpload : './src/js/multiArtistUpload.js',
+        clientPanel : './src/js/clientPanel.js',
 
     },
     output : {

@@ -1,21 +1,73 @@
-include ../layout/head.pug
-include ../components/mixins/form-field.pug
-include ../components/mixins/layouts.pug
-block contenedor
-    // ================================================
-    // NAVBAR
-    // ================================================
-//include ./navBar.pug
-main(class="flex-1 max-w-7xl mx-auto px-6 py-16 md:py-24")
-    //==============================================
-    // SECCIONES 
-    // ================================================
-    
-        
+extends base.pug
 
+block content
+    //- Welcome section
+    div(class="mb-8")
+        h2(class="text-2xl font-display font-extrabold text-white tracking-tight") Bienvenido, #{usuario.nombreUsuario}
+        p(class="text-white/40 text-sm mt-1 font-mono uppercase tracking-widest") Tu biblioteca musical
 
-    // ================================================
-    // FOOTER (PENDIENTE)
-    //include ./footer.pug
-    // ================================================
-    // footer
+    //- Stats
+    div(class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8")
+        //- Creditos disponibles
+        div(class="stats-crystal glass-card")
+            div(class="flex justify-between items-start relative z-10")
+                span.subTittle Creditos Disponibles
+                span(class="material-symbols-outlined") credit_card_heart
+            div(class="mt-4 relative z-10")
+                span(class="text-4xl font-display font-extrabold text-primary") #{creditosDisponibles || 0}
+                div(class="mt-1 text-[10px] font-mono text-white/30 uppercase") R$ disponibles
+
+        //- Descargas totales
+        div(class="stats-crystal glass-card")
+            div(class="flex justify-between items-start relative z-10")
+                span.subTittle Mis Descargas
+                span(class="material-symbols-outlined") cloud_download
+            div(class="mt-4 relative z-10")
+                span(class="text-4xl font-display font-extrabold text-primary") #{totalDescargas || 0}
+                div(class="mt-1 text-[10px] font-mono text-white/30 uppercase") archivos descargados
+
+        //- Wishlist
+        div(class="stats-crystal glass-card")
+            div(class="flex justify-between items-start relative z-10")
+                span.subTittle Mi Wishlist
+                span(class="material-symbols-outlined") bookmark
+            div(class="mt-4 relative z-10")
+                span(class="text-4xl font-display font-extrabold text-primary") #{wishlistCount || 0}
+                div(class="mt-1 text-[10px] font-mono text-white/30 uppercase") en lista
+
+    //- Descargas recientes
+    div(class="modular-card p-6 mb-8")
+        div(class="flex items-center justify-between mb-6")
+            h3(class="text-sm font-bold uppercase tracking-widest text-white") Descargas Recientes
+            a(href="/ritmaap/biblioteca" class="text-[10px] text-primary font-bold uppercase tracking-widest hover:text-primary/80 transition-colors") Ver todas
+
+        div#recent-downloads
+            if descargasRecientes && descargasRecientes.length > 0
+                table(class="w-full text-left")
+                    thead
+                        tr(class="border-b border-white/10")
+                            th(class="px-4 py-3 text-[9px] font-mono text-primary uppercase") Nombre
+                            th(class="px-4 py-3 text-[9px] font-mono text-primary uppercase") Artista
+                            th(class="px-4 py-3 text-[9px] font-mono text-primary uppercase w-20") Tipo
+                            th(class="px-4 py-3 text-[9px] font-mono text-primary uppercase w-32") Fecha
+                    tbody
+                        each d in descargasRecientes
+                            tr(class="border-b border-white/5 hover:bg-white/3 transition-colors")
+                                td(class="px-4 py-3")
+                                    p(class="text-sm font-bold text-white") #{d.Multimedia ? d.Multimedia.nombreComposicion : 'N/A'}
+                                td(class="px-4 py-3 text-white/50 text-xs")
+                                    if d.Multimedia && d.Multimedia.Artista
+                                        | #{d.Multimedia.Artista.nombreArtista}
+                                    else
+                                        | —
+                                td(class="px-4 py-3")
+                                    if d.Multimedia
+                                        - const fmt = (d.Multimedia.formato || '').toUpperCase()
+                                        - const fmtColor = fmt === 'MP3' ? 'bg-green-500/20 text-green-400' : fmt === 'WAV' ? 'bg-blue-500/20 text-blue-400' : fmt === 'MP4' ? 'bg-purple-500/20 text-purple-400' : 'bg-white/10 text-white/50'
+                                        span(class=`px-2 py-0.5 text-[8px] font-bold uppercase rounded ${fmtColor}`) #{fmt}
+                                td(class="px-4 py-3 text-white/40 text-[10px] font-mono")
+                                    | #{new Date(d.fechaDescarga).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
+            else
+                div(class="text-center py-10")
+                    span(class="material-symbols-outlined text-4xl text-white/10 mb-2") cloud_download
+                    p(class="text-white/20 text-xs uppercase tracking-widest") Aun no tienes descargas

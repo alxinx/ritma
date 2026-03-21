@@ -1,0 +1,43 @@
+//- Header — User Panel
+header(class="h-20 glass-header sticky top-0 flex items-center justify-between px-6 lg:px-10 z-50")
+    div(class="flex flex-col")
+        h3= tituloPagina
+        span.subtitulo= subtitulo
+
+    div(class="flex items-center gap-4 lg:gap-6")
+        //- Creditos disponibles
+        a(href="/ritmaap/creditos" class="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full hover:bg-primary/15 transition-all" title="Creditos disponibles")
+            span(class="material-symbols-outlined text-primary text-lg") credit_card_heart
+            span(class="text-sm font-bold text-primary font-mono") #{creditosDisponibles || 0}
+
+        //- Notificaciones / Mensajes
+        button(class="relative text-white/40 hover:text-primary transition-colors p-2")
+            span(class="material-symbols-outlined text-xl") notifications
+            if notificaciones && notificaciones > 0
+                span(class="absolute -top-0.5 -right-0.5 size-4 bg-red-500 text-[8px] font-bold text-white rounded-full flex items-center justify-center") #{notificaciones}
+
+        div(class="h-8 w-px bg-white/10")
+
+        //- Perfil del usuario
+        div(class="relative" id="profileMenuWrapper")
+            button(class="flex items-center gap-2 cursor-pointer" id="profileMenuBtn")
+                div(class="size-9 rounded-full overflow-hidden border-2 border-primary/30")
+                    if usuario && usuario.imagen
+                        img(src=`${process.env.R2_PUBLIC_URL}/images/users/${usuario.imagen}` alt="Perfil" class="w-full h-full object-cover")
+                    else
+                        img(src="/img/generico.webp" alt="Perfil" class="w-full h-full object-cover")
+                span(class="material-symbols-outlined text-white/40 text-sm") expand_more
+
+            //- Dropdown menu
+            div(id="profileMenu" class="absolute right-0 top-full mt-2 w-48 bg-surface-dark border border-white/10 rounded-xl shadow-2xl hidden flex-col overflow-hidden z-100")
+                div(class="px-4 py-3 border-b border-white/10")
+                    p(class="text-sm font-bold text-white truncate") #{usuario.nombreUsuario} #{usuario.apellidoUsuario}
+                    p(class="text-[10px] text-white/40 truncate") #{usuario.emailUsuario}
+                a(href="/ritmaap/settings" class="flex items-center gap-2 px-4 py-3 text-sm text-white/60 hover:text-primary hover:bg-white/5 transition-colors")
+                    span(class="material-symbols-outlined text-lg") settings
+                    | Settings
+                form(action="/app/logout" method="POST" class="border-t border-white/10")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    button(type="submit" class="flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors w-full text-left")
+                        span(class="material-symbols-outlined text-lg") exit_to_app
+                        | Cerrar Sesion

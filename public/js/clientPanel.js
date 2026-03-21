@@ -1,0 +1,1 @@
+(()=>{"use strict";document.addEventListener("DOMContentLoaded",()=>{const e=document.getElementById("profileMenuBtn"),t=document.getElementById("profileMenu");e&&t&&(e.addEventListener("click",e=>{e.stopPropagation(),t.classList.toggle("hidden")}),document.addEventListener("click",n=>{e.contains(n.target)||t.contains(n.target)||t.classList.add("hidden")}))})})();
