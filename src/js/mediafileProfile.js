@@ -73,6 +73,25 @@ import Swal from 'sweetalert2';
         // DOWNLOAD FLOW (OTP Redis Token)
         // ==========================================
         const btnDownload = document.getElementById('btn-request-download');
+        const downloadContainer = btnDownload?.closest('div');
+
+        // Consultar estado de ban al cargar la página
+        if (btnDownload) {
+            (async () => {
+                try {
+                    const banRes = await fetch('/app/dash/json/download-ban-status');
+                    const banData = await banRes.json();
+                    if (banData.banned) {
+                        btnDownload.disabled = true;
+                        btnDownload.style.opacity = '0.3';
+                        btnDownload.style.pointerEvents = 'none';
+                        btnDownload.innerHTML = '<span class="material-symbols-outlined">block</span> Descargas suspendidas';
+                        btnDownload.title = banData.msg;
+                    }
+                } catch (e) { /* fail open */ }
+            })();
+        }
+
         if (btnDownload) {
             btnDownload.addEventListener('click', async () => {
                 try {
@@ -88,8 +107,31 @@ import Swal from 'sweetalert2';
                     });
                     const data = await res.json();
 
+                    if (data.blocked) {
+                        // Rate limit — deshabilitar botón y mostrar bloqueo
+                        btnDownload.disabled = true;
+                        btnDownload.style.opacity = '0.3';
+                        btnDownload.style.pointerEvents = 'none';
+                        btnDownload.innerHTML = '<span class="material-symbols-outlined">block</span> Descargas suspendidas';
+                        Swal.fire({ icon: 'error', title: 'Descargas suspendidas', text: data.msg, background: '#0a0a0c', color: '#fff' });
+                        return;
+                    }
+
+                    // Mostrar advertencia si el header la trae
+                    const warning = res.headers.get('X-Download-Warning');
+                    if (warning) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Advertencia',
+                            text: warning,
+                            timer: 4000,
+                            showConfirmButton: false,
+                            background: '#0a0a0c',
+                            color: '#fff'
+                        });
+                    }
+
                     if (data.ok && data.token) {
-                        // Redirect to download endpoint
                         window.location.href = `/app/dash/api/download/${data.token}`;
                     } else {
                         Swal.fire({ icon: 'error', title: 'Error', text: data.msg || 'No se pudo generar el link.', background: '#0a0a0c', color: '#fff' });

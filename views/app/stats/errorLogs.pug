@@ -1,14 +1,65 @@
-div(class="glass-card rounded-3xl p-8 flex flex-col justify-center relative overflow-hidden group border-ritma-red/20 glow-red")
+- const borderError = errores24h > 0 ? 'border-ritma-red/20' : 'border-white/5'
+div(class=`glass-card rounded-3xl p-8 flex flex-col justify-center relative overflow-hidden group ${borderError}`)
   div(class="absolute inset-0 pixel-pattern opacity-5")
 
   div(class="relative z-10 text-center")
     h3(class="text-[11px] font-bold text-error-red uppercase tracking-[0.3em] mb-6") Error Logs (24h)
 
-    div(class="inline-flex items-center justify-center size-24 rounded-full bg-ritma-red/10 border border-ritma-red/30 mb-6")
-      span(class="text-5xl font-accent font-extrabold text-ritma-red") 12
+    - const circleClass = errores24h > 0 ? 'bg-ritma-red/10 border border-ritma-red/30' : 'bg-green-500/10 border border-green-500/30'
+    div(class=`inline-flex items-center justify-center size-24 rounded-full mb-6 ${circleClass}`)
+      if errores24h > 0
+        span(class="text-5xl font-accent font-extrabold text-ritma-red") #{errores24h}
+      else
+        span(class="text-5xl font-accent font-extrabold text-green-400") 0
 
-    p(class="text-xs font-bold text-white mb-2") CRITICAL: 500 ERRORS DETECTED
-    p(class="text-[10px] text-ritma-red/70 font-mono tracking-tighter") TIMESTAMP: 2023-10-27T14:22:11Z
+    if errores24h > 0
+      p(class="text-xs font-bold text-white mb-2") #{errores24h} ERROR#{errores24h > 1 ? 'ES' : ''} DETECTADO#{errores24h > 1 ? 'S' : ''}
+      button#btn-ver-errores(class="mt-6 w-full py-3 bg-ritma-red text-white text-[10px] font-black rounded-xl uppercase tracking-widest hover:brightness-110 transition-all")
+        | Inspeccionar Errores
+    else
+      p(class="text-xs font-bold text-green-400 mb-2") SISTEMA LIMPIO
+      p(class="text-[10px] text-white/30 font-mono") Sin errores en las últimas 24h
 
-    button(class="mt-8 w-full py-3 bg-ritma-red text-white text-[10px] font-black rounded-xl uppercase tracking-widest hover:brightness-110 transition-all")
-      | Inspect Failures
+  //- Modal de errores
+  div#modal-errores(class="fixed inset-0 z-[999] hidden")
+    div(class="absolute inset-0 bg-black/80" onclick="document.getElementById('modal-errores').classList.add('hidden')")
+    div(class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl max-h-[80vh] glass-card rounded-2xl p-6 overflow-hidden flex flex-col")
+      div(class="flex items-center justify-between mb-4")
+        h3(class="text-sm font-bold text-white uppercase tracking-widest") Errores (24h)
+        button(onclick="document.getElementById('modal-errores').classList.add('hidden')" class="text-white/40 hover:text-white")
+          span(class="material-symbols-outlined") close
+      div#errores-lista(class="overflow-y-auto flex-1 space-y-2")
+
+  script.
+    (function() {
+      try {
+        const errores = !{erroresLista};
+        const btn = document.getElementById('btn-ver-errores');
+        const modal = document.getElementById('modal-errores');
+        const lista = document.getElementById('errores-lista');
+        if (!btn || !modal || !lista) return;
+
+        const colores = {
+          CRITICAL: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
+          HIGH: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30' },
+          MEDIUM: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' },
+          LOW: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' }
+        };
+
+        btn.addEventListener('click', () => {
+          lista.innerHTML = errores.map(e => {
+            const c = colores[e.nivel] || colores.MEDIUM;
+            const fecha = new Date(e.createdAt).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+            return `<div class="p-3 rounded-xl border ${c.border} ${c.bg}">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[9px] font-black uppercase tracking-widest ${c.text}">${e.nivel}</span>
+                <span class="text-[9px] text-white/30 font-mono">${fecha}</span>
+              </div>
+              <p class="text-xs font-bold text-white mb-1">[${e.modulo}] ${e.error}</p>
+              ${e.stack ? '<p class="text-[10px] text-white/30 font-mono truncate">' + e.stack.substring(0, 120) + '</p>' : ''}
+            </div>`;
+          }).join('');
+          modal.classList.remove('hidden');
+        });
+      } catch(e) {}
+    })();

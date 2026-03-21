@@ -21,7 +21,7 @@
 
         // --- ESTADO ---
         let currentPage = 1;
-        const LIMIT = 20;
+        const LIMIT = window.__MULTIMEDIA_CONFIG__?.maxRowsPerPage || 10;
         let debounceTimer;
         let abortController;
         let selectedGeneros = [];

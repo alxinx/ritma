@@ -4,9 +4,10 @@ import upload from '../middlewares/upload.js';
 import procesarImagenes from '../middlewares/imageProcessor.js'
 import validarErrores  from '../middlewares/validarErrores.js'
 import {checkUploadMultimedia} from '../middlewares/validationFields.js';
+import downloadRateLimiter from '../middlewares/downloadRateLimiter.js';
 import  {getPresignedUrl}  from '../controllers/uploadController.js';
 
-import { dashboard, usersPanel, multimediaPanel, uploadboard, mediafile, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus, toggleMultimediaEstado, requestDownloadToken, verifyAndDownload, updateMultimediaData, requestStreamToken, streamVideo, streamPreview, getActiveMembers, getAspirantes, aprobarAspirante, rechazarAspirante, sseUserPanel, getSolicitudesPendientes, userProfile, getUserDownloads, addUserCredits, updateUserData, toggleUserStatus, getUserWishlist, getUserCreditHistory, downloadsPanel, getTopGeneros } from '../controllers/adminControllers.js'
+import { dashboard, usersPanel, multimediaPanel, uploadboard, mediafile, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus, toggleMultimediaEstado, requestDownloadToken, verifyAndDownload, updateMultimediaData, requestStreamToken, streamVideo, streamPreview, getActiveMembers, getAspirantes, aprobarAspirante, rechazarAspirante, sseUserPanel, getSolicitudesPendientes, userProfile, getUserDownloads, addUserCredits, updateUserData, toggleUserStatus, getUserWishlist, getUserCreditHistory, downloadsPanel, getTopGeneros, checkDownloadBan } from '../controllers/adminControllers.js'
 const routes = express.Router();
 dotenv.config();
 
@@ -54,7 +55,8 @@ routes.get('/json/album/:idArtista', getAlbumsByArtist);
 routes.get('/json/multimedia', getMultimediaList);
 routes.get('/json/multimedia/status', getMultimediaStatus);
 routes.patch('/json/multimedia/:idMultimedia/toggle', toggleMultimediaEstado);
-routes.post('/json/multimedia/:idMultimedia/request-download', requestDownloadToken);
+routes.get('/json/download-ban-status', checkDownloadBan);
+routes.post('/json/multimedia/:idMultimedia/request-download', downloadRateLimiter, requestDownloadToken);
 routes.patch('/json/multimedia/:idMultimedia/update', updateMultimediaData);
 routes.post('/json/multimedia/:idMultimedia/request-stream', requestStreamToken);
 routes.get('/api/download/:token', verifyAndDownload);

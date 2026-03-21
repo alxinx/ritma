@@ -1,4 +1,4 @@
-import { Usuarios, Artistas, Album, Generos, Multimedia, MultimediaGeneros, ArtistaGeneros, HistorialDescargas, Aspirantes, RitmaCoins, Wishlist } from '../models/index.js'
+import { Usuarios, Artistas, Album, Generos, Multimedia, MultimediaGeneros, ArtistaGeneros, HistorialDescargas, Aspirantes, RitmaCoins, Wishlist, LogErrores } from '../models/index.js'
 import multimediaQueue from '../queues/multimediaQueue.js';
 import db from "../config/bd.js";
 import s3Client from "../config/r2.js";
@@ -9,7 +9,7 @@ import { pipeline } from 'stream/promises';
 import crypto from 'crypto';
 import dotenv from "dotenv";
 import path from 'path';
-import { Op } from 'sequelize';
+import { Op, fn, col, literal } from 'sequelize';
 
 import * as mm from 'music-metadata'; // Para BPM y Duración
 dotenv.config();
@@ -18,14 +18,132 @@ const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL;
 
 const dashboard = async (req, res) => {
     try {
-        const aspirantesEnEspera = await Aspirantes.count({ where: { estadoAspirante: 'aspirante' } });
+        const ahora = new Date();
+        const hace30d = new Date(ahora); hace30d.setDate(hace30d.getDate() - 30);
+        const hace24h = new Date(ahora); hace24h.setHours(hace24h.getHours() - 24);
+
+        // ── Queries en paralelo ──
+        const [
+            aspirantesEnEspera,
+            creditosEnCirculacion,
+            totalArchivos,
+            totalAudio,
+            totalVideo,
+            nuevosEsteMes,
+            aspirantesPorDia,
+            errores24h,
+            erroresLista
+        ] = await Promise.all([
+            // 1. Aspirantes en espera
+            Aspirantes.count({ where: { estadoAspirante: 'aspirante' } }),
+
+            // 2. Créditos en circulación (misma query que usersPanel)
+            RitmaCoins.sum('cantidadActual', {
+                where: { cantidadActual: { [Op.gt]: 0 } }
+            }).then(v => v || 0),
+
+            // 3. Total archivos activos
+            Multimedia.count({ where: { estado: 'ENABLE' } }),
+
+            // 4. Total audio activos
+            Multimedia.count({ where: { estado: 'ENABLE', tipoAsset: 'AUDIO' } }),
+
+            // 5. Total video activos
+            Multimedia.count({ where: { estado: 'ENABLE', tipoAsset: 'VIDEO' } }),
+
+            // 6. Aspirantes nuevos en últimos 30 días
+            Aspirantes.count({ where: { createdAt: { [Op.gte]: hace30d } } }),
+
+            // 7. Aspirantes por día (últimos 30 días para gráfica)
+            Aspirantes.findAll({
+                attributes: [
+                    [fn('DATE', col('createdAt')), 'dia'],
+                    [fn('COUNT', '*'), 'total']
+                ],
+                where: { createdAt: { [Op.gte]: hace30d } },
+                group: [fn('DATE', col('createdAt'))],
+                order: [[fn('DATE', col('createdAt')), 'ASC']],
+                raw: true
+            }),
+
+            // 8. Errores últimas 24h (count)
+            LogErrores.count({ where: { createdAt: { [Op.gte]: hace24h } } }),
+
+            // 9. Errores últimas 24h (lista para modal)
+            LogErrores.findAll({
+                where: { createdAt: { [Op.gte]: hace24h } },
+                order: [['createdAt', 'DESC']],
+                limit: 50,
+                raw: true
+            })
+        ]);
+
+        // Top 6 consumers — query directa con SQL para evitar problemas de GROUP BY con JOINs
+        let consumersConVolumen = [];
+        try {
+            const [topRows] = await db.query(`
+                SELECT
+                    h.idUsuario,
+                    u.nombreUsuario AS nombre,
+                    u.apellidoUsuario AS apellido,
+                    COUNT(*) AS totalDescargas,
+                    COALESCE(SUM(m.tamano), 0) AS totalBytes
+                FROM HISTORIAL_DESCARGAS_MULTIMEDIA h
+                JOIN USUARIOS u ON u.idUsuario = h.idUsuario
+                LEFT JOIN MULTIMEDIA m ON m.idMultimedia = h.idMultimedia
+                WHERE h.fechaDescarga >= :hace30d
+                GROUP BY h.idUsuario, u.nombreUsuario, u.apellidoUsuario
+                ORDER BY totalDescargas DESC
+                LIMIT 6
+            `, { replacements: { hace30d } });
+
+            if (topRows.length > 0) {
+                const maxDescargas = topRows[0].totalDescargas || 1;
+                consumersConVolumen = topRows.map(r => ({
+                    nombre: r.nombre || 'N/A',
+                    apellido: r.apellido || '',
+                    totalGB: (Number(r.totalBytes) / (1024 ** 3)).toFixed(1),
+                    porcentaje: Math.round((r.totalDescargas / maxDescargas) * 100),
+                    totalDescargas: r.totalDescargas
+                }));
+            }
+        } catch (e) {
+            console.error('Error topConsumers query:', e.message);
+        }
+
+        // Tendencia nuevos aspirantes: esta semana vs anterior
+        const hace7d = new Date(ahora); hace7d.setDate(hace7d.getDate() - 7);
+        const hace14d = new Date(ahora); hace14d.setDate(hace14d.getDate() - 14);
+        const [estaSemana, semanaAnterior] = await Promise.all([
+            Aspirantes.count({ where: { createdAt: { [Op.gte]: hace7d } } }),
+            Aspirantes.count({ where: { createdAt: { [Op.gte]: hace14d, [Op.lt]: hace7d } } })
+        ]);
+        let tendenciaNuevos;
+        if (semanaAnterior === 0 && estaSemana === 0) {
+            tendenciaNuevos = { direccion: 'flat', porcentaje: 0 };
+        } else if (semanaAnterior === 0) {
+            tendenciaNuevos = { direccion: 'up', porcentaje: 100 };
+        } else {
+            const pct = Math.round(((estaSemana - semanaAnterior) / semanaAnterior) * 100);
+            tendenciaNuevos = { direccion: pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat', porcentaje: Math.abs(pct) };
+        }
 
         return res.status(200).render('../views/app/dashboard', {
             tituloPagina: "Panel de control Principal",
             subtitulo: "Bienvenido",
             active: 'dashboard',
             csrfToken: req.csrfToken(),
-            aspirantesEnEspera
+            aspirantesEnEspera,
+            creditosEnCirculacion,
+            totalArchivos,
+            totalAudio,
+            totalVideo,
+            nuevosEsteMes,
+            tendenciaNuevos,
+            aspirantesPorDia: JSON.stringify(aspirantesPorDia),
+            topConsumers: consumersConVolumen,
+            errores24h,
+            erroresLista: JSON.stringify(erroresLista)
         });
     } catch (error) {
         console.error('Error dashboard:', error);
@@ -34,7 +152,17 @@ const dashboard = async (req, res) => {
             subtitulo: "Bienvenido",
             active: 'dashboard',
             csrfToken: req.csrfToken(),
-            aspirantesEnEspera: 0
+            aspirantesEnEspera: 0,
+            creditosEnCirculacion: 0,
+            totalArchivos: 0,
+            totalAudio: 0,
+            totalVideo: 0,
+            nuevosEsteMes: 0,
+            tendenciaNuevos: { direccion: 'flat', porcentaje: 0 },
+            aspirantesPorDia: '[]',
+            topConsumers: [],
+            errores24h: 0,
+            erroresLista: '[]'
         });
     }
 }
@@ -286,7 +414,8 @@ const multimediaPanel = (req, res) => {
         tituloPagina: "Biblioteca Multimedia",
         subtitulo: "Panel principal de la biblioteca multimedia",
         active: 'multimedia',
-        csrfToken: req.csrfToken()
+        csrfToken: req.csrfToken(),
+        maxRowsPerPage: parseInt(process.env.MAX_ROWS_FOR_PAGE) || 10
     })
 }
 
@@ -1748,6 +1877,38 @@ const getUserCreditHistory = async (req, res) => {
     }
 };
 
+// ==========================================
+// CHECK DOWNLOAD BAN STATUS
+// ==========================================
+const checkDownloadBan = async (req, res) => {
+    try {
+        const userId = req.usuario?.idUsuario;
+        if (!userId) return res.json({ ok: true, banned: false });
+
+        // Admins nunca están baneados
+        if (req.usuario?.permisos === 'ADMIN') return res.json({ ok: true, banned: false });
+
+        const banData = await redisClient.get(`rtm:dl:ban:${userId}`);
+        if (!banData) return res.json({ ok: true, banned: false });
+
+        const ban = JSON.parse(banData);
+        const ttl = await redisClient.ttl(`rtm:dl:ban:${userId}`);
+        const minutosRestantes = Math.ceil(ttl / 60);
+
+        let msg;
+        if (ban.strike >= 3) {
+            msg = `Lamentablemente no podrás volver a descargar más archivos hoy. Comunícate con ${process.env.APP_EMAIL || 'soporte@ritma.co'} para más información.`;
+        } else {
+            msg = `Tus descargas están suspendidas por ${ban.label}. Tiempo restante: ${minutosRestantes} minuto${minutosRestantes !== 1 ? 's' : ''}.`;
+        }
+
+        return res.json({ ok: true, banned: true, msg, ttl });
+    } catch (error) {
+        console.error('Error checkDownloadBan:', error);
+        res.json({ ok: true, banned: false });
+    }
+};
+
 export {
     dashboard,
     usersPanel,
@@ -1780,4 +1941,5 @@ export {
     getUserCreditHistory,
     downloadsPanel,
     getTopGeneros,
+    checkDownloadBan,
 }
