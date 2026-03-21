@@ -1,14 +1,16 @@
-form(id="upload-form" class="max-w-7xl mx-auto space-y-8" enctype="multipart/form-data" novalidate ) 
+form(id="upload-form" class="max-w-7xl mx-auto space-y-8" enctype="multipart/form-data" novalidate )
     input(type="hidden" name="_csrf")
     div(class="glass-card rounded-3xl relative overflow-visible")
       nav(class="flex border-b border-white/10 bg-black/20")
-        a(id="single" class="tab-btn  inactive cursor-pointer")
+        a(id="single" class="tab-btn active cursor-pointer")
             span(class="material-symbols-outlined text-sm mr-3 ")  file_open
-            | Solo un archivo
-        a(id="multiple" class="tab-btn active cursor-pointer")
+            | Un solo artista
+        a(id="multiple" class="tab-btn inactive cursor-pointer")
             span(class="material-symbols-outlined text-sm mr-3") library_music
-            | Varios Archivos
-      div(class="p-10 relative overflow-hidden")
+            | Varios artistas
+
+      //- ======== TAB 1: UN SOLO ARTISTA ========
+      div#tab-single-artist(class="p-10 relative overflow-hidden")
         div(class="space-y-10 relative z-10")
           input(type="hidden", id="idArtista" name="idArtista")
           div(class="grid grid-cols-1 md:grid-cols-3 gap-8 pb-10 border-b border-white/5")
@@ -77,6 +79,70 @@ form(id="upload-form" class="max-w-7xl mx-auto space-y-8" enctype="multipart/for
                     input(class="sr-only peer" type="checkbox" checked)
                     div(class="w-9 h-5 bg-white/10 rounded-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-black after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full")
         +btnSubmit("btnloadnow", "btnloadnow", "Inicializar Upload", "arrow_shape_up_stack_2")(class="btn-green text-black")
+
+      //- ======== TAB 2: VARIOS ARTISTAS ========
+      div#tab-multi-artist(class="p-10 relative overflow-hidden hidden")
+        div(class="space-y-8 relative z-10")
+          //- Header
+          div(class="flex items-center justify-between pb-6 border-b border-white/5")
+            div
+              h3(class="text-sm font-accent font-extrabold uppercase tracking-wider") Carga Múltiple
+              p(class="text-[10px] font-mono text-gray-500 mt-1") FORMATO DE NOMBRE: [BPM] - [ARTISTA] - [TITULO].ext
+            div(class="flex items-center gap-3")
+              span#multi-file-count(class="text-primary font-bold text-lg") 0
+              span(class="text-[10px] font-mono text-gray-500") / 10 ARCHIVOS
+
+          //- Drop zone + file inputs
+          div(class="flex gap-4")
+            label(for="multi-files-standard" class="upload-zone-mini flex-1 cursor-pointer")
+              div(class="upload-scan-lines")
+              div(class="text-center relative z-10 py-6")
+                span(class="material-symbols-outlined text-4xl upload-icon-pulse mb-2") cloud_upload
+                p(class="text-[10px] text-white/40 uppercase tracking-widest") Seleccionar archivos
+              input(type="file" id="multi-files-standard" multiple accept=".mp3,.wav,.mp4,.mov,.m4a,.flac,.aac,.ogg,.wma,.aiff,.avi,.mkv,.wmv,.webm" class="hidden")
+            label(for="multi-files-folder" class="upload-zone-mini flex-1 cursor-pointer")
+              div(class="upload-scan-lines")
+              div(class="text-center relative z-10 py-6")
+                span(class="material-symbols-outlined text-4xl upload-icon-pulse mb-2") folder_open
+                p(class="text-[10px] text-white/40 uppercase tracking-widest") Seleccionar carpeta
+              input(type="file" id="multi-files-folder" webkitdirectory accept=".mp3,.wav,.mp4,.mov,.m4a,.flac,.aac,.ogg,.wma,.aiff,.avi,.mkv,.wmv,.webm" class="hidden")
+
+          //- Preview table
+          div#multi-table-container(class="hidden")
+            div(class="overflow-x-auto")
+              table(class="w-full text-left table-fixed")
+                thead
+                  tr(class="border-b border-white/10")
+                    th(class="px-2 py-3 text-[9px] font-mono text-primary uppercase" style="width:3%") #
+                    th(class="px-2 py-3 text-[9px] font-mono text-primary uppercase" style="width:25%") Título
+                    th(class="px-2 py-3 text-[9px] font-mono text-primary uppercase" style="width:25%") Artista
+                    th(class="px-2 py-3 text-[9px] font-mono text-primary uppercase" style="width:15%") Álbum
+                    th(class="px-2 py-3 text-[9px] font-mono text-primary uppercase" style="width:10%") BPM
+                    th(class="px-2 py-3 text-[9px] font-mono text-primary uppercase text-center" style="width:5%") Sub
+                    th(class="px-2 py-3 text-[9px] font-mono text-primary uppercase" style="width:12%") Créditos
+                    th(class="px-2 py-3" style="width:5%")
+                tbody#multi-table-body
+
+          //- Genres (shared selector)
+          div(class="grid grid-cols-1 md:grid-cols-2 gap-10")
+            div(class="space-y-4")
+              label(class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest block ml-1") Selecciona los géneros
+              a(class="category-select" id="btn-abrir-generos-multi")
+                span(class="text-[10px] font-bold uppercase tracking-widest text-gray-400") Seleccione los géneros adecuados
+                span(class="material-symbols-outlined text-primary") shelves
+              input(type="hidden" name="generosSeleccionadosMulti" id="generosSeleccionadosMulti")
+              div#contenedor-pills-generos-multi(class="flex flex-wrap gap-2")
+            div(class="flex flex-col justify-end")
+              div(class="p-4 glass-card rounded-2xl border-white/5 bg-white/2 flex items-center justify-between")
+                div(class="space-y-1")
+                  p(class="text-[10px] font-bold text-white uppercase tracking-wider") Magic Numbers Validation
+                  p(class="text-[8px] font-mono text-gray-500") FILE_HEADER_CHECK_ON
+                label(class="relative inline-flex items-center cursor-pointer")
+                  input(class="sr-only peer" type="checkbox" checked)
+                  div(class="w-9 h-5 bg-white/10 rounded-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-black after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full")
+
+          +btnSubmit("btnloadnow-multi", "btnloadnow-multi", "Inicializar Upload Multi-Artista", "arrow_shape_up_stack_2")(class="btn-green text-black")
+
 //MODAL
 div(id="modal-generos" class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 hidden")
   div(class="glass-card  w-full max-w-2xl p-8 rounded-3xl border border-white/10")

@@ -93,10 +93,35 @@ const checkAcceso = [
         .escape()
 ];
 
+// Validación para upload multi-artista
+const checkUploadMultiArtist = [
+    check('generosSeleccionados')
+        .notEmpty().withMessage('Debe seleccionar al menos un género.')
+        .isLength({ min: 3 }).withMessage('La selección de género no es válida.'),
+
+    check('tracks')
+        .isArray({ min: 1, max: 10 }).withMessage('Debe haber entre 1 y 10 tracks.'),
+
+    check('tracks.*.titulo')
+        .trim()
+        .notEmpty().withMessage('Cada track debe tener un título.')
+        .isLength({ max: 200 }).withMessage('El título es demasiado largo.'),
+
+    check('tracks.*.nombreArtista')
+        .trim()
+        .notEmpty().withMessage('Cada track debe tener un artista.')
+        .isLength({ max: 150 }).withMessage('El nombre del artista es demasiado largo.'),
+
+    check('tracks.*.costoCreditos')
+        .optional()
+        .isInt({ min: 0, max: 100 }).withMessage('El costo debe ser entre 0 y 100 créditos.')
+];
+
 export {
 loginValidation,
 checkPasswords,
 emailValidation,
 checkUploadMultimedia,
+checkUploadMultiArtist,
 checkAcceso
 }

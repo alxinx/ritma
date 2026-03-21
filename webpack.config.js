@@ -10,6 +10,7 @@ export default {
         listadoMultimedia : './src/js/listadoMultimedia.js',
         mediafileProfile : './src/js/mediafileProfile.js',
         userProfile : './src/js/userProfile.js',
+        multiArtistUpload : './src/js/multiArtistUpload.js',
 
     },
     output : {

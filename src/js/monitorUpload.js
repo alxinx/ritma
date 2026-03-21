@@ -281,6 +281,103 @@ function actualizarProgresoGlobal() {
 }
 
 
+/**
+ * Monitor Multi-Artist — Sube archivos y registra con artistas independientes
+ */
+window.inicializarMonitorMulti = async function (filesList, tracks, generosSeleccionados, csrfToken) {
+    progresoArchivos = {};
+
+    // Header
+    const headerEl = document.getElementById('monitor-artista-album');
+    if (headerEl) headerEl.textContent = `Multi-Artista | ${filesList.length} archivos`;
+
+    // Build monitor UI
+    const container = document.getElementById('monitor-items-container');
+    container.innerHTML = '';
+
+    filesList.forEach((item, i) => {
+        const track = tracks.find(t => t.uid === item.uid);
+        container.insertAdjacentHTML('beforeend', `
+            <div class="bg-white/5 p-4 rounded-xl border border-white/5 mb-2">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10px] uppercase font-mono">${(i + 1).toString().padStart(2, '0')} - ${track ? track.titulo : item.file.name}</span>
+                    <span id="perc-${i}" class="text-[9px] font-mono">0%</span>
+                </div>
+                <div class="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div id="bar-${i}" class="h-full bg-primary transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+        `);
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    try {
+        const keysSubidas = [];
+        const metadatosExtraidos = [];
+
+        // Upload each file sequentially
+        for (let i = 0; i < filesList.length; i++) {
+            const file = filesList[i].file;
+
+            const duracion = await obtenerDuracionMedia(file);
+            metadatosExtraidos.push({
+                tamano: file.size,
+                formato: file.name.split('.').pop().toLowerCase(),
+                duracion: Math.round(duracion),
+                nombreFinal: file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_\- ]/g, '') + '.' + file.name.split('.').pop().toLowerCase()
+            });
+
+            const res = await ejecutarSubidaDirecta(file, 'multimedia', tracks[i]?.titulo || file.name, i);
+            keysSubidas.push(res.fileKey);
+        }
+
+        // Build payload with per-track artist info
+        const payload = {
+            generosSeleccionados,
+            tracks: tracks.map((t, i) => ({
+                titulo: t.titulo,
+                nombreArtista: t.nombreArtista,
+                idArtista: t.idArtista || '',
+                nombreAlbum: t.nombreAlbum,
+                bpm: t.bpm,
+                subtitulos: t.subtitulos,
+                costoCreditos: t.costoCreditos,
+                keyTrack: keysSubidas[i],
+                metadato: metadatosExtraidos[i]
+            }))
+        };
+
+        const res = await fetch('/app/dash/uploadboard/multi', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-csrf-token': csrfToken
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data.ok) {
+            Swal.fire({
+                icon: 'success',
+                title: '¡RTM-ENGINE MULTI CORONADO!',
+                text: data.msg,
+                background: '#0a0a0c', color: '#fff'
+            }).then(() => window.location.href = '/app/dash/multimedia');
+        } else {
+            const errorMsg = data.msg || (data.errores && data.errores.map(e => e.msg).join(', ')) || 'Error en registro';
+            throw new Error(errorMsg);
+        }
+    } catch (error) {
+        console.error('Multi-artist upload error:', error);
+        Swal.fire({ icon: 'error', title: 'RTM-ENGINE ERROR', text: error.message, background: '#0a0a0c', color: '#fff' });
+    } finally {
+        progresoArchivos = {};
+    }
+};
+
+
 function obtenerDuracionMedia(file) {
     return new Promise((resolve) => {
         const element = file.type.startsWith('video') ? document.createElement('video') : document.createElement('audio');

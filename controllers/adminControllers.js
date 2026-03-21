@@ -1909,6 +1909,167 @@ const checkDownloadBan = async (req, res) => {
     }
 };
 
+// ==========================================
+// CHECK ARTIST EXISTS (para multi-artist upload)
+// ==========================================
+const checkArtistExists = async (req, res) => {
+    try {
+        const { nombre } = req.query;
+        if (!nombre || nombre.trim() === '') {
+            return res.json({ exists: false, exact: null, similar: [] });
+        }
+        const trimmed = nombre.trim();
+
+        // Exact match
+        const exact = await Artistas.findOne({
+            where: { nombreArtista: trimmed },
+            attributes: ['idArtista', 'nombreArtista']
+        });
+
+        if (exact) {
+            return res.json({ exists: true, exact, similar: [] });
+        }
+
+        // Similar matches (fuzzy)
+        const similar = await Artistas.findAll({
+            where: { nombreArtista: { [Op.like]: `%${trimmed}%` } },
+            limit: 3,
+            attributes: ['idArtista', 'nombreArtista']
+        });
+
+        return res.json({ exists: false, exact: null, similar });
+    } catch (error) {
+        console.error('Error checkArtistExists:', error);
+        res.status(500).json({ msg: 'Error al verificar artista' });
+    }
+};
+
+// ==========================================
+// POST UPLOAD MULTI-ARTIST
+// ==========================================
+const postUploadMultiArtist = async (req, res) => {
+    let t;
+    try {
+        t = await db.transaction();
+        const { generosSeleccionados, tracks } = req.body;
+
+        if (!tracks || !Array.isArray(tracks) || tracks.length === 0) {
+            await t.rollback();
+            return res.status(400).json({ ok: false, msg: 'No se recibieron tracks.' });
+        }
+
+        if (tracks.length > 10) {
+            await t.rollback();
+            return res.status(400).json({ ok: false, msg: 'Máximo 10 archivos por upload.' });
+        }
+
+        const generosIds = JSON.parse(generosSeleccionados || '[]');
+        const resultadosMultimedia = [];
+
+        // Group by artist to avoid creating duplicates
+        const artistCache = new Map();
+
+        for (const track of tracks) {
+            const artistName = track.nombreArtista?.trim();
+            if (!artistName) {
+                await t.rollback();
+                return res.status(400).json({ ok: false, msg: 'Todos los tracks deben tener un artista.' });
+            }
+
+            // Resolve artist (cache to avoid dup creation)
+            let artista;
+            if (track.idArtista) {
+                artista = artistCache.get(track.idArtista) || await Artistas.findByPk(track.idArtista, { transaction: t });
+                if (artista) artistCache.set(artista.idArtista, artista);
+            }
+
+            if (!artista) {
+                const cacheKey = artistName.toLowerCase();
+                if (artistCache.has(cacheKey)) {
+                    artista = artistCache.get(cacheKey);
+                } else {
+                    [artista] = await Artistas.findOrCreate({
+                        where: { nombreArtista: artistName },
+                        transaction: t
+                    });
+                    artistCache.set(cacheKey, artista);
+                    artistCache.set(artista.idArtista, artista);
+                }
+            }
+
+            // Resolve album
+            const albumName = track.nombreAlbum?.trim() || 'Single';
+            const [album] = await Album.findOrCreate({
+                where: { nombreAlbum: albumName, idArtista: artista.idArtista },
+                defaults: { nombreAlbum: albumName, idArtista: artista.idArtista },
+                transaction: t
+            });
+
+            // Create multimedia record
+            const meta = track.metadato || {};
+            const bpmVal = track.bpm ? Math.min(300, Math.max(20, parseInt(track.bpm))) : null;
+
+            const nuevoMultimedia = await Multimedia.create({
+                nombreComposicion: track.titulo?.trim() || 'Sin título',
+                idAlbum: album.idAlbum,
+                idArtista: artista.idArtista,
+                tipoAsset: (meta.formato && ['mp4', 'mov', 'avi', 'mkv', 'wmv', 'webm'].includes(meta.formato)) ? 'VIDEO' : 'AUDIO',
+                formato: meta.formato || 'unknown',
+                tamano: meta.tamano || 0,
+                duracion: meta.duracion || 0,
+                costoCreditos: parseInt(track.costoCreditos) || 0,
+                bpm: bpmVal,
+                subtitulos: track.subtitulos === 'on',
+                keyTemp: track.keyTrack ? track.keyTrack.split('/').pop() : (meta.nombreFinal || null),
+                estado_ingesta: 'processing'
+            }, { transaction: t });
+
+            // Genres
+            if (generosIds.length > 0) {
+                await MultimediaGeneros.bulkCreate(
+                    generosIds.map(idGen => ({ idMultimedia: nuevoMultimedia.idMultimedia, idGenero: idGen })),
+                    { transaction: t }
+                );
+
+                const promesasArtGeneros = generosIds.map(idGen =>
+                    ArtistaGeneros.findOrCreate({
+                        where: { idArtista: artista.idArtista, idGenero: idGen },
+                        transaction: t
+                    })
+                );
+                await Promise.all(promesasArtGeneros);
+            }
+
+            resultadosMultimedia.push({
+                ...nuevoMultimedia.toJSON(),
+                keyTrack: track.keyTrack
+            });
+        }
+
+        await t.commit();
+
+        // Enqueue processing jobs
+        for (const media of resultadosMultimedia) {
+            try {
+                await multimediaQueue.add('processPreview', {
+                    keyTemp: media.keyTrack,
+                    tipoAsset: media.tipoAsset
+                });
+                console.log(`[RTM-QUEUE] Multi-job: ${media.keyTrack}`);
+            } catch (qErr) {
+                console.error('[RTM-QUEUE] Error multi-enqueue:', qErr);
+            }
+        }
+
+        res.status(200).json({ ok: true, msg: `¡${resultadosMultimedia.length} archivos registrados correctamente!` });
+
+    } catch (error) {
+        if (t && !t.finished) await t.rollback();
+        console.error('Error postUploadMultiArtist:', error.name, error.message);
+        res.status(500).json({ ok: false, msg: 'Error al guardar: ' + error.message });
+    }
+};
+
 export {
     dashboard,
     usersPanel,
@@ -1942,4 +2103,6 @@ export {
     downloadsPanel,
     getTopGeneros,
     checkDownloadBan,
+    checkArtistExists,
+    postUploadMultiArtist,
 }

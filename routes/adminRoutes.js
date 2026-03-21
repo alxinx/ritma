@@ -3,11 +3,11 @@ import dotenv from "dotenv";
 import upload from '../middlewares/upload.js';
 import procesarImagenes from '../middlewares/imageProcessor.js'
 import validarErrores  from '../middlewares/validarErrores.js'
-import {checkUploadMultimedia} from '../middlewares/validationFields.js';
+import {checkUploadMultimedia, checkUploadMultiArtist} from '../middlewares/validationFields.js';
 import downloadRateLimiter from '../middlewares/downloadRateLimiter.js';
 import  {getPresignedUrl}  from '../controllers/uploadController.js';
 
-import { dashboard, usersPanel, multimediaPanel, uploadboard, mediafile, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus, toggleMultimediaEstado, requestDownloadToken, verifyAndDownload, updateMultimediaData, requestStreamToken, streamVideo, streamPreview, getActiveMembers, getAspirantes, aprobarAspirante, rechazarAspirante, sseUserPanel, getSolicitudesPendientes, userProfile, getUserDownloads, addUserCredits, updateUserData, toggleUserStatus, getUserWishlist, getUserCreditHistory, downloadsPanel, getTopGeneros, checkDownloadBan } from '../controllers/adminControllers.js'
+import { dashboard, usersPanel, multimediaPanel, uploadboard, mediafile, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus, toggleMultimediaEstado, requestDownloadToken, verifyAndDownload, updateMultimediaData, requestStreamToken, streamVideo, streamPreview, getActiveMembers, getAspirantes, aprobarAspirante, rechazarAspirante, sseUserPanel, getSolicitudesPendientes, userProfile, getUserDownloads, addUserCredits, updateUserData, toggleUserStatus, getUserWishlist, getUserCreditHistory, downloadsPanel, getTopGeneros, checkDownloadBan, checkArtistExists, postUploadMultiArtist } from '../controllers/adminControllers.js'
 const routes = express.Router();
 dotenv.config();
 
@@ -28,6 +28,7 @@ routes.get("/multimedia", multimediaPanel)
     postUploadMultimedia
 );
         routes.post("/uploadboard/validate", validateUpload);
+routes.post("/uploadboard/multi", checkUploadMultiArtist, validarErrores, postUploadMultiArtist);
 routes.get("/live-upload-monitor", upload.any(), liveUploadMonitor)
 
 
@@ -48,6 +49,7 @@ routes.post('/api/upload/sign', getPresignedUrl);
 //*******************[JSON]******************* */
 //routes.get('/json/artist/:nombreArtista', jsonCheckArtistByName)
 routes.get('/json/artistas', jsonCheckArtistByName);
+routes.get('/json/artistas/check', checkArtistExists);
 routes.get('/json/generos', getAllGenres);
 
 routes.get('/json/album/:idArtista', getAlbumsByArtist);
