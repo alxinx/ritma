@@ -77,6 +77,10 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.08);
     /* backdrop-filter removido: causa alto consumo GPU con múltiples cards */
 }
+.glass-card-modal {
+    background: rgba(10, 10, 12, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
 .glass-sidebar {
     background: rgba(0, 0, 0, 0.92);
     border-right: 1px solid rgba(255, 255, 255, 0.05);

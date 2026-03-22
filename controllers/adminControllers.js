@@ -1670,15 +1670,18 @@ const getUserDownloads = async (req, res) => {
             offset
         });
 
-        const data = rows.map(d => ({
-            idDescarga: d.idDescarga,
-            nombreComposicion: d.MULTIMEDIA?.nombreComposicion || '—',
-            artista: d.MULTIMEDIA?.ARTISTA?.nombreArtista || '—',
-            formato: d.MULTIMEDIA?.formato?.toUpperCase() || '—',
-            tipoAsset: d.MULTIMEDIA?.tipoAsset || 'AUDIO',
-            fechaDescarga: d.fechaDescarga,
-            creditos: d.creditos || 0
-        }));
+        const data = rows.map(d => {
+            const m = d.MULTIMEDIum || d.MULTIMEDIA || null;
+            return {
+                idDescarga: d.idDescarga,
+                nombreComposicion: m?.nombreComposicion || '—',
+                artista: m?.ARTISTA?.nombreArtista || '—',
+                formato: m?.formato?.toUpperCase() || '—',
+                tipoAsset: m?.tipoAsset || 'AUDIO',
+                fechaDescarga: d.fechaDescarga,
+                creditos: d.creditos || 0
+            };
+        });
 
         res.json({
             ok: true,
@@ -1831,16 +1834,19 @@ const getUserWishlist = async (req, res) => {
             order: [['fechaCreacion', 'DESC']]
         });
 
-        const data = items.map(w => ({
-            idWishlist: w.idWishlist,
-            idMultimedia: w.MULTIMEDIA?.idMultimedia,
-            nombreComposicion: w.MULTIMEDIA?.nombreComposicion || '—',
-            artista: w.MULTIMEDIA?.ARTISTA?.nombreArtista || '—',
-            formato: w.MULTIMEDIA?.formato?.toUpperCase() || '—',
-            tipoAsset: w.MULTIMEDIA?.tipoAsset || 'AUDIO',
-            costoCreditos: w.MULTIMEDIA?.costoCreditos || 0,
-            fechaCreacion: w.fechaCreacion
-        }));
+        const data = items.map(w => {
+            const m = w.MULTIMEDIum || w.MULTIMEDIA || null;
+            return {
+                idWishlist: w.idWishlist,
+                idMultimedia: m?.idMultimedia,
+                nombreComposicion: m?.nombreComposicion || '—',
+                artista: m?.ARTISTA?.nombreArtista || '—',
+                formato: m?.formato?.toUpperCase() || '—',
+                tipoAsset: m?.tipoAsset || 'AUDIO',
+                costoCreditos: m?.costoCreditos || 0,
+                fechaCreacion: w.fechaCreacion
+            };
+        });
 
         res.json({ ok: true, data, total: data.length });
     } catch (error) {
