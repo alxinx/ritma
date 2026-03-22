@@ -1,0 +1,24 @@
+extends base.pug
+
+block content
+    div(class="flex flex-col lg:flex-row min-h-screen")
+        if multimedia && multimedia.tipoAsset === 'AUDIO'
+            include layout/audioProfileClient.pug
+        else if multimedia && multimedia.tipoAsset === 'VIDEO'
+            include layout/videoProfileClient.pug
+
+    //- Data para el JS (sin exponer URLs de R2)
+    script.
+        window.__MEDIAFILE__ = {
+            idMultimedia: "#{multimedia.idMultimedia}",
+            tipoAsset: "#{multimedia.tipoAsset}",
+            csrfToken: "#{csrfToken}",
+            hasPreview: #{multimedia.keyPreview ? 'true' : 'false'},
+            nombreComposicion: "#{multimedia.nombreComposicion}",
+            costoCreditos: #{multimedia.costoCreditos || 0},
+            bpm: #{multimedia.bpm || 0},
+            creditosDisponibles: #{creditosDisponibles || 0},
+            yaComprado: #{yaComprado ? 'true' : 'false'},
+            enWishlist: #{enWishlist ? 'true' : 'false'}
+        };
+    script(src="/js/clientMediafile.js")

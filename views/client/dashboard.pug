@@ -129,15 +129,15 @@ block content
         div(class="w-full lg:w-[30%] space-y-6")
 
             //- RECOMENDADOS PARA TI
-            div(class="rounded-2xl border border-white/10 p-5" style="background: rgba(255,255,255,0.03);")
-                div(class="flex items-center justify-between mb-5")
-                    h3(class="text-[11px] font-bold uppercase tracking-widest text-white") Recomendados para ti
-                    span(class="material-symbols-outlined text-primary text-lg") auto_awesome
+            div(class="rounded-2xl border border-white/10 overflow-hidden" style="background: rgba(255,255,255,0.03);")
+                div(class="flex items-center justify-between px-5 py-4 bg-primary")
+                    h3(class="text-[11px] font-bold uppercase tracking-widest text-black") Recomendados para ti
+                    span(class="material-symbols-outlined text-black/60 text-lg") auto_awesome
 
-                div(class="space-y-2")
+                div(class="p-5 space-y-2")
                     if recomendados && recomendados.length > 0
                         each r in recomendados
-                            div(class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:border-primary/20 hover:bg-white/3 transition-all cursor-pointer group")
+                            a(href=`/ritmaap/profile/mediafile/${r.idMultimedia}` class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:border-primary/20 hover:bg-white/3 transition-all cursor-pointer group")
                                 //- Icono tipo
                                 div(class="size-9 rounded-lg bg-white/5 flex items-center justify-center shrink-0")
                                     if r.tipoAsset === 'VIDEO'
@@ -153,10 +153,8 @@ block content
                                 //- Acciones
                                 div(class="flex items-center gap-1 shrink-0")
                                     span(class="text-[9px] font-mono text-primary font-bold mr-1") #{r.costoCreditos} R$
-                                    button(class="p-1 text-white/20 hover:text-primary transition-colors" title="Ver")
+                                    span(class="p-1 text-white/20 group-hover:text-primary transition-colors" title="Ver")
                                         span(class="material-symbols-outlined text-[16px]") visibility
-                                    button(class="p-1 text-white/20 hover:text-primary transition-colors" title="Descargar")
-                                        span(class="material-symbols-outlined text-[16px]") download
                     else
                         each i in [1,2,3,4,5]
                             div(class="flex items-center gap-3 p-3 rounded-xl border border-white/5 animate-pulse")
@@ -166,15 +164,15 @@ block content
                                     div(class="h-2 bg-white/3 rounded w-1/2")
 
             //- TOP DESCARGAS DE LA SEMANA
-            div(class="rounded-2xl border border-white/10 p-5" style="background: rgba(255,255,255,0.03);")
-                div(class="flex items-center justify-between mb-5")
-                    h3(class="text-[11px] font-bold uppercase tracking-widest text-white") Top Descargas
-                    span(class="text-[9px] font-mono text-primary/60 uppercase") Esta semana
+            div(class="rounded-2xl border border-white/10 overflow-hidden" style="background: rgba(255,255,255,0.03);")
+                div(class="flex items-center justify-between px-5 py-4 bg-primary")
+                    h3(class="text-[11px] font-bold uppercase tracking-widest text-black") Top Descargas
+                    span(class="text-[9px] font-mono text-black/60 font-bold uppercase") Esta semana
 
-                div(class="space-y-2")
+                div(class="p-5 space-y-2")
                     if topSemanal && topSemanal.length > 0
                         each t, idx in topSemanal
-                            div(class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:border-primary/20 hover:bg-white/3 transition-all")
+                            a(href=`/ritmaap/profile/mediafile/${t.idMultimedia}` class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:border-primary/20 hover:bg-white/3 transition-all group")
                                 //- Ranking number
                                 span(class=`text-lg font-display font-black w-7 text-center ${idx < 3 ? 'text-primary' : 'text-white/15'}`) #{(idx + 1).toString().padStart(2, '0')}
                                 //- Icono tipo
@@ -184,17 +182,15 @@ block content
                                     else
                                         span(class="material-symbols-outlined text-green-400 text-sm") music_note
                                 div(class="flex-1 min-w-0")
-                                    p(class="text-xs font-bold text-white truncate") #{t.nombreComposicion}
+                                    p(class="text-xs font-bold text-white truncate group-hover:text-primary transition-colors") #{t.nombreComposicion}
                                     p(class="text-[9px] text-white/30 truncate font-mono")
                                         if t.Artista
                                             | #{t.Artista.nombreArtista}
                                 //- Acciones
                                 div(class="flex items-center gap-1 shrink-0")
                                     span(class="text-[9px] font-mono text-white/30 mr-1") #{t.totalDescargas} DL
-                                    button(class="p-1 text-white/20 hover:text-primary transition-colors" title="Ver")
+                                    span(class="p-1 text-white/20 group-hover:text-primary transition-colors" title="Ver")
                                         span(class="material-symbols-outlined text-[16px]") visibility
-                                    button(class="p-1 text-white/20 hover:text-primary transition-colors" title="Descargar")
-                                        span(class="material-symbols-outlined text-[16px]") download
                     else
                         div(class="text-center py-8")
                             span(class="material-symbols-outlined text-3xl text-white/5 mb-2 block") trending_up
