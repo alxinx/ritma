@@ -1,4 +1,4 @@
-import { Usuarios, Multimedia, Artistas, Album, Generos, HistorialDescargas, RitmaCoins, Wishlist, MultimediaGeneros, Aspirantes } from '../models/index.js';
+import { Usuarios, Multimedia, Artistas, Album, Generos, HistorialDescargas, RitmaCoins, Wishlist, Favoritos, MultimediaGeneros, Aspirantes } from '../models/index.js';
 import { Op, fn, col, literal } from 'sequelize';
 import db from '../config/bd.js';
 import s3Client from "../config/r2.js";
@@ -99,6 +99,12 @@ const mediafile = async (req, res) => {
         });
         const enWishlist = !!wishlistItem;
 
+        // Verificar si esta en favoritos
+        const favoritoItem = await Favoritos.findOne({
+            where: { idMultimedia, idUsuario }
+        });
+        const enFavoritos = !!favoritoItem;
+
         // Creditos del usuario
         const creditosDisponibles = await RitmaCoins.sum('cantidadActual', { where: { idUsuario } }) || 0;
 
@@ -123,6 +129,7 @@ const mediafile = async (req, res) => {
             creditosDisponibles,
             yaComprado,
             enWishlist,
+            enFavoritos,
             relacionados,
             R2_PUBLIC_URL,
             notificaciones: 0
@@ -339,15 +346,21 @@ const searchMultimedia = async (req, res) => {
             distinct: true
         });
 
-        const [creditosDisponibles, descargasUsuario] = await Promise.all([
+        const [creditosDisponibles, descargasUsuario, favoritosUsuario] = await Promise.all([
             RitmaCoins.sum('cantidadActual', { where: { idUsuario } }).then(v => v || 0),
             HistorialDescargas.findAll({
+                where: { idUsuario },
+                attributes: ['idMultimedia'],
+                raw: true
+            }),
+            Favoritos.findAll({
                 where: { idUsuario },
                 attributes: ['idMultimedia'],
                 raw: true
             })
         ]);
         const idsComprados = new Set(descargasUsuario.map(d => d.idMultimedia));
+        const idsFavoritos = new Set(favoritosUsuario.map(f => f.idMultimedia));
 
         const data = rows.map(m => {
             const yaComprado = idsComprados.has(m.idMultimedia);
@@ -360,7 +373,8 @@ const searchMultimedia = async (req, res) => {
                 costoCreditos: m.costoCreditos || 0,
                 bpm: m.bpm || null,
                 yaComprado,
-                puedeDescargar: yaComprado || creditosDisponibles >= (m.costoCreditos || 0)
+                puedeDescargar: yaComprado || creditosDisponibles >= (m.costoCreditos || 0),
+                enFavoritos: idsFavoritos.has(m.idMultimedia)
             };
         });
 
@@ -1270,6 +1284,205 @@ const uploadAvatar = async (req, res) => {
     }
 };
 
+// ==========================================
+// FAVORITOS — Página principal
+// ==========================================
+const favoritosPage = async (req, res) => {
+    try {
+        const idUsuario = req.usuario.idUsuario;
+        const creditosDisponibles = await RitmaCoins.sum('cantidadActual', { where: { idUsuario } }) || 0;
+
+        return res.render('../views/client/favoritos', {
+            tituloPagina: 'Mis Favoritos',
+            subtitulo: 'Tu colección personal',
+            active: 'favoritos',
+            csrfToken: req.csrfToken(),
+            creditosDisponibles,
+            R2_PUBLIC_URL,
+            notificaciones: 0
+        });
+    } catch (error) {
+        console.error('Error favoritosPage:', error);
+        return res.redirect('/ritmaap/');
+    }
+};
+
+// ==========================================
+// FAVORITOS — Listado paginado JSON (infinite scroll)
+// ==========================================
+const getFavoritos = async (req, res) => {
+    try {
+        const idUsuario = req.usuario.idUsuario;
+        let { page, search } = req.query;
+        page = Math.max(1, parseInt(page) || 1);
+        const limit = 12;
+        const offset = (page - 1) * limit;
+
+        const rawSearch = (search || '').trim();
+        const searchTerm = rawSearch.replace(/[^\w\sáéíóúñÁÉÍÓÚÑüÜ.\-]/gi, '').substring(0, 100);
+
+        let whereClauses = ['f.idUsuario = :idUsuario', "m.estado = 'ENABLE'"];
+        const replacements = { idUsuario };
+
+        if (searchTerm) {
+            whereClauses.push('(m.nombreComposicion LIKE :search OR a.nombreArtista LIKE :search)');
+            replacements.search = `%${searchTerm}%`;
+        }
+
+        const whereSQL = whereClauses.join(' AND ');
+
+        // Contar total
+        const [[{ total }]] = await db.query(`
+            SELECT COUNT(*) AS total
+            FROM FAVORITOS f
+            JOIN MULTIMEDIA m ON m.idMultimedia = f.idMultimedia
+            LEFT JOIN ARTISTAS a ON a.idArtista = m.idArtista
+            WHERE ${whereSQL}
+        `, { replacements });
+
+        // Datos paginados
+        const [rows] = await db.query(`
+            SELECT
+                f.idFavorito,
+                m.idMultimedia,
+                m.nombreComposicion,
+                m.tipoAsset,
+                m.formato,
+                m.costoCreditos,
+                m.bpm,
+                m.keyPreview,
+                a.idArtista,
+                a.nombreArtista AS artista,
+                a.cover AS artistaCover,
+                al.cover AS albumCover,
+                f.createdAt
+            FROM FAVORITOS f
+            JOIN MULTIMEDIA m ON m.idMultimedia = f.idMultimedia
+            LEFT JOIN ARTISTAS a ON a.idArtista = m.idArtista
+            LEFT JOIN ALBUM al ON al.idAlbum = m.idAlbum
+            WHERE ${whereSQL}
+            ORDER BY f.createdAt DESC
+            LIMIT :limit OFFSET :offset
+        `, { replacements: { ...replacements, limit, offset } });
+
+        // Verificar cuáles ya compró
+        const idsMultimedia = rows.map(r => r.idMultimedia);
+        let comprados = new Set();
+        if (idsMultimedia.length > 0) {
+            const [compradosRows] = await db.query(`
+                SELECT DISTINCT idMultimedia FROM HISTORIAL_DESCARGAS_MULTIMEDIA
+                WHERE idUsuario = :idUsuario AND idMultimedia IN (:ids)
+            `, { replacements: { idUsuario, ids: idsMultimedia } });
+            comprados = new Set(compradosRows.map(r => r.idMultimedia));
+        }
+
+        const data = rows.map(r => {
+            let coverUrl = '/img/coverGenerico.webp';
+            if (r.albumCover) {
+                coverUrl = `${R2_PUBLIC_URL}/${r.albumCover}`;
+            } else if (r.artistaCover) {
+                coverUrl = `${R2_PUBLIC_URL}/images/artistas/${r.artistaCover}`;
+            }
+
+            return {
+                idFavorito: r.idFavorito,
+                idMultimedia: r.idMultimedia,
+                nombreComposicion: r.nombreComposicion,
+                tipoAsset: r.tipoAsset,
+                formato: (r.formato || '').toUpperCase(),
+                costoCreditos: r.costoCreditos || 0,
+                bpm: r.bpm || null,
+                artista: r.artista || '—',
+                coverUrl,
+                hasPreview: !!r.keyPreview,
+                yaComprado: comprados.has(r.idMultimedia)
+            };
+        });
+
+        const totalPages = Math.ceil(total / limit);
+        res.json({ ok: true, data, total, page, totalPages, hasMore: page < totalPages });
+
+    } catch (error) {
+        console.error('Error getFavoritos:', error);
+        res.status(500).json({ ok: false, msg: 'Error al obtener favoritos' });
+    }
+};
+
+// ==========================================
+// FAVORITOS — Agregar (POST)
+// ==========================================
+const addFavorito = async (req, res) => {
+    try {
+        const { idMultimedia } = req.params;
+        const idUsuario = req.usuario.idUsuario;
+
+        // Verificar que el multimedia existe y está activo
+        const multimedia = await Multimedia.findOne({
+            where: { idMultimedia, estado: 'ENABLE' }
+        });
+        if (!multimedia) return res.status(404).json({ ok: false, msg: 'Multimedia no encontrado' });
+
+        // Verificar si ya está en favoritos
+        const existe = await Favoritos.findOne({ where: { idUsuario, idMultimedia } });
+        if (existe) return res.status(409).json({ ok: false, msg: 'Ya está en favoritos' });
+
+        await Favoritos.create({ idUsuario, idMultimedia });
+        res.json({ ok: true, msg: 'Agregado a favoritos' });
+
+    } catch (error) {
+        console.error('Error addFavorito:', error);
+        res.status(500).json({ ok: false, msg: 'Error al agregar a favoritos' });
+    }
+};
+
+// ==========================================
+// FAVORITOS — Eliminar (DELETE)
+// ==========================================
+const removeFavorito = async (req, res) => {
+    try {
+        const { idMultimedia } = req.params;
+        const idUsuario = req.usuario.idUsuario;
+
+        const deleted = await Favoritos.destroy({ where: { idMultimedia, idUsuario } });
+        if (!deleted) return res.status(404).json({ ok: false, msg: 'No se encontró en favoritos' });
+
+        res.json({ ok: true, msg: 'Eliminado de favoritos' });
+
+    } catch (error) {
+        console.error('Error removeFavorito:', error);
+        res.status(500).json({ ok: false, msg: 'Error al eliminar de favoritos' });
+    }
+};
+
+// ==========================================
+// FAVORITOS — Toggle (POST) para uso en mediafile/search
+// ==========================================
+const toggleFavorito = async (req, res) => {
+    try {
+        const { idMultimedia } = req.params;
+        const idUsuario = req.usuario.idUsuario;
+
+        const multimedia = await Multimedia.findOne({
+            where: { idMultimedia, estado: 'ENABLE' }
+        });
+        if (!multimedia) return res.status(404).json({ ok: false, msg: 'Multimedia no encontrado' });
+
+        const existe = await Favoritos.findOne({ where: { idUsuario, idMultimedia } });
+
+        if (existe) {
+            await existe.destroy();
+            return res.json({ ok: true, enFavoritos: false, msg: 'Eliminado de favoritos' });
+        }
+
+        await Favoritos.create({ idUsuario, idMultimedia });
+        res.json({ ok: true, enFavoritos: true, msg: 'Agregado a favoritos' });
+
+    } catch (error) {
+        console.error('Error toggleFavorito:', error);
+        res.status(500).json({ ok: false, msg: 'Error al modificar favoritos' });
+    }
+};
+
 export {
     dashboard,
     getGeneros,
@@ -1291,5 +1504,10 @@ export {
     settingsPage,
     updateProfile,
     updatePassword,
-    uploadAvatar
+    uploadAvatar,
+    favoritosPage,
+    getFavoritos,
+    addFavorito,
+    removeFavorito,
+    toggleFavorito
 }

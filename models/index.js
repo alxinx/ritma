@@ -11,6 +11,7 @@ import Aspirantes from './Aspirantes.js'
 import RitmaCoins from './RitmaCoins.js'
 import PacksCreditos from './PacksCreditos.js'
 import Wishlist from './Wishlist.js'
+import Favoritos from './Favoritos.js'
 
 
 
@@ -62,6 +63,12 @@ Multimedia.hasMany(Wishlist, { foreignKey: 'idMultimedia' });
 Wishlist.belongsTo(Multimedia, { foreignKey: 'idMultimedia' });
 
 
+// --- 6. FAVORITOS ---
+Usuarios.hasMany(Favoritos, { foreignKey: 'idUsuario', onDelete: 'CASCADE' });
+Favoritos.belongsTo(Usuarios, { foreignKey: 'idUsuario' });
+Multimedia.hasMany(Favoritos, { foreignKey: 'idMultimedia', onDelete: 'CASCADE' });
+Favoritos.belongsTo(Multimedia, { foreignKey: 'idMultimedia' });
+
 export {
-        Usuarios, Generos, Artistas, Album, Multimedia, ArtistaGeneros, MultimediaGeneros, LogErrores, HistorialDescargas, Aspirantes, RitmaCoins, PacksCreditos, Wishlist
+        Usuarios, Generos, Artistas, Album, Multimedia, ArtistaGeneros, MultimediaGeneros, LogErrores, HistorialDescargas, Aspirantes, RitmaCoins, PacksCreditos, Wishlist, Favoritos
 }

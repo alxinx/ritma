@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 
         const { idMultimedia, tipoAsset, csrfToken, nombreComposicion, costoCreditos, yaComprado } = config;
         let enWishlist = config.enWishlist;
+        let enFavoritos = config.enFavoritos;
 
         // ==========================================
         // WISHLIST TOGGLE
@@ -59,6 +60,61 @@ import Swal from 'sweetalert2';
                 } finally {
                     btnWishlist.disabled = false;
                     btnWishlist.style.opacity = '1';
+                }
+            });
+        }
+
+        // ==========================================
+        // FAVORITO TOGGLE
+        // ==========================================
+        const btnFavorito = document.getElementById('btn-favorito');
+        if (btnFavorito) {
+            btnFavorito.addEventListener('click', async () => {
+                try {
+                    btnFavorito.disabled = true;
+                    btnFavorito.style.opacity = '0.5';
+
+                    const res = await fetch(`/ritmaap/json/favoritos/${idMultimedia}/toggle`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'CSRF-Token': csrfToken
+                        }
+                    });
+                    const data = await res.json();
+
+                    if (data.ok) {
+                        enFavoritos = data.enFavoritos;
+                        const icon = btnFavorito.querySelector('.material-symbols-outlined');
+                        const label = btnFavorito.querySelector('h4, h5');
+
+                        if (enFavoritos) {
+                            btnFavorito.classList.remove('btn-ghost');
+                            btnFavorito.classList.add('btn-danger');
+                            if (icon) icon.textContent = 'heart_minus';
+                            if (label) label.textContent = 'Quitar de Favoritos';
+                        } else {
+                            btnFavorito.classList.remove('btn-danger');
+                            btnFavorito.classList.add('btn-ghost');
+                            if (icon) icon.textContent = 'favorite';
+                            if (label) label.textContent = 'Agregar a Favoritos';
+                        }
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: enFavoritos ? 'Agregado a Favoritos' : 'Eliminado de Favoritos',
+                            timer: 1500,
+                            showConfirmButton: false,
+                            background: '#0a0a0c',
+                            color: '#fff'
+                        });
+                    }
+                } catch (err) {
+                    console.error('Error favorito:', err);
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar favoritos.', background: '#0a0a0c', color: '#fff' });
+                } finally {
+                    btnFavorito.disabled = false;
+                    btnFavorito.style.opacity = '1';
                 }
             });
         }

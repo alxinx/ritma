@@ -1,7 +1,7 @@
 import express from "express";
 import downloadRateLimiter from '../middlewares/downloadRateLimiter.js';
 import upload from '../middlewares/upload.js';
-import { dashboard, getGeneros, searchMultimedia, mediafile, toggleWishlist, requestDownloadToken, verifyAndDownload, checkDownloadBan, requestStreamToken, streamVideo, streamPreview, biblioteca, searchBiblioteca, getArtistasBiblioteca, wishlistPage, searchWishlist, removeFromWishlist, settingsPage, updateProfile, updatePassword, uploadAvatar } from '../controllers/clientControllers.js';
+import { dashboard, getGeneros, searchMultimedia, mediafile, toggleWishlist, requestDownloadToken, verifyAndDownload, checkDownloadBan, requestStreamToken, streamVideo, streamPreview, biblioteca, searchBiblioteca, getArtistasBiblioteca, wishlistPage, searchWishlist, removeFromWishlist, settingsPage, updateProfile, updatePassword, uploadAvatar, favoritosPage, getFavoritos, addFavorito, removeFavorito, toggleFavorito } from '../controllers/clientControllers.js';
 
 const routes = express.Router();
 
@@ -35,6 +35,13 @@ routes.get("/json/biblioteca/artistas", getArtistasBiblioteca);
 routes.get("/wishlist", wishlistPage);
 routes.get("/json/wishlist/search", searchWishlist);
 routes.delete("/json/wishlist/:idMultimedia", removeFromWishlist);
+
+// Favoritos
+routes.get("/favoritos", favoritosPage);
+routes.get("/json/favoritos", getFavoritos);
+routes.post("/json/favoritos/:idMultimedia", addFavorito);
+routes.delete("/json/favoritos/:idMultimedia", removeFavorito);
+routes.post("/json/favoritos/:idMultimedia/toggle", toggleFavorito);
 
 // Settings
 routes.get("/settings", settingsPage);

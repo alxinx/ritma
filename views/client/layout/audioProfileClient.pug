@@ -26,9 +26,17 @@ aside(class="w-full lg:w-3/5 xl:w-[35%] relative overflow-hidden lg:h-180 border
       a(href="/ritmaap/creditos" class="flex items-center justify-center gap-2 w-full px-6 py-4 bg-primary hover:brightness-110 font-display font-extrabold text-sm uppercase tracking-widest transition-all")
         span(class="material-symbols-outlined text-xl" style="color:#000") credit_card_heart
         span(style="color:#000") Comprar Creditos
-    button(id="btn-wishlist" class="btn w-full" class=enWishlist ? "btn-danger" : "btn-ghost")
-      span(class="material-symbols-outlined mr-2") #{enWishlist ? 'bookmark_remove' : 'bookmark_add'}
-      h4 #{enWishlist ? 'Quitar de Wishlist' : 'Agregar a Wishlist'}
+    if yaComprado
+      button(id="btn-favorito" class="btn w-full" class=enFavoritos ? "btn-danger" : "btn-ghost")
+        span(class="material-symbols-outlined mr-2") #{enFavoritos ? 'heart_minus' : 'favorite'}
+        h4 #{enFavoritos ? 'Quitar de Favoritos' : 'Agregar a Favoritos'}
+    else
+      button(id="btn-wishlist" class="btn w-full" class=enWishlist ? "btn-danger" : "btn-ghost")
+        span(class="material-symbols-outlined mr-2") #{enWishlist ? 'bookmark_remove' : 'bookmark_add'}
+        h4 #{enWishlist ? 'Quitar de Wishlist' : 'Agregar a Wishlist'}
+      button(id="btn-favorito" class="btn w-full" class=enFavoritos ? "btn-danger" : "btn-ghost")
+        span(class="material-symbols-outlined mr-2") #{enFavoritos ? 'heart_minus' : 'favorite'}
+        h4 #{enFavoritos ? 'Quitar de Favoritos' : 'Agregar a Favoritos'}
 
   div(class="absolute top-12 left-12 flex flex-col gap-2")
     div(class="sidebar-line w-1 h-32 opacity-50")
