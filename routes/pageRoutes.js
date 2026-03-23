@@ -1,6 +1,7 @@
 import express from "express";
 import {frontend,home, vision, estructura, acceso, accesoPost, trendingTracks,
 trendingVideos, profileTrack} from "../controllers/pageControllers.js"
+
 const routes = express.Router();
 
 routes.get("/", home )
@@ -19,6 +20,7 @@ routes.get("/trending-videos", trendingVideos)
 
 //BORRAR ANTES DE SUBIR A PRODUCCION:
 routes.get('/frontend', frontend )
+
 
 
 export default routes

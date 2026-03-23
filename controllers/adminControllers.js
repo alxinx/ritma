@@ -1,17 +1,46 @@
-
-const adminLogin = (req, res)=>{
-    res.render( "./auth/login", {
-        tituloPagina : "Login"
-    } )
+const dashboard = (req, res) => {
+    return res.status(200).render('../views/app/dashboard', {
+        tituloPagina: "Panel de control Principal",
+        subtitulo: "Bienvenido",
+        active: 'dashboard',
+        csrfToken: req.csrfToken()
+    })
 }
 
-const adminForgot = (req, res)=>{
-    res.render( "./auth/forgot", {
-        tituloPagina : "Recuperar Contraseña"
-    } )
+const usersPanel = (req, res) => {
+    return res.status(200).render('../views/app/userPanel', {
+        tituloPagina: "Usuarios",
+        subtitulo: "Panel de control de los usuarios",
+        active: 'users',
+        csrfToken: req.csrfToken()
+    })
 }
 
-export {
-    adminLogin,
-    adminForgot,
+const multimediaPanel = (req, res) => {
+    return res.status(200).render('../views/app/multimediaPanel', {
+        tituloPagina: "Biblioteca Multimedia",
+        subtitulo: "Panel principal de la biblioteca multimedia",
+        active: 'multimedia',
+        csrfToken: req.csrfToken()
+    })
 }
+
+const uploadboard = (req, res) => {
+    return res.status(200).render('../views/app/uploadboard', {
+        tituloPagina: "Biblioteca Multimedia",
+        subtitulo: "Subir Archivos Multimedia",
+        active: 'multimedia',
+        csrfToken: req.csrfToken()
+    })
+}
+
+const liveUploadMonitor = (req, res) => {
+    return res.status(200).render('../views/app/live-upload-monitor', {
+        tituloPagina: "Biblioteca Multimedia",
+        subtitulo: "Live Upload Monitor",
+        active: 'multimedia',
+        csrfToken: req.csrfToken()
+    })
+}
+
+export { dashboard, usersPanel, multimediaPanel, uploadboard, liveUploadMonitor }

@@ -2,10 +2,7 @@ include ../layout/head.pug
 include ../components/mixins/form-field.pug
 include ../components/mixins/layouts.pug
 block contenedor
-    // ================================================
-    // NAVBAR
-    // ================================================
-//include ./navBar.pug
+
 main(class="flex-1 flex items-center justify-center px-4 py-20 bg-background-dark relative overflow-hidden")
 
 
@@ -20,18 +17,26 @@ main(class="flex-1 flex items-center justify-center px-4 py-20 bg-background-dar
             div(class="size-16 bg-primary/10 rounded-sm flex items-center justify-center border border-primary/20  shadow-[0_0_30px_rgba(201,218,43,0.1)] group")
                 span(class="material-symbols-outlined text-primary text-4xl animate-pulse") lock
             
+            if errores && errores.email
+                   +alertError("EMAIL INVÁLIDO 😠", "Debes darme un correo electronico válido")
+
+            if mensaje
+                +alertSuccess("REVISA TU CORREO", `${mensaje}`)
+
             h3.text-primary.mt-5 recuperar password
 
             p.subTittle
                 | Ingrese el email con el que se registró,  de vuelta le enviaremos un email de confirmación y recuperación de contraseña.
 
-        form(class="space-y-6 relative z-10" method="post" action="")
+        form(class="space-y-6 relative z-10" id="formulario" method="post")
             +ritmaInput("email", "email", "email", "Email:", true, "email@dj.com", "alternate_email")
 
 
              
-            +formActions("Recuperar")
-            
+            +btnSubmit("forgot", "forgot", "Recuperar contraseña", "arrow_forward_ios")
+
+    script(src="/js/basicValidator.js") 
+
         
         
         
@@ -40,11 +45,4 @@ main(class="flex-1 flex items-center justify-center px-4 py-20 bg-background-dar
 
 
 
-                
-
-
-    // ================================================
-    // FOOTER (PENDIENTE)
-    //include ./footer.pug
-    // ================================================
-    // footer
+        

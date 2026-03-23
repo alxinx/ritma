@@ -1,0 +1,46 @@
+include ../layout/head.pug
+include ../components/mixins/form-field.pug
+include ../components/mixins/layouts.pug
+block contenedor
+
+main(class="flex-1 flex items-center justify-center px-4 py-20 bg-background-dark relative overflow-hidden")
+    div(class="cardLogin")
+        //- Decoración superior técnica
+        div(class="decorationUp")
+        div(class="flex flex-col items-center mb-4 text-center relative z-10")
+            //- Icono con efecto de pulso
+            div(class="size-16 bg-primary/10 rounded-sm flex items-center justify-center border border-primary/20  shadow-[0_0_30px_rgba(201,218,43,0.1)] group")
+                span(class="material-symbols-outlined text-primary text-4xl animate-pulse") passkey
+            
+            h3.text-primary.mt-5 recuperar password
+
+            p.subTittle
+                |Ingrese la contraseña con la que quiera quedar! debe ser de mas de 5 caracteres. 
+
+        form(class="space-y-6 relative z-10" id="formulario" name="formulario" method="post" action="")
+
+            input(type="hidden", name="token" value=token)
+            +ritmaInput("password", "password", "password", "Nueva Contraseña:", true, "● ● ● ● ● ●", "key")
+
+            +ritmaInput("password_again", "password_again", "password", "Escribalo otra vez:", true, "● ● ● ● ● ●", "key")
+
+
+             
+            +btnSubmit("recuperar", "recuperar", "Actualizar Contraseña", "arrow_forward_ios")
+            
+        script(src="/js/basicValidator.js") 
+        
+        
+
+
+
+
+
+                
+
+
+    // ================================================
+    // FOOTER (PENDIENTE)
+    //include ./footer.pug
+    // ================================================
+    // footer

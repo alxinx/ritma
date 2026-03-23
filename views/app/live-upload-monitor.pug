@@ -1,0 +1,34 @@
+include ../layout/head.pug
+include ../components/mixins/form-field.pug
+block contenedor
+
+
+    // ================================================
+    // NAVBAR
+    // ================================================
+//include ./navBar.pug
+div(class="flex min-h-screen ")
+    
+    //-MENU LATERAL
+    include layout/leftMenu.pug
+    main(class="flex-1 lg:ml-72 min-h-screen")
+        // HEADER 
+        
+        
+        include layout/headerAdmin.pug
+
+        //BODY
+        div(class="flex-1 overflow-y-auto p-10 custom-scrollbar")  
+
+            include partials/liveUploadMultimedia.pug
+
+
+            
+
+
+ 
+        script(src="/js/multimediaPanels.js") 
+
+        include layout/footer.pug 
+
+    script(src="/js/controlPanel.js") 
