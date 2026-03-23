@@ -1,0 +1,26 @@
+//- Download Library — Right Column
+div(class="glass-card rounded-3xl border border-white/10 overflow-hidden")
+
+    //- Header
+    div(class="flex items-center justify-between p-6 border-b border-white/5")
+        h3(class="font-display font-extrabold text-lg uppercase tracking-tighter text-white") Biblioteca de Descargas
+        div(class="flex items-center gap-3")
+            span(class="material-symbols-outlined text-white/30") filter_list
+            span(class="material-symbols-outlined text-white/30") download
+
+    //- Table
+    div(class="overflow-x-auto")
+        table(class="w-full text-left")
+            thead(class="bg-white/5")
+                tr
+                    th(class="px-6 py-4 text-[10px] uppercase font-bold text-white/40 tracking-widest") Nombre Multimedia
+                    th(class="px-6 py-4 text-[10px] uppercase font-bold text-white/40 tracking-widest") Tipo
+                    th(class="px-6 py-4 text-[10px] uppercase font-bold text-white/40 tracking-widest") Fecha Descarga
+                    th(class="px-6 py-4 text-[10px] uppercase font-bold text-white/40 tracking-widest text-right") Cr&eacute;ditos Gastados
+            tbody#downloads-tbody(class="divide-y divide-white/5")
+                //- Rendered by JS
+
+    //- Pagination
+    div(class="flex items-center justify-between px-6 py-4 border-t border-white/5")
+        span#downloads-total(class="text-[10px] font-bold text-white/30 uppercase tracking-widest") Cargando...
+        div#downloads-pages(class="flex items-center gap-2")

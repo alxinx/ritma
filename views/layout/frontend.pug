@@ -93,7 +93,7 @@ block contenedor
                 
                 div(class="space-y-4")
                   label File Analysis
-                  +fileUpload("audio-drop", "track_upload", true, "Ingresa el audio", "Análisis de BPM y Key automático")
+                  +fileUploadMini("audio-drop", "track_upload", true, "Ingresa el audio", "Análisis de BPM y Key automático")
 
           // Section 3: Buttons
           section(class="py-20 border-b border-white/5" id="buttons")
@@ -117,4 +117,4 @@ block contenedor
               +systemLog("error", "Fallo crítico en el nodo BA-NODE-7: Timeout")
               +systemLog("info", "Iniciando protocolo de redundancia...")
 
-    include ./footer.pug
+    ///include ./footer.pug

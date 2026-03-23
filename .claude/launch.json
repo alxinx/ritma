@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Express Server (Ritma)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start"],
+      "port": 5050
+    },
+    {
+      "name": "Tailwind CSS Watcher",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "css"],
+      "port": 0
+    },
+    {
+      "name": "Webpack Bundler",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "js"],
+      "port": 0
+    }
+  ]
+}

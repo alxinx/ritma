@@ -1,0 +1,223 @@
+include ../layout/head.pug
+include ../components/mixins/form-field.pug
+include ../components/mixins/layouts.pug
+block contenedor
+
+    div(class="flex min-h-screen")
+
+        //- MENU LATERAL
+        include layout/leftMenu.pug
+        main(class="flex-1 ml-[60px] lg:ml-72 min-h-screen")
+            //- HEADER
+            include layout/headerAdmin.pug
+
+            //- BODY
+            div(class="mx-auto p-4 pb-32")
+
+                //- TITULO + STAT INGRESO SEMANAL
+                section(class="flex flex-col lg:flex-row lg:items-end justify-between mb-10")
+                    div
+                        h1(class="text-5xl lg:text-6xl font-display font-black uppercase tracking-tighter") Cr&eacute;ditos
+                        p(class="text-[10px] font-mono text-white/30 uppercase tracking-widest mt-2") module: credits_manager // packs &amp; transactions
+
+                    //- STAT: Ingreso semanal
+                    div(class="glass-card rounded-3xl p-6 mt-6 lg:mt-0 lg:w-80 relative overflow-hidden")
+                        div(class="absolute inset-0 pixel-pattern opacity-5")
+                        div(class="relative z-10")
+                            div(class="flex items-center justify-between mb-2")
+                                span(class="text-[9px] font-bold text-white/30 uppercase tracking-[0.3em]") Ingreso Semanal
+                                span(class="material-symbols-outlined text-primary text-xl") trending_up
+                            div(class="flex items-baseline gap-2")
+                                span#stat-ingreso-semanal(class="text-4xl font-display font-extrabold text-primary") $#{ingresoSemanal.toLocaleString('es-CO')}
+                                span(class="text-sm font-bold text-white/40") COP
+                            div(class="mt-2 flex items-center gap-3")
+                                div(class="flex items-center gap-1.5")
+                                    span(class="material-symbols-outlined text-xs text-white/30") database
+                                    span(class="text-[9px] text-white/30 font-mono") #{creditosCirculacion} créditos en circulación
+                                div(class="flex items-center gap-1.5")
+                                    span(class="material-symbols-outlined text-xs text-white/30") receipt_long
+                                    span(class="text-[9px] text-white/30 font-mono") #{totalTransacciones} transacciones
+
+                //- GRID PRINCIPAL: 70/30
+                section(class="grid grid-cols-1 lg:grid-cols-12 gap-8")
+
+                    //- ==========================================
+                    //- IZQUIERDA (70%) — Lista RITMA_COINS + Chart
+                    //- ==========================================
+                    div(class="lg:col-span-8 space-y-8")
+
+                        //- Card: Historial de transacciones
+                        div(class="glass-card rounded-3xl p-8 relative overflow-hidden")
+                            div(class="absolute inset-0 pixel-pattern opacity-5")
+                            div(class="relative z-10")
+                                //- Header con buscador y export
+                                div(class="flex items-center justify-between mb-6")
+                                    h3(class="text-sm font-display font-black uppercase tracking-widest") Historial de Transacciones
+                                    div(class="flex items-center gap-3")
+                                        //- Buscador con debounce
+                                        div(class="relative group")
+                                            span(class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg text-white/20 group-focus-within:text-primary transition-colors") search
+                                            input#credits-search(
+                                                type="text"
+                                                placeholder="Buscar email o nombre..."
+                                                autocomplete="off"
+                                                class="w-56 pl-10 pr-4 py-2.5 bg-white/4 border border-white/10 rounded-xl text-white text-xs font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
+                                            )
+                                        //- Botón exportar
+                                        button#btn-export(type="button" class="flex items-center gap-2 px-4 py-2.5 bg-white/4 border border-white/10 rounded-xl text-white/60 hover:text-primary hover:border-primary/30 transition-all text-xs font-bold uppercase tracking-widest cursor-pointer")
+                                            span(class="material-symbols-outlined text-base") download
+                                            | Excel
+
+                                //- Tabla
+                                div(class="overflow-x-auto")
+                                    table(class="w-full text-left")
+                                        thead
+                                            tr(class="border-b border-white/5")
+                                                th(class="pb-3 text-[9px] font-bold text-white/30 uppercase tracking-widest") Usuario
+                                                th(class="pb-3 text-[9px] font-bold text-white/30 uppercase tracking-widest") Pack
+                                                th(class="pb-3 text-[9px] font-bold text-white/30 uppercase tracking-widest text-center") Comprados
+                                                th(class="pb-3 text-[9px] font-bold text-white/30 uppercase tracking-widest text-center") Disponibles
+                                                th(class="pb-3 text-[9px] font-bold text-white/30 uppercase tracking-widest text-right") Valor
+                                                th(class="pb-3 text-[9px] font-bold text-white/30 uppercase tracking-widest text-right") Fecha
+                                        tbody#credits-tbody
+                                            //- Skeleton loader
+                                            each i in [1,2,3,4,5,6,7,8]
+                                                tr(class="border-b border-white/3 animate-pulse")
+                                                    td(class="py-3")
+                                                        div(class="h-4 bg-white/5 rounded w-32")
+                                                    td(class="py-3")
+                                                        div(class="h-4 bg-white/5 rounded w-20")
+                                                    td(class="py-3 text-center")
+                                                        div(class="h-4 bg-white/5 rounded w-12 mx-auto")
+                                                    td(class="py-3 text-center")
+                                                        div(class="h-4 bg-white/5 rounded w-12 mx-auto")
+                                                    td(class="py-3 text-right")
+                                                        div(class="h-4 bg-white/5 rounded w-16 ml-auto")
+                                                    td(class="py-3 text-right")
+                                                        div(class="h-4 bg-white/5 rounded w-20 ml-auto")
+
+                                //- Paginación
+                                div#credits-pagination(class="flex items-center justify-between mt-6")
+                                    span#credits-info(class="text-[10px] text-white/30 font-mono")
+                                    div(class="flex items-center gap-2")
+                                        button#credits-prev(type="button" class="px-3 py-1.5 bg-white/4 border border-white/10 rounded-lg text-white/40 hover:text-primary hover:border-primary/30 text-xs transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer") Anterior
+                                        button#credits-next(type="button" class="px-3 py-1.5 bg-white/4 border border-white/10 rounded-lg text-white/40 hover:text-primary hover:border-primary/30 text-xs transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer") Siguiente
+
+                        //- Card: Chart ventas trimestrales
+                        div(class="glass-card rounded-3xl p-8 relative overflow-hidden")
+                            div(class="absolute inset-0 pixel-pattern opacity-5")
+                            div(class="relative z-10")
+                                div(class="flex items-center justify-between mb-6")
+                                    h3(class="text-sm font-display font-black uppercase tracking-widest") Ventas &Uacute;ltimo Trimestre
+                                    span(class="text-[9px] font-bold bg-white/5 text-white/40 px-3 py-1 rounded-full border border-white/10 uppercase tracking-widest") bar_chart
+                                div(class="h-64")
+                                    canvas#credits-chart
+
+                    //- ==========================================
+                    //- DERECHA (30%) — Gestión de Packs
+                    //- ==========================================
+                    div(class="lg:col-span-4 space-y-6")
+
+                        //- Formulario Crear/Editar Pack
+                        div(class="glass-card rounded-3xl p-6 relative overflow-hidden")
+                            div(class="absolute inset-0 pixel-pattern opacity-5")
+                            div(class="relative z-10")
+                                h3#pack-form-title(class="text-sm font-display font-black uppercase tracking-widest mb-5") Nuevo Pack
+                                input#pack-edit-id(type="hidden" value="")
+
+                                div(class="space-y-4")
+                                    div
+                                        label(class="block text-[9px] uppercase tracking-widest text-white/30 font-mono mb-1.5") Nombre del Pack *
+                                        input#pack-nombre(
+                                            type="text"
+                                            maxlength="100"
+                                            placeholder="Ej: Pack Básico"
+                                            class="w-full px-4 py-2.5 bg-white/4 border border-white/10 rounded-xl text-white text-sm font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
+                                        )
+
+                                    div(class="grid grid-cols-2 gap-3")
+                                        div
+                                            label(class="block text-[9px] uppercase tracking-widest text-white/30 font-mono mb-1.5") Valor (COP) *
+                                            input#pack-valor(
+                                                type="text"
+                                                placeholder="$0"
+                                                class="w-full px-4 py-2.5 bg-white/4 border border-white/10 rounded-xl text-white text-sm font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
+                                            )
+                                        div
+                                            label(class="block text-[9px] uppercase tracking-widest text-white/30 font-mono mb-1.5") Cr&eacute;ditos *
+                                            input#pack-creditos(
+                                                type="number"
+                                                min="0"
+                                                max="10000"
+                                                placeholder="0"
+                                                class="w-full px-4 py-2.5 bg-white/4 border border-white/10 rounded-xl text-white text-sm font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
+                                            )
+
+                                    div
+                                        label(class="block text-[9px] uppercase tracking-widest text-white/30 font-mono mb-1.5") Descuento (%)
+                                        input#pack-descuento(
+                                            type="number"
+                                            min="0"
+                                            max="99"
+                                            placeholder="0"
+                                            value="0"
+                                            class="w-full px-4 py-2.5 bg-white/4 border border-white/10 rounded-xl text-white text-sm font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
+                                        )
+
+                                    div(class="flex gap-2 pt-2")
+                                        button#btn-save-pack(type="button" class="flex-1 px-4 py-2.5 bg-primary text-black text-sm font-bold rounded-xl hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed" disabled)
+                                            | Guardar
+                                        button#btn-cancel-edit(type="button" class="hidden px-4 py-2.5 bg-white/4 border border-white/10 rounded-xl text-white/40 hover:text-white text-sm font-medium transition-all cursor-pointer")
+                                            | Cancelar
+
+                        //- Card: Listado de Packs
+                        div(class="glass-card rounded-3xl p-6 relative overflow-hidden")
+                            div(class="absolute inset-0 pixel-pattern opacity-5")
+                            div(class="relative z-10")
+                                h3(class="text-sm font-display font-black uppercase tracking-widest mb-5") Packs Existentes
+                                div#packs-list(class="space-y-3 max-h-[500px] overflow-y-auto pr-1" style="scrollbar-width: thin; scrollbar-color: rgba(201,218,43,0.2) transparent;")
+                                    //- Skeleton
+                                    each i in [1,2,3]
+                                        div(class="flex items-center justify-between p-4 rounded-2xl border border-white/5 animate-pulse" style="background: rgba(255,255,255,0.02);")
+                                            div(class="space-y-2")
+                                                div(class="h-4 bg-white/5 rounded w-24")
+                                                div(class="h-3 bg-white/3 rounded w-32")
+                                            div(class="flex gap-2")
+                                                div(class="size-7 bg-white/5 rounded-lg")
+                                                div(class="size-7 bg-white/5 rounded-lg")
+
+            //- Modal de Exportación (rango de fechas)
+            div#modal-export(class="fixed inset-0 z-[200] flex items-center justify-center hidden" style="background: rgba(0,0,0,0.80);")
+                div(class="glass-card rounded-3xl p-8 w-full max-w-md relative" style="background: rgba(15,15,15,0.98); border: 1px solid rgba(201,218,43,0.10);")
+                    button#modal-export-close(type="button" class="absolute top-4 right-4 text-white/30 hover:text-white transition-colors cursor-pointer")
+                        span(class="material-symbols-outlined") close
+
+                    h3(class="text-sm font-display font-black uppercase tracking-widest mb-6") Exportar Transacciones
+
+                    div(class="space-y-4")
+                        div
+                            label(class="block text-[9px] uppercase tracking-widest text-white/30 font-mono mb-1.5") Fecha Inicio
+                            input#export-desde(
+                                type="date"
+                                class="w-full px-4 py-2.5 bg-white/4 border border-white/10 rounded-xl text-white text-sm font-medium focus:outline-none focus:border-primary/40 transition-all"
+                            )
+                        div
+                            label(class="block text-[9px] uppercase tracking-widest text-white/30 font-mono mb-1.5") Fecha Fin
+                            input#export-hasta(
+                                type="date"
+                                class="w-full px-4 py-2.5 bg-white/4 border border-white/10 rounded-xl text-white text-sm font-medium focus:outline-none focus:border-primary/40 transition-all"
+                            )
+                        p(class="text-[10px] text-white/20 font-mono") Si deja ambos campos vacíos se exportarán todas las transacciones.
+
+                        button#btn-do-export(type="button" class="w-full px-4 py-3 bg-primary text-black text-sm font-bold rounded-xl hover:bg-primary/90 transition-all cursor-pointer")
+                            span(class="material-symbols-outlined text-base align-middle mr-1") download
+                            | Descargar CSV
+
+            include layout/footer.pug
+
+    script(src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js")
+    script.
+        window.__CREDITS__ = {
+            csrfToken: "#{csrfToken}"
+        };
+    script(src="/js/adminCreditos.js")

@@ -1,0 +1,61 @@
+//- Profile Card — Left Column
+div(class="glass-card rounded-3xl p-8 border border-white/10")
+
+    //- Avatar
+    div(class="flex justify-center mb-6")
+        div(class="relative")
+            img(src=imagenUsuario alt="Avatar" class="size-36 rounded-full object-cover border-2 border-white/10")
+            if usuario.estado === 'activo'
+                span(class="absolute bottom-2 right-2 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-primary text-black rounded-full") VIP
+
+    //- Name & Contact
+    div(class="text-center mb-6")
+        h2(class="font-display font-extrabold text-2xl text-white") #{usuario.nombreUsuario} #{usuario.apellidoUsuario}
+        div(class="flex items-center justify-center gap-2 mt-2 text-white/40 text-sm")
+            span(class="material-symbols-outlined text-sm") mail
+            span #{usuario.emailUsuario}
+        if aspirante && aspirante.whatsappAspirante
+            div(class="flex items-center justify-center gap-2 mt-1 text-white/40 text-sm")
+                span(class="material-symbols-outlined text-sm") chat
+                span #{aspirante.whatsappAspirante}
+
+    //- Add Credits Button
+    button#btn-agregar-creditos(class="w-full py-4 border-2 border-primary text-primary font-display font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-primary hover:text-black transition-all duration-300 mb-8")
+        | Agregar Cr&eacute;ditos
+
+    //- Top Genres
+    if topGeneros && topGeneros.length > 0
+        div(class="mb-6")
+            h4(class="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-3") G&eacute;neros m&aacute;s descargados
+            div(class="flex flex-wrap gap-2")
+                each g in topGeneros
+                    span(class="px-3 py-1 bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-wider text-white/70 rounded-full") #{g.nombreGenero}
+
+    //- Top Artists
+    if topArtistas && topArtistas.length > 0
+        div(class="mb-6")
+            h4(class="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-3") Artistas m&aacute;s descargados
+            div(class="space-y-2")
+                each a in topArtistas
+                    div(class="flex items-center justify-between")
+                        span(class="text-white font-bold text-sm") #{a.nombreArtista}
+                        span(class="text-white/30 text-[10px] font-mono") #{a.total} DN
+
+    //- Wishlist
+    div(class="mb-8")
+        button#btn-abrir-wishlist(class="w-full flex items-center justify-between px-4 py-3 bg-white/3 border border-white/5 rounded-xl hover:border-primary/20 transition-all group")
+            div(class="flex items-center gap-3")
+                span(class="material-symbols-outlined text-ritma-orange") favorite
+                span(class="font-display font-bold text-sm text-white uppercase") #{wishlistCount} en Wishlist
+            span(class="material-symbols-outlined text-white/30 group-hover:text-primary transition-colors") open_in_new
+
+    //- Action Buttons
+    div(class="flex gap-3")
+        button#btn-editar-datos(class="flex-1 py-3 border border-white/20 text-white font-display font-bold text-[10px] uppercase tracking-widest rounded-lg hover:border-primary hover:text-primary transition-all")
+            | Editar Datos
+        if usuario.estado === 'activo'
+            button#btn-toggle-status(class="flex-1 py-3 border border-red-500/30 text-red-400 font-display font-bold text-[10px] uppercase tracking-widest rounded-lg hover:bg-red-500/20 transition-all" data-estado="activo")
+                | Suspender
+        else
+            button#btn-toggle-status(class="flex-1 py-3 border border-green-500/30 text-green-400 font-display font-bold text-[10px] uppercase tracking-widest rounded-lg hover:bg-green-500/20 transition-all" data-estado="suspendido")
+                | Activar Usuario

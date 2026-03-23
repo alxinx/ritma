@@ -1,0 +1,10 @@
+div#btn-credit-history(class="stats-crystal glass-card cursor-pointer hover:border-primary/30 transition-all")
+  div(class="absolute inset-0 pixel-pattern opacity-5")
+  div(class="flex justify-between items-start relative z-10")
+    span(class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.3em]") Cr&eacute;ditos Disponibles
+    span(class="material-symbols-outlined") currency_rupee_circle
+  div(class="mt-4 relative z-10")
+    span#up-stat-creditos-disp(class="text-4xl font-display font-extrabold text-primary") #{creditosDisponibles || 0}
+    div(class="mt-1 flex items-center gap-1.5 text-[10px] font-mono")
+      span(class="text-white/40") PTS
+      span(class="material-symbols-outlined text-white/20 text-xs ml-auto") open_in_new

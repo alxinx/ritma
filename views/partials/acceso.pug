@@ -21,8 +21,9 @@ main(class="flex-1 flex items-center justify-center px-4 py-20 bg-background-dar
         | Únete a la red de infraestructura digital para DJs más avanzada de Latinoamérica.
 
     //- Formulario de Registro
-    form(class="space-y-6 relative z-10" method="post" action="/solicitud-procesada")
-      
+    form(class="space-y-6 relative z-10" method="post" action="/acceso")
+      input(type="hidden" name="_csrf" value=csrfToken)
+
       //- Parámetros: ID, NAME, TYPE, LABEL, REQUIRED, PLACEHOLDER, ICON
       +ritmaInput("nombreCompleto", "full_name", "text", "Identidad", true, "Escribe tu nombre...", "face")
       

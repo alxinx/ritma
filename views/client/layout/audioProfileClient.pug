@@ -1,0 +1,152 @@
+aside(class="w-full lg:w-3/5 xl:w-[35%] relative overflow-hidden lg:h-180 border-r border-white/10")
+
+  img(alt=multimedia.ARTISTA ? multimedia.ARTISTA.nombreArtista : 'Artista' class="absolute inset-0 w-full h-full object-cover" src=coverUrl)
+
+  div(class="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent")
+
+  div(class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent")
+
+  div(class="absolute bottom-28 left-12 z-10")
+    div(class="mb-4 inline-block bg-primary px-3 py-1 text-black font-display font-black text-[10px] uppercase tracking-widest")
+      | Artista
+    h2(class="font-display font-black text-6xl xl:text-6xl uppercase leading-none tracking-tighter")
+      | #{multimedia.ARTISTA ? multimedia.ARTISTA.nombreArtista : 'Sin artista'}
+
+  //- Botones de accion (Descargar / Comprar Creditos / Wishlist)
+  div(class="absolute bottom-0 w-full left-0 z-10 flex flex-col gap-2 p-4")
+    if yaComprado
+      button(id="btn-request-download" class="btn btn-green w-full")
+        span(class="material-symbols-outlined mr-2") download
+        h4 Descargar (Ya comprado)
+    else if creditosDisponibles >= multimedia.costoCreditos
+      button(id="btn-request-download" class="btn btn-green w-full")
+        span(class="material-symbols-outlined mr-2") download
+        h4 Descargar — #{multimedia.costoCreditos} R$
+    else
+      a(href="/ritmaap/creditos" class="flex items-center justify-center gap-2 w-full px-6 py-4 bg-primary hover:brightness-110 font-display font-extrabold text-sm uppercase tracking-widest transition-all")
+        span(class="material-symbols-outlined text-xl" style="color:#000") credit_card_heart
+        span(style="color:#000") Comprar Creditos
+    button(id="btn-wishlist" class="btn w-full" class=enWishlist ? "btn-danger" : "btn-ghost")
+      span(class="material-symbols-outlined mr-2") #{enWishlist ? 'bookmark_remove' : 'bookmark_add'}
+      h4 #{enWishlist ? 'Quitar de Wishlist' : 'Agregar a Wishlist'}
+
+  div(class="absolute top-12 left-12 flex flex-col gap-2")
+    div(class="sidebar-line w-1 h-32 opacity-50")
+    span(class="text-[10px] font-mono rotate-90 origin-left translate-x-3 translate-y-4 text-slate-500 tracking-[0.3em]")
+      | #{multimedia.ALBUM ? multimedia.ALBUM.nombreAlbum : 'Single'}
+
+section(class="mb-5")
+
+div(class="p-8 lg:p-3 max-w-5xl")
+  div(class="flex flex-col gap-2 mb-12")
+    //- Breadcrumbs
+    div(class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4")
+      a(class="hover:text-white transition-colors" href="/ritmaap/") HOME
+      span(class="material-symbols-outlined text-sm") chevron_right
+      span(class="text-primary") #{multimedia.nombreComposicion}
+
+    div(class="flex items-center gap-4 text-slate-500 text-[10px] font-bold tracking-[0.2em] uppercase")
+      span Artista : #{multimedia.ARTISTA ? multimedia.ARTISTA.nombreArtista : 'N/A'}
+      span(class="w-1 h-1 bg-white/20 rounded-full")
+      span Album: #{multimedia.ALBUM ? multimedia.ALBUM.nombreAlbum : 'Single'}
+
+    h1(class="font-display font-black text-5xl lg:text-7xl uppercase tracking-tighter mb-4 glow-primary")
+      | #{multimedia.nombreComposicion}
+
+    div(class="grid grid-cols-2 md:grid-cols-5 gap-4 py-8 border-y border-white/10")
+      div(class="flex flex-col")
+        span(class="text-slate-500 text-[10px] text-center uppercase tracking-widest mb-1") Creditos
+        span(class="text-2xl font-display font-bold text-center") #{multimedia.costoCreditos}
+
+      div(class="flex flex-col border-l border-white/10 pl-4")
+        span(class="text-slate-500 text-[10px] uppercase tracking-widest mb-1 text-center") BPM
+        span(class="text-2xl font-display font-bold text-ritma-cyan text-center") #{multimedia.bpm || 'N/A'}
+
+      div(class="flex flex-col border-l border-white/10 pl-4")
+        span(class="text-slate-500 text-[10px] uppercase tracking-widest mb-1 text-center") Generos
+        span(class="text-2xs font-display font-bold")
+          if multimedia.GENEROs && multimedia.GENEROs.length
+            | #{multimedia.GENEROs.map(g => g.nombre).join(', ')}
+          else
+            | Sin genero
+
+      div(class="flex flex-col border-l border-white/10 pl-4")
+        span(class="text-slate-500 text-[10px] uppercase tracking-widest mb-1 text-center") Formato
+        span(class="text-2xl font-display font-bold text-center") #{multimedia.formato ? multimedia.formato.toUpperCase() : 'N/A'}
+
+      div(class="flex flex-col border-l border-white/10 pl-4")
+        span(class="text-slate-500 text-[10px] uppercase tracking-widest mb-1 text-center") Duracion
+        span(class="text-1xs font-display font-bold text-center")
+          if multimedia.duracion
+            - const mins = Math.floor(multimedia.duracion / 60)
+            - const secs = multimedia.duracion % 60
+            | #{String(mins).padStart(2,'0')}:#{String(secs).padStart(2,'0')}
+          else
+            | --:--
+
+  //- Waveform Player Section
+  div(id="waveform-container" class="relative w-full h-40 bg-surface-accent border border-white/10 mb-2 cursor-pointer")
+    div(class="absolute inset-0 bg-primary/5")
+
+    //- Playhead / Marker
+    div(id="playhead" class="absolute top-0 bottom-0 w-px bg-primary z-20 shadow-[0_0_15px_#C9DA2B]" style="left: 0%")
+      div(class="absolute -top-3 -left-[5px] w-3 h-3 bg-primary rotate-45")
+
+    //- Waveform Backgrounds
+    div(class="absolute inset-0 waveform-massive bg-white/10 opacity-30")
+    div(id="waveform-progress" class="absolute inset-y-0 left-0 waveform-massive bg-primary" style="width: 0%")
+
+    //- Play/Pause Button
+    div(class="absolute inset-0 flex items-center justify-center z-30 pointer-events-none")
+      button(id="btn-play-pause" class="w-16 h-16 bg-primary text-black flex items-center justify-center pointer-events-auto hover:scale-110 transition-transform")
+        span(id="play-icon" class="material-symbols-outlined text-4xl text-black") play_arrow
+
+  //- Time display
+  div(class="flex justify-between text-[10px] text-slate-500 font-mono mb-8")
+    span(id="current-time") 00:00
+    span(id="total-time")
+      if multimedia.duracion
+        - const mins2 = Math.floor(multimedia.duracion / 60)
+        - const secs2 = multimedia.duracion % 60
+        | #{String(mins2).padStart(2,'0')}:#{String(secs2).padStart(2,'0')}
+      else
+        | --:--
+
+  //- ==========================================
+  //- TAMBIEN PUEDE INTERESARTE
+  //- ==========================================
+  section(class="mt-8")
+    div(class="flex items-center gap-4 mb-6")
+      h3(class="font-display font-black text-xl uppercase tracking-tighter") Tambien puede interesarte
+      div(class="flex-grow h-px bg-white/10")
+
+    div(class="grid grid-cols-1 md:grid-cols-5 gap-4")
+      if relacionados && relacionados.length > 0
+        each item in relacionados
+          a(href=`/ritmaap/profile/mediafile/${item.idMultimedia}` class="group rounded-2xl border border-white/5 hover:border-primary/30 overflow-hidden transition-all" style="background: rgba(255,255,255,0.03);")
+            //- Cover
+            div(class="relative aspect-square overflow-hidden bg-surface-dark")
+              if item.ARTISTA && item.ARTISTA.cover
+                img(src=`${R2_PUBLIC_URL}/images/artistas/${item.ARTISTA.cover}` alt=item.nombreComposicion class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300")
+              else if item.ALBUM && item.ALBUM.cover
+                img(src=`${R2_PUBLIC_URL}/${item.ALBUM.cover}` alt=item.nombreComposicion class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300")
+              else
+                img(src="/img/coverGenerico.webp" alt=item.nombreComposicion class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300")
+              //- Badge tipo
+              div(class="absolute top-2 right-2")
+                if item.tipoAsset === 'VIDEO'
+                  span(class="px-2 py-0.5 bg-purple-500/80 text-white text-[8px] font-bold uppercase rounded-full") Video
+                else
+                  span(class="px-2 py-0.5 bg-green-500/80 text-white text-[8px] font-bold uppercase rounded-full") Audio
+            //- Info
+            div(class="p-3")
+              p(class="text-xs font-bold text-white truncate group-hover:text-primary transition-colors") #{item.nombreComposicion}
+              p(class="text-[9px] text-white/30 font-mono truncate mt-1") #{item.ARTISTA ? item.ARTISTA.nombreArtista : '—'}
+              div(class="flex items-center justify-between mt-2")
+                span(class="text-[10px] font-mono text-primary font-bold") #{item.costoCreditos} R$
+                button(class="p-1 text-white/20 hover:text-primary transition-colors" title="Ver")
+                  span(class="material-symbols-outlined text-[16px]") visibility
+      else
+        div(class="col-span-5 text-center py-8")
+          span(class="material-symbols-outlined text-3xl text-white/5 mb-2 block") library_music
+          p(class="text-white/15 text-[10px] font-mono uppercase") No hay recomendaciones disponibles

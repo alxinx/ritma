@@ -1,7 +1,23 @@
-# Ignorar archivo de entorno
+# --- Dependencias y Entorno ---
 .env
+node_modules/
+npm-debug.log
 
-# Ignorar todo el contenido dentro de public/img/
+# --- Docker y Base de Datos ---
+# Si decides guardar los datos de MySQL en una carpeta local para que no se pierdan
+mysql_data/
+.docker/
+
+# --- Multimedia y Temporales (Crucial para Ritma) ---
+# Ignoramos las carpetas donde FFmpeg procesará los archivos antes de subirlos a R2
 public/img/
 public/test/
-node_modules/
+public/upload/
+public/temp/
+upload/
+*.tmp
+
+# --- Logs y Otros ---
+logs/
+*.log
+.DS_Store

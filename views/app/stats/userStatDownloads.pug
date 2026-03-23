@@ -1,0 +1,17 @@
+div(class="stats-crystal glass-card")
+  div(class="absolute inset-0 pixel-pattern opacity-5")
+  div(class="flex justify-between items-start relative z-10")
+    span(class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.3em]") Nro de Descargas
+    span(class="material-symbols-outlined") download
+  div(class="mt-4 relative z-10")
+    span#up-stat-descargas(class="text-4xl font-display font-extrabold text-white") #{nroDescargas || 0}
+    div(class="mt-1 flex items-center gap-1.5 text-[10px] font-mono")
+      if tendenciaDescargas && tendenciaDescargas.direccion === 'up'
+        span(class="material-symbols-outlined text-green-400") trending_up
+        span(class="text-green-400") +#{tendenciaDescargas.porcentaje}%
+      else if tendenciaDescargas && tendenciaDescargas.direccion === 'down'
+        span(class="material-symbols-outlined text-red-400") trending_down
+        span(class="text-red-400") -#{tendenciaDescargas.porcentaje}%
+      else
+        span(class="material-symbols-outlined text-white/40") trending_flat
+        span(class="text-white/40") Sin cambios

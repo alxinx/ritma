@@ -1,0 +1,165 @@
+main(class="pt-4 pb-20 relative w-full")
+  div(class="absolute inset-0 pixel-grid opacity-20 pointer-events-none")
+
+  div(class="max-w-[1400px] mx-auto px-6 relative z-10")
+    //- Breadcrumbs
+    div(class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-6")
+      a(class="hover:text-white transition-colors" href="/ritmaap/") HOME
+      span(class="material-symbols-outlined text-sm") chevron_right
+      span(class="text-primary") #{multimedia.nombreComposicion}
+
+    div(class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-12")
+      //- Video Player Column
+      div(class="lg:col-span-3 space-y-6")
+        div(class="relative aspect-video bg-surface-dark border border-white/10 video-glow overflow-hidden group")
+          if multimedia.keyPreview || multimedia.keyOriginal
+            video(id="video-player" class="w-full h-full object-cover" src=`/ritmaap/api/preview/${multimedia.idMultimedia}` poster=coverUrl preload="metadata")
+          else
+            video(id="video-player" class="w-full h-full object-cover" poster=coverUrl preload="none")
+
+          //- Video Controls Overlay
+          div(class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-6")
+            div(class="flex items-center justify-between w-full")
+              div(class="flex items-center gap-6")
+                button(id="btn-play-pause" class="text-white hover:text-primary transition-colors")
+                  span(id="play-icon" class="material-symbols-outlined text-4xl") play_arrow
+                div(id="video-progress-bar" class="h-1 w-64 md:w-96 bg-white/20 relative cursor-pointer group/bar")
+                  div(id="video-progress" class="absolute top-0 left-0 h-full w-0 bg-primary shadow-[0_0_10px_#C9DA2B]")
+                  div(id="video-seek-dot" class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full shadow-[0_0_8px_#C9DA2B] opacity-0 group-hover/bar:opacity-100 transition-opacity pointer-events-none" style="left: 0%")
+                span(id="video-time" class="font-mono text-[11px] tracking-tighter")
+                  | 00:00 /
+                  if multimedia.duracion
+                    - const mins = Math.floor(multimedia.duracion / 60)
+                    - const secs = multimedia.duracion % 60
+                    |  #{String(mins).padStart(2,'0')}:#{String(secs).padStart(2,'0')}
+                  else
+                    |  --:--
+              div(class="flex items-center gap-4")
+                span(class="px-2 py-0.5 border border-primary text-primary text-[10px] font-bold") #{multimedia.formato ? multimedia.formato.toUpperCase() : 'VIDEO'}
+                button(id="btn-fullscreen" class="text-white hover:text-primary transition-colors")
+                  span(class="material-symbols-outlined") fullscreen
+
+        //- Video Info Header
+        div(class="flex flex-col md:flex-row md:items-center justify-between gap-4")
+          div
+            h1(class="font-display font-extrabold text-4xl md:text-5xl uppercase tracking-tighter leading-none mb-3")
+              | #{multimedia.nombreComposicion}
+            div(class="flex flex-wrap gap-4 text-slate-400 text-xs font-medium uppercase tracking-widest")
+              span(class="flex items-center gap-1")
+                span(class="material-symbols-outlined text-sm") person
+                | #{multimedia.ARTISTA ? multimedia.ARTISTA.nombreArtista : 'Sin artista'}
+              span(class="flex items-center gap-1")
+                span(class="material-symbols-outlined text-sm") schedule
+                | #{new Date(multimedia.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+              span(class="flex items-center gap-1 text-primary")
+                span(class="material-symbols-outlined text-sm") currency_rupee_circle
+                | #{multimedia.costoCreditos} Creditos
+
+      //- Sidebar Stats
+      div(class="lg:col-span-1 md:col-span-3")
+        div(class="glass-card border border-white/10 p-6 h-full")
+          h3(class="font-display font-bold text-[10px] uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2")
+          span(class="material-symbols-outlined mr-3 mt-1 mb-5") stacked_line_chart
+          | ESTADISTICAS TECNICAS
+
+          div(class="space-y-2")
+            div(class="grid grid-cols-2 gap-4")
+              div(class="boxStatsVideo text-center")
+                p Creditos
+                span #{multimedia.costoCreditos}
+              div(class="boxStatsVideo text-center")
+                p BPM
+                span #{multimedia.bpm || 'N/A'}
+
+            div(class="grid grid-cols-2 gap-4")
+              div(class="boxStatsVideo text-center")
+                p Tiempo
+                if multimedia.duracion
+                  - const m = Math.floor(multimedia.duracion / 60)
+                  - const s = multimedia.duracion % 60
+                  span #{m}:#{String(s).padStart(2,'0')} Min
+                else
+                  span N/A
+              div(class="boxStatsVideo text-center")
+                p Subtitulado
+                span(class="center") #{multimedia.subtitulos ? 'Si' : 'No'}
+
+            div(class="boxStatsVideo text-center")
+              p Formato
+              span #{multimedia.formato ? multimedia.formato.toUpperCase() : 'N/A'}
+
+            div(class="boxStatsVideo text-center")
+              p Generos
+              if multimedia.GENEROs && multimedia.GENEROs.length
+                span #{multimedia.GENEROs.map(g => g.nombre).join(', ')}
+              else
+                span Sin genero
+
+          div(class="mt-12 pt-8 border-t border-white/5")
+            div(class="flex items-center gap-3 p-4 bg-white/5 border border-white/10")
+              if multimedia.ALBUM && multimedia.ALBUM.cover
+                img(alt="Album cover" class="w-8 h-8 opacity-50" src=`${R2_PUBLIC_URL}/${multimedia.ALBUM.cover}`)
+              div(class="text-[9px] uppercase tracking-widest text-slate-400")
+                | #{multimedia.ALBUM ? multimedia.ALBUM.nombreAlbum : 'Single'}
+                br
+                span(class="text-white font-bold") #{multimedia.ARTISTA ? multimedia.ARTISTA.nombreArtista : ''}
+
+            //- Boton Descargar / Comprar Creditos
+            if yaComprado
+              button(id="btn-request-download" class="btn-small btn-green w-full mt-4")
+                span(class="material-symbols-outlined") download
+                h5 Descargar (Ya comprado)
+            else if creditosDisponibles >= multimedia.costoCreditos
+              button(id="btn-request-download" class="btn-small btn-green w-full mt-4")
+                span(class="material-symbols-outlined") download
+                h5 Descargar — #{multimedia.costoCreditos} R$
+            else
+              a(href="/ritmaap/creditos" class="flex items-center justify-center gap-2 w-full mt-4 px-4 py-3 bg-primary hover:brightness-110 font-display font-extrabold text-[11px] uppercase tracking-widest transition-all")
+                span(class="material-symbols-outlined text-lg" style="color:#000") credit_card_heart
+                span(style="color:#000") Comprar Creditos
+
+            //- Boton Wishlist
+            button(id="btn-wishlist" class=`btn-small ${enWishlist ? 'btn-danger' : 'btn-ghost'} w-full mt-4`)
+              span(class="material-symbols-outlined") #{enWishlist ? 'bookmark_remove' : 'bookmark_add'}
+              h5 #{enWishlist ? 'Quitar de Wishlist' : 'Agregar a Wishlist'}
+
+    //- ==========================================
+    //- TAMBIEN PUEDE INTERESARTE
+    //- ==========================================
+    section(class="mt-16")
+      div(class="flex items-center gap-4 mb-8")
+        h2(class="font-display font-extrabold text-2xl uppercase tracking-tighter")
+          | TAMBIEN PUEDE
+          span(class="text-primary")  INTERESARTE
+        div(class="flex-grow h-px bg-white/10")
+
+      div(class="grid grid-cols-1 md:grid-cols-5 gap-4")
+        if relacionados && relacionados.length > 0
+          each item in relacionados
+            a(href=`/ritmaap/profile/mediafile/${item.idMultimedia}` class="group rounded-2xl border border-white/5 hover:border-primary/30 overflow-hidden transition-all" style="background: rgba(255,255,255,0.03);")
+              //- Cover
+              div(class="relative aspect-square overflow-hidden bg-surface-dark")
+                if item.ARTISTA && item.ARTISTA.cover
+                  img(src=`${R2_PUBLIC_URL}/images/artistas/${item.ARTISTA.cover}` alt=item.nombreComposicion class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300")
+                else if item.ALBUM && item.ALBUM.cover
+                  img(src=`${R2_PUBLIC_URL}/${item.ALBUM.cover}` alt=item.nombreComposicion class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300")
+                else
+                  img(src="/img/coverGenerico.webp" alt=item.nombreComposicion class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300")
+                //- Badge tipo
+                div(class="absolute top-2 right-2")
+                  if item.tipoAsset === 'VIDEO'
+                    span(class="px-2 py-0.5 bg-purple-500/80 text-white text-[8px] font-bold uppercase rounded-full") Video
+                  else
+                    span(class="px-2 py-0.5 bg-green-500/80 text-white text-[8px] font-bold uppercase rounded-full") Audio
+              //- Info
+              div(class="p-3")
+                p(class="text-xs font-bold text-white truncate group-hover:text-primary transition-colors") #{item.nombreComposicion}
+                p(class="text-[9px] text-white/30 font-mono truncate mt-1") #{item.ARTISTA ? item.ARTISTA.nombreArtista : '—'}
+                div(class="flex items-center justify-between mt-2")
+                  span(class="text-[10px] font-mono text-primary font-bold") #{item.costoCreditos} R$
+                  button(class="p-1 text-white/20 hover:text-primary transition-colors" title="Ver")
+                    span(class="material-symbols-outlined text-[16px]") visibility
+        else
+          div(class="col-span-5 text-center py-8")
+            span(class="material-symbols-outlined text-3xl text-white/5 mb-2 block") library_music
+            p(class="text-white/15 text-[10px] font-mono uppercase") No hay recomendaciones disponibles
