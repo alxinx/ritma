@@ -7,7 +7,7 @@ import {checkUploadMultimedia, checkUploadMultiArtist} from '../middlewares/vali
 import downloadRateLimiter from '../middlewares/downloadRateLimiter.js';
 import  {getPresignedUrl}  from '../controllers/uploadController.js';
 
-import { dashboard, usersPanel, multimediaPanel, uploadboard, mediafile, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus, toggleMultimediaEstado, requestDownloadToken, verifyAndDownload, updateMultimediaData, requestStreamToken, streamVideo, streamPreview, getActiveMembers, getAspirantes, aprobarAspirante, rechazarAspirante, sseUserPanel, getSolicitudesPendientes, userProfile, getUserDownloads, addUserCredits, updateUserData, toggleUserStatus, getUserWishlist, getUserCreditHistory, downloadsPanel, getTopGeneros, checkDownloadBan, checkArtistExists, postUploadMultiArtist } from '../controllers/adminControllers.js'
+import { dashboard, usersPanel, multimediaPanel, uploadboard, mediafile, postUploadMultimedia, validateUpload, liveUploadMonitor, jsonCheckArtistByName, getAlbumsByArtist, getAllGenres, getMultimediaList, getMultimediaStatus, toggleMultimediaEstado, requestDownloadToken, verifyAndDownload, updateMultimediaData, requestStreamToken, streamVideo, streamPreview, getActiveMembers, getAspirantes, aprobarAspirante, rechazarAspirante, sseUserPanel, getSolicitudesPendientes, userProfile, getUserDownloads, addUserCredits, updateUserData, toggleUserStatus, getUserWishlist, getUserCreditHistory, downloadsPanel, getTopGeneros, checkDownloadBan, checkArtistExists, postUploadMultiArtist, creditsPanel, getCreditsHistory, getCreditsChart, exportCreditsExcel, getPacks, createPack, updatePack, togglePackEstado } from '../controllers/adminControllers.js'
 const routes = express.Router();
 dotenv.config();
 
@@ -17,7 +17,7 @@ dotenv.config();
 routes.get("/", dashboard)
 routes.get("/users", usersPanel)
 routes.get("/downloads", downloadsPanel)
-routes.get("/credits", dashboard)
+routes.get("/credits", creditsPanel)
 routes.get("/multimedia", multimediaPanel)
     routes.get("/uploadboard", uploadboard)
        
@@ -86,5 +86,14 @@ routes.get('/json/users/:idUsuario/credit-history', getUserCreditHistory);
 
 // Analytics
 routes.get('/json/analytics/top-generos', getTopGeneros);
+
+// Credits module
+routes.get('/json/credits/history', getCreditsHistory);
+routes.get('/json/credits/chart', getCreditsChart);
+routes.get('/json/credits/export', exportCreditsExcel);
+routes.get('/json/packs', getPacks);
+routes.post('/json/packs', createPack);
+routes.patch('/json/packs/:idPack', updatePack);
+routes.patch('/json/packs/:idPack/toggle', togglePackEstado);
 
 export default routes

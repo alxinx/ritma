@@ -13,6 +13,10 @@ export default {
         multiArtistUpload : './src/js/multiArtistUpload.js',
         clientPanel : './src/js/clientPanel.js',
         clientMediafile : './src/js/clientMediafile.js',
+        clientBiblioteca : './src/js/clientBiblioteca.js',
+        clientWishlist : './src/js/clientWishlist.js',
+        clientSettings : './src/js/clientSettings.js',
+        adminCreditos : './src/js/adminCreditos.js',
 
     },
     output : {

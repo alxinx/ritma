@@ -174,7 +174,13 @@ import Swal from 'sweetalert2';
                     }
 
                     if (data.ok && data.token) {
-                        window.location.href = `/ritmaap/api/download/${data.token}`;
+                        // Animar descuento de créditos si no es propietario
+                        if (!yaComprado && costoCreditos > 0 && window.animateCredits) {
+                            window.animateCredits(costoCreditos);
+                        }
+                        setTimeout(() => {
+                            window.location.href = `/ritmaap/api/download/${data.token}`;
+                        }, yaComprado ? 0 : 400);
                     } else {
                         Swal.fire({ icon: 'error', title: 'Error', text: data.msg || 'No se pudo generar el link.', background: '#0a0a0c', color: '#fff' });
                     }

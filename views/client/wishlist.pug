@@ -1,0 +1,55 @@
+extends base.pug
+
+block content
+    //- Config para el JS
+    script.
+        window.__WISHLIST__ = {
+            csrfToken: "#{csrfToken}",
+            R2_PUBLIC_URL: "#{R2_PUBLIC_URL}",
+            creditosDisponibles: #{creditosDisponibles || 0}
+        };
+    script(src="/js/clientWishlist.js")
+
+    div(class="space-y-6")
+
+        //- Header card
+        div(class="relative overflow-hidden rounded-2xl p-6" style="background: linear-gradient(135deg, rgba(201,218,43,0.06) 0%, rgba(0,0,0,0.9) 60%); border: 1px solid rgba(201,218,43,0.10);")
+            div(class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent")
+            div(class="flex items-center justify-between")
+                div(class="flex items-center gap-4")
+                    span(class="material-symbols-outlined text-primary text-4xl") bookmark
+                    div
+                        h1(class="text-2xl font-display font-black uppercase tracking-tight text-white") Mi Wishlist
+                        p#wishlist-count(class="text-white/30 text-xs font-mono uppercase tracking-widest mt-1") Cargando...
+                div(class="flex items-center gap-3")
+                    //- Buscador
+                    div(class="relative group")
+                        span(class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg text-primary/50 group-focus-within:text-primary transition-colors") search
+                        input#wishlist-search(
+                            type="text"
+                            placeholder="Buscar en wishlist..."
+                            autocomplete="off"
+                            class="w-64 pl-10 pr-4 py-3 bg-white/4 border border-white/10 rounded-xl text-white text-sm font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
+                        )
+
+        //- Skeleton loader
+        div#wishlist-skeleton(class="grid gap-3" style="grid-template-columns: repeat(6, 1fr);")
+            each i in [1,2,3,4,5,6,7,8,9,10,11,12]
+                div(class="rounded-xl overflow-hidden animate-pulse" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);")
+                    div(class="aspect-square bg-white/5")
+                    div(class="p-3 space-y-2")
+                        div(class="h-4 bg-white/5 rounded w-3/4")
+                        div(class="h-3 bg-white/3 rounded w-1/2")
+                        div(class="flex gap-2 mt-3")
+                            div(class="h-7 w-7 bg-white/5 rounded-full")
+                            div(class="h-7 w-7 bg-white/5 rounded-full")
+                            div(class="h-7 w-7 bg-white/5 rounded-full")
+
+        //- Grid real (oculto hasta cargar)
+        div#wishlist-grid(class="hidden grid gap-3" style="grid-template-columns: repeat(6, 1fr);")
+
+        //- Empty state
+        div#wishlist-empty(class="hidden text-center py-20")
+            span(class="material-symbols-outlined text-7xl text-white/5 mb-4 block") bookmark_border
+            p(class="text-white/20 text-sm font-mono uppercase tracking-widest") Tu wishlist esta vacia
+            p(class="text-white/10 text-xs mt-2") Agrega archivos desde el buscador o el perfil de cada multimedia

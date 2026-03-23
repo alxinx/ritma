@@ -22,8 +22,8 @@ header(class="h-20 glass-header sticky top-0 flex items-center justify-between p
         div(class="relative" id="profileMenuWrapper")
             button(class="flex items-center gap-2 cursor-pointer" id="profileMenuBtn")
                 div(class="size-9 rounded-full overflow-hidden border-2 border-primary/30")
-                    if usuario && usuario.imagen
-                        img(src=`${process.env.R2_PUBLIC_URL}/images/users/${usuario.imagen}` alt="Perfil" class="w-full h-full object-cover")
+                    if userImagen
+                        img(src=`${process.env.R2_PUBLIC_URL}/images/users/${userImagen}` alt="Perfil" class="w-full h-full object-cover")
                     else
                         img(src="/img/generico.webp" alt="Perfil" class="w-full h-full object-cover")
                 span(class="material-symbols-outlined text-white/40 text-sm") expand_more

@@ -9,6 +9,7 @@ import LogErrores from './LogErrores.js'
 import HistorialDescargas from './HistorialDescargas.js'
 import Aspirantes from './Aspirantes.js'
 import RitmaCoins from './RitmaCoins.js'
+import PacksCreditos from './PacksCreditos.js'
 import Wishlist from './Wishlist.js'
 
 
@@ -50,6 +51,10 @@ HistorialDescargas.belongsTo(Usuarios, { foreignKey: 'idUsuario' });
 Usuarios.hasMany(RitmaCoins, { foreignKey: 'idUsuario' });
 RitmaCoins.belongsTo(Usuarios, { foreignKey: 'idUsuario' });
 
+// --- 4b. PACKS CREDITOS → RITMA COINS ---
+PacksCreditos.hasMany(RitmaCoins, { foreignKey: 'idPack', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+RitmaCoins.belongsTo(PacksCreditos, { foreignKey: 'idPack', onDelete: 'RESTRICT', onUpdate: 'CASCADE' });
+
 // --- 5. WISHLIST ---
 Usuarios.hasMany(Wishlist, { foreignKey: 'idUsuario' });
 Wishlist.belongsTo(Usuarios, { foreignKey: 'idUsuario' });
@@ -58,5 +63,5 @@ Wishlist.belongsTo(Multimedia, { foreignKey: 'idMultimedia' });
 
 
 export {
-        Usuarios, Generos, Artistas, Album, Multimedia, ArtistaGeneros, MultimediaGeneros, LogErrores, HistorialDescargas, Aspirantes, RitmaCoins, Wishlist
+        Usuarios, Generos, Artistas, Album, Multimedia, ArtistaGeneros, MultimediaGeneros, LogErrores, HistorialDescargas, Aspirantes, RitmaCoins, PacksCreditos, Wishlist
 }

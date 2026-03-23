@@ -1,4 +1,4 @@
-import { Usuarios, Artistas, Album, Generos, Multimedia, MultimediaGeneros, ArtistaGeneros, HistorialDescargas, Aspirantes, RitmaCoins, Wishlist, LogErrores } from '../models/index.js'
+import { Usuarios, Artistas, Album, Generos, Multimedia, MultimediaGeneros, ArtistaGeneros, HistorialDescargas, Aspirantes, RitmaCoins, PacksCreditos, Wishlist, LogErrores } from '../models/index.js'
 import multimediaQueue from '../queues/multimediaQueue.js';
 import db from "../config/bd.js";
 import s3Client from "../config/r2.js";
@@ -2070,6 +2070,288 @@ const postUploadMultiArtist = async (req, res) => {
     }
 };
 
+// ==========================================
+// MÓDULO CRÉDITOS — Panel principal
+// ==========================================
+
+const creditsPanel = async (req, res) => {
+    try {
+        // Ingreso semanal: suma de valorPack en últimos 7 días
+        const hace7d = new Date();
+        hace7d.setDate(hace7d.getDate() - 7);
+
+        const ingresoSemanal = await RitmaCoins.sum('valorPack', {
+            where: { fechaCompra: { [Op.gte]: hace7d } }
+        }) || 0;
+
+        // Total créditos en circulación
+        const creditosCirculacion = await RitmaCoins.sum('cantidadActual', {
+            where: { cantidadActual: { [Op.gt]: 0 } }
+        }) || 0;
+
+        // Total transacciones
+        const totalTransacciones = await RitmaCoins.count();
+
+        res.render('app/creditsPanel', {
+            tituloPagina: 'CRÉDITOS',
+            subtitulo: 'Gestión de packs y transacciones',
+            csrfToken: req.csrfToken(),
+            ingresoSemanal,
+            creditosCirculacion,
+            totalTransacciones
+        });
+    } catch (error) {
+        console.error('Error creditsPanel:', error);
+        res.redirect('/app/dash/');
+    }
+};
+
+// ==========================================
+// MÓDULO CRÉDITOS — Listado RITMA_COINS (paginado + búsqueda)
+// ==========================================
+
+const getCreditsHistory = async (req, res) => {
+    try {
+        let { page, limit, search } = req.query;
+        page = Math.max(1, parseInt(page) || 1);
+        limit = Math.min(50, Math.max(1, parseInt(limit) || 15));
+        const offset = (page - 1) * limit;
+
+        // Sanitizar búsqueda
+        const searchTerm = (search || '').replace(/[^\w\s@.\-áéíóúñ]/gi, '').trim();
+
+        const whereClause = {};
+        let includeWhere = {};
+
+        if (searchTerm) {
+            includeWhere = {
+                [Op.or]: [
+                    { emailUsuario: { [Op.like]: `%${searchTerm}%` } },
+                    { nombreUsuario: { [Op.like]: `%${searchTerm}%` } },
+                    { apellidoUsuario: { [Op.like]: `%${searchTerm}%` } }
+                ]
+            };
+        }
+
+        const { count, rows } = await RitmaCoins.findAndCountAll({
+            where: whereClause,
+            include: [
+                {
+                    model: Usuarios,
+                    attributes: ['nombreUsuario', 'apellidoUsuario', 'emailUsuario'],
+                    where: searchTerm ? includeWhere : undefined
+                },
+                {
+                    model: PacksCreditos,
+                    attributes: ['nombrePack'],
+                    required: false
+                }
+            ],
+            order: [['fechaCompra', 'DESC']],
+            limit,
+            offset
+        });
+
+        const data = rows.map(r => ({
+            idRitma: r.idRitma,
+            usuario: r.USUARIO
+                ? `${r.USUARIO.nombreUsuario} ${r.USUARIO.apellidoUsuario || ''}`
+                : 'N/A',
+            email: r.USUARIO?.emailUsuario || 'N/A',
+            pack: r.PACKS_CREDITO?.nombrePack || 'Manual',
+            cantidadComprada: r.cantidadComprada,
+            cantidadActual: r.cantidadActual,
+            valorPack: r.valorPack,
+            fechaCompra: r.fechaCompra
+        }));
+
+        res.json({
+            ok: true,
+            data,
+            total: count,
+            page,
+            totalPages: Math.ceil(count / limit)
+        });
+    } catch (error) {
+        console.error('Error getCreditsHistory:', error);
+        res.status(500).json({ ok: false, msg: 'Error al obtener historial de créditos' });
+    }
+};
+
+// ==========================================
+// MÓDULO CRÉDITOS — Chart ventas trimestre
+// ==========================================
+
+const getCreditsChart = async (req, res) => {
+    try {
+        const hace3m = new Date();
+        hace3m.setMonth(hace3m.getMonth() - 3);
+
+        const [resultados] = await db.query(`
+            SELECT
+                DATE_FORMAT(fechaCompra, '%Y-%m') AS mes,
+                SUM(valorPack) AS totalVentas,
+                COUNT(*) AS totalTransacciones
+            FROM RITMA_COINS
+            WHERE fechaCompra >= :desde
+            GROUP BY mes
+            ORDER BY mes ASC
+        `, {
+            replacements: { desde: hace3m.toISOString().split('T')[0] },
+            type: db.QueryTypes ? undefined : undefined
+        });
+
+        res.json({ ok: true, data: resultados });
+    } catch (error) {
+        console.error('Error getCreditsChart:', error);
+        res.status(500).json({ ok: false, msg: 'Error al obtener datos del gráfico' });
+    }
+};
+
+// ==========================================
+// MÓDULO CRÉDITOS — Exportar a Excel
+// ==========================================
+
+const exportCreditsExcel = async (req, res) => {
+    try {
+        let { desde, hasta } = req.query;
+        const whereClause = {};
+
+        if (desde && hasta) {
+            // Sanitizar fechas
+            const desdeFecha = new Date(desde);
+            const hastaFecha = new Date(hasta);
+            if (!isNaN(desdeFecha) && !isNaN(hastaFecha)) {
+                hastaFecha.setHours(23, 59, 59, 999);
+                whereClause.fechaCompra = { [Op.between]: [desdeFecha, hastaFecha] };
+            }
+        }
+
+        const rows = await RitmaCoins.findAll({
+            where: whereClause,
+            include: [
+                { model: Usuarios, attributes: ['nombreUsuario', 'apellidoUsuario', 'emailUsuario'] },
+                { model: PacksCreditos, attributes: ['nombrePack'], required: false }
+            ],
+            order: [['fechaCompra', 'DESC']],
+            limit: 10000
+        });
+
+        // Generar CSV
+        const header = 'ID,Usuario,Email,Pack,Creditos Comprados,Creditos Actuales,Valor Pack,Fecha Compra\n';
+        const csvRows = rows.map(r => {
+            const nombre = r.USUARIO ? `${r.USUARIO.nombreUsuario} ${r.USUARIO.apellidoUsuario || ''}` : 'N/A';
+            const email = r.USUARIO?.emailUsuario || 'N/A';
+            const pack = r.PACKS_CREDITO?.nombrePack || 'Manual';
+            const fecha = r.fechaCompra ? new Date(r.fechaCompra).toISOString().split('T')[0] : '';
+            return `${r.idRitma},"${nombre}","${email}","${pack}",${r.cantidadComprada},${r.cantidadActual},${r.valorPack},"${fecha}"`;
+        }).join('\n');
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="creditos_${Date.now()}.csv"`);
+        res.send('\uFEFF' + header + csvRows);
+    } catch (error) {
+        console.error('Error exportCreditsExcel:', error);
+        res.status(500).json({ ok: false, msg: 'Error al exportar' });
+    }
+};
+
+// ==========================================
+// MÓDULO CRÉDITOS — CRUD Packs
+// ==========================================
+
+const getPacks = async (req, res) => {
+    try {
+        const packs = await PacksCreditos.findAll({
+            order: [['createdAt', 'DESC']]
+        });
+        res.json({ ok: true, data: packs });
+    } catch (error) {
+        console.error('Error getPacks:', error);
+        res.status(500).json({ ok: false, msg: 'Error al obtener packs' });
+    }
+};
+
+const createPack = async (req, res) => {
+    try {
+        let { nombrePack, valorPack, nroCreditos, descuento } = req.body;
+
+        // Sanitizar
+        nombrePack = (nombrePack || '').replace(/[<>"';]/g, '').trim();
+        if (!nombrePack) return res.status(400).json({ ok: false, msg: 'Nombre requerido' });
+
+        valorPack = parseFloat(valorPack);
+        if (isNaN(valorPack) || valorPack < 0) return res.status(400).json({ ok: false, msg: 'Valor inválido' });
+
+        nroCreditos = parseInt(nroCreditos);
+        if (isNaN(nroCreditos) || nroCreditos < 0 || nroCreditos > 10000) return res.status(400).json({ ok: false, msg: 'Créditos inválidos (0-10000)' });
+
+        descuento = parseInt(descuento) || 0;
+        if (descuento < 0 || descuento > 99) return res.status(400).json({ ok: false, msg: 'Descuento inválido (0-99)' });
+
+        // Verificar nombre único
+        const existe = await PacksCreditos.findOne({ where: { nombrePack } });
+        if (existe) return res.status(409).json({ ok: false, msg: 'Ya existe un pack con ese nombre' });
+
+        const pack = await PacksCreditos.create({ nombrePack, valorPack, nroCreditos, descuento });
+        res.json({ ok: true, data: pack, msg: 'Pack creado correctamente' });
+    } catch (error) {
+        console.error('Error createPack:', error);
+        res.status(500).json({ ok: false, msg: 'Error al crear pack' });
+    }
+};
+
+const updatePack = async (req, res) => {
+    try {
+        const { idPack } = req.params;
+        let { nombrePack, valorPack, nroCreditos, descuento } = req.body;
+
+        const pack = await PacksCreditos.findByPk(idPack);
+        if (!pack) return res.status(404).json({ ok: false, msg: 'Pack no encontrado' });
+
+        // Sanitizar
+        nombrePack = (nombrePack || '').replace(/[<>"';]/g, '').trim();
+        if (!nombrePack) return res.status(400).json({ ok: false, msg: 'Nombre requerido' });
+
+        valorPack = parseFloat(valorPack);
+        if (isNaN(valorPack) || valorPack < 0) return res.status(400).json({ ok: false, msg: 'Valor inválido' });
+
+        nroCreditos = parseInt(nroCreditos);
+        if (isNaN(nroCreditos) || nroCreditos < 0 || nroCreditos > 10000) return res.status(400).json({ ok: false, msg: 'Créditos inválidos' });
+
+        descuento = parseInt(descuento) || 0;
+        if (descuento < 0 || descuento > 99) return res.status(400).json({ ok: false, msg: 'Descuento inválido' });
+
+        // Verificar unicidad si cambió el nombre
+        if (nombrePack !== pack.nombrePack) {
+            const existe = await PacksCreditos.findOne({ where: { nombrePack } });
+            if (existe) return res.status(409).json({ ok: false, msg: 'Ya existe un pack con ese nombre' });
+        }
+
+        await pack.update({ nombrePack, valorPack, nroCreditos, descuento });
+        res.json({ ok: true, data: pack, msg: 'Pack actualizado correctamente' });
+    } catch (error) {
+        console.error('Error updatePack:', error);
+        res.status(500).json({ ok: false, msg: 'Error al actualizar pack' });
+    }
+};
+
+const togglePackEstado = async (req, res) => {
+    try {
+        const { idPack } = req.params;
+        const pack = await PacksCreditos.findByPk(idPack);
+        if (!pack) return res.status(404).json({ ok: false, msg: 'Pack no encontrado' });
+
+        const nuevoEstado = pack.estado === 'enable' ? 'disable' : 'enable';
+        await pack.update({ estado: nuevoEstado });
+
+        res.json({ ok: true, estado: nuevoEstado, msg: `Pack ${nuevoEstado === 'enable' ? 'activado' : 'suspendido'}` });
+    } catch (error) {
+        console.error('Error togglePackEstado:', error);
+        res.status(500).json({ ok: false, msg: 'Error al cambiar estado' });
+    }
+};
+
 export {
     dashboard,
     usersPanel,
@@ -2105,4 +2387,12 @@ export {
     checkDownloadBan,
     checkArtistExists,
     postUploadMultiArtist,
+    creditsPanel,
+    getCreditsHistory,
+    getCreditsChart,
+    exportCreditsExcel,
+    getPacks,
+    createPack,
+    updatePack,
+    togglePackEstado,
 }
