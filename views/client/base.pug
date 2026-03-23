@@ -2,6 +2,7 @@ include ../layout/head.pug
 include ../components/mixins/form-field.pug
 include ../components/mixins/layouts.pug
 block contenedor
+    meta(name="csrf-token" content=csrfToken)
 
     div(class="flex min-h-screen")
 

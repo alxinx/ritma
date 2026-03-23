@@ -1,5 +1,10 @@
+import Swal from 'sweetalert2';
+
 ;(function () {
     document.addEventListener('DOMContentLoaded', () => {
+
+        // CSRF token from meta or cookie
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
         // ==========================================
         // PROFILE DROPDOWN MENU
@@ -246,7 +251,6 @@
         async function triggerSearch() {
             if (!searchTbody) return;
 
-            // Si no hay filtros activos, mostrar empty state
             if (!hasActiveFilters()) {
                 searchEmpty?.classList.remove('hidden');
                 searchLoading?.classList.add('hidden');
@@ -254,7 +258,6 @@
                 return;
             }
 
-            // Mostrar loading
             searchEmpty?.classList.add('hidden');
             searchTableWrapper?.classList.add('hidden');
             searchLoading?.classList.remove('hidden');
@@ -286,7 +289,6 @@
                     return;
                 }
 
-                // Renderizar resultados
                 searchEmpty?.classList.add('hidden');
                 searchTableWrapper?.classList.remove('hidden');
 
@@ -304,10 +306,17 @@
                         ? '<span class="material-symbols-outlined text-purple-400 text-sm">videocam</span>'
                         : '<span class="material-symbols-outlined text-green-400 text-sm">music_note</span>';
 
-                    // Boton descarga o carrito
-                    const actionBtn = m.puedeDescargar
-                        ? `<button class="p-1.5 text-white/30 hover:text-primary transition-colors" title="Descargar"><span class="material-symbols-outlined text-[18px]">download</span></button>`
-                        : `<button class="p-1.5 text-white/30 hover:text-yellow-400 transition-colors" title="Creditos insuficientes — Agregar al carrito"><span class="material-symbols-outlined text-[18px]">shopping_cart</span></button>`;
+                    let actionBtn;
+                    if (m.yaComprado) {
+                        // Ya es propietario — descargar gratis
+                        actionBtn = `<button class="btn-dl-search p-1.5 text-white/30 hover:text-primary transition-colors" title="Ya comprado — Descargar" data-id="${m.idMultimedia}" data-nombre="${escapeHtml(m.nombreComposicion)}" data-costo="0" data-owned="true"><span class="material-symbols-outlined text-[18px]">download</span></button>`;
+                    } else if (m.puedeDescargar) {
+                        // Puede comprar
+                        actionBtn = `<button class="btn-dl-search p-1.5 text-white/30 hover:text-primary transition-colors" title="Descargar" data-id="${m.idMultimedia}" data-nombre="${escapeHtml(m.nombreComposicion)}" data-costo="${m.costoCreditos}" data-owned="false"><span class="material-symbols-outlined text-[18px]">download</span></button>`;
+                    } else {
+                        // Sin creditos
+                        actionBtn = `<button class="p-1.5 text-white/30 hover:text-yellow-400 transition-colors" title="Creditos insuficientes"><span class="material-symbols-outlined text-[18px]">shopping_cart</span></button>`;
+                    }
 
                     return `
                     <tr class="border-b border-white/5 hover:bg-white/3 transition-colors">
@@ -339,6 +348,11 @@
                     </tr>`;
                 }).join('');
 
+                // Bind download buttons
+                searchTbody.querySelectorAll('.btn-dl-search').forEach(btn => {
+                    btn.addEventListener('click', () => handleDownload(btn));
+                });
+
                 // Paginacion
                 if (searchTotal) {
                     searchTotal.textContent = `${json.total} resultado${json.total !== 1 ? 's' : ''} — Pagina ${json.page} de ${json.totalPages}`;
@@ -367,11 +381,269 @@
         }
 
         // ==========================================
+        // DOWNLOAD HANDLER (SweetAlert + countdown)
+        // ==========================================
+        async function handleDownload(btn) {
+            const idMultimedia = btn.dataset.id;
+            const nombreComposicion = btn.dataset.nombre;
+            const costoCreditos = parseInt(btn.dataset.costo) || 0;
+            const yaComprado = btn.dataset.owned === 'true';
+
+            try {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+
+                // SweetAlert con countdown de 5 segundos
+                let countdown = 5;
+                let countdownInterval;
+
+                const creditMsg = yaComprado
+                    ? 'Ya tienes este archivo. No se descontaran creditos.'
+                    : `Se descontaran <strong>${costoCreditos} R$</strong> de tus creditos.`;
+
+                const swalResult = await Swal.fire({
+                    title: nombreComposicion,
+                    html: `${creditMsg}<br><br>La descarga iniciara en <strong id="swal-countdown">${countdown}</strong> segundos...`,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Descargar ahora',
+                    cancelButtonText: 'No descargar',
+                    background: '#0a0a0c',
+                    color: '#fff',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        const countdownEl = document.getElementById('swal-countdown');
+                        countdownInterval = setInterval(() => {
+                            countdown--;
+                            if (countdownEl) countdownEl.textContent = countdown;
+                            if (countdown <= 0) {
+                                clearInterval(countdownInterval);
+                                Swal.clickConfirm();
+                            }
+                        }, 1000);
+                    },
+                    willClose: () => {
+                        clearInterval(countdownInterval);
+                    }
+                });
+
+                if (swalResult.isDismissed) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Descarga cancelada',
+                        text: 'No se descontaron creditos.',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#0a0a0c',
+                        color: '#fff'
+                    });
+                    return;
+                }
+
+                // Solicitar token de descarga
+                const res = await fetch(`/ritmaap/json/multimedia/${idMultimedia}/request-download`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'CSRF-Token': csrfToken
+                    }
+                });
+                const data = await res.json();
+
+                if (data.blocked) {
+                    Swal.fire({ icon: 'error', title: 'Descargas suspendidas', text: data.msg, background: '#0a0a0c', color: '#fff' });
+                    return;
+                }
+
+                const warning = res.headers.get('X-Download-Warning');
+                if (warning) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Advertencia',
+                        text: warning,
+                        timer: 4000,
+                        showConfirmButton: false,
+                        background: '#0a0a0c',
+                        color: '#fff'
+                    });
+                }
+
+                if (data.ok && data.token) {
+                    // Animar descuento de créditos si no es propietario
+                    if (!yaComprado && costoCreditos > 0 && window.animateCredits) {
+                        window.animateCredits(costoCreditos);
+                    }
+                    // Pequeño delay para que la animación se vea antes del redirect
+                    setTimeout(() => {
+                        window.location.href = `/ritmaap/api/download/${data.token}`;
+                    }, yaComprado ? 0 : 400);
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error', text: data.msg || 'No se pudo generar el link.', background: '#0a0a0c', color: '#fff' });
+                }
+
+            } catch (err) {
+                console.error('Error download:', err);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Error al solicitar descarga.', background: '#0a0a0c', color: '#fff' });
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        }
+
+        // ==========================================
         // HELPERS
         // ==========================================
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // ==========================================
+        // ANIMACION DOWNCOUNT DE CREDITOS (global)
+        // Expuesta como window.animateCredits(costo)
+        // ==========================================
+        window.animateCredits = function(costo) {
+            if (!costo || costo <= 0) return;
+            const badge = document.querySelector('a[href="/ritmaap/creditos"] .font-mono');
+            if (!badge) return;
+
+            const current = parseInt(badge.textContent) || 0;
+            const target = Math.max(0, current - costo);
+            const duration = 1200; // ms
+            const startTime = performance.now();
+
+            // Flash rojo en el badge
+            const container = badge.closest('a');
+            if (container) {
+                container.style.transition = 'all 0.3s';
+                container.style.borderColor = 'rgba(239,68,68,0.6)';
+                container.style.background = 'rgba(239,68,68,0.15)';
+                badge.style.color = '#ef4444';
+            }
+
+            // Floating "-X" indicator
+            if (container) {
+                const floater = document.createElement('span');
+                floater.textContent = `-${costo}`;
+                floater.style.cssText = `
+                    position: absolute; top: -5px; right: -5px; z-index: 100;
+                    font-size: 12px; font-weight: 900; color: #ef4444;
+                    font-family: monospace; pointer-events: none;
+                    animation: creditFloat 1.5s ease-out forwards;
+                `;
+                container.style.position = 'relative';
+                container.appendChild(floater);
+                setTimeout(() => floater.remove(), 1500);
+            }
+
+            // Easing countdown
+            function step(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // easeOutCubic
+                const ease = 1 - Math.pow(1 - progress, 3);
+                const val = Math.round(current - (current - target) * ease);
+                badge.textContent = val;
+
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    badge.textContent = target;
+                    // Restaurar colores
+                    setTimeout(() => {
+                        if (container) {
+                            container.style.borderColor = '';
+                            container.style.background = '';
+                            badge.style.color = '';
+                        }
+                    }, 600);
+                }
+            }
+            requestAnimationFrame(step);
+        };
+
+        // ==========================================
+        // ANIMACION UPCOUNT DE CREDITOS (global)
+        // Expuesta como window.animateCreditsUp(cantidad)
+        // ==========================================
+        window.animateCreditsUp = function(cantidad) {
+            if (!cantidad || cantidad <= 0) return;
+            const badge = document.querySelector('a[href="/ritmaap/creditos"] .font-mono');
+            if (!badge) return;
+
+            const current = parseInt(badge.textContent) || 0;
+            const target = current + cantidad;
+            const duration = 1400;
+            const startTime = performance.now();
+
+            const container = badge.closest('a');
+            if (container) {
+                container.style.transition = 'all 0.3s';
+                container.style.borderColor = 'rgba(34,197,94,0.7)';
+                container.style.background = 'rgba(34,197,94,0.15)';
+                badge.style.color = '#22c55e';
+                // Pulse scale
+                container.style.transform = 'scale(1.12)';
+                setTimeout(() => { container.style.transform = 'scale(1)'; }, 300);
+            }
+
+            // Floating "+X" indicator (sube desde abajo)
+            if (container) {
+                const floater = document.createElement('span');
+                floater.textContent = `+${cantidad}`;
+                floater.style.cssText = `
+                    position: absolute; top: -5px; right: -5px; z-index: 100;
+                    font-size: 13px; font-weight: 900; color: #22c55e;
+                    font-family: monospace; pointer-events: none;
+                    animation: creditFloatUp 1.6s ease-out forwards;
+                `;
+                container.style.position = 'relative';
+                container.appendChild(floater);
+                setTimeout(() => floater.remove(), 1600);
+            }
+
+            // Easing count UP
+            function step(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const ease = 1 - Math.pow(1 - progress, 3);
+                const val = Math.round(current + (target - current) * ease);
+                badge.textContent = val;
+
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    badge.textContent = target;
+                    setTimeout(() => {
+                        if (container) {
+                            container.style.borderColor = '';
+                            container.style.background = '';
+                            badge.style.color = '';
+                        }
+                    }, 800);
+                }
+            }
+            requestAnimationFrame(step);
+        };
+
+        // Inyectar CSS de las animaciones floating (una sola vez)
+        if (!document.getElementById('credit-float-style')) {
+            const s = document.createElement('style');
+            s.id = 'credit-float-style';
+            s.textContent = `
+                @keyframes creditFloat {
+                    0%   { opacity: 1; transform: translateY(0) scale(1); }
+                    70%  { opacity: 1; transform: translateY(-28px) scale(1.2); }
+                    100% { opacity: 0; transform: translateY(-40px) scale(0.8); }
+                }
+                @keyframes creditFloatUp {
+                    0%   { opacity: 0; transform: translateY(12px) scale(0.7); }
+                    20%  { opacity: 1; transform: translateY(0) scale(1.15); }
+                    70%  { opacity: 1; transform: translateY(-24px) scale(1.1); }
+                    100% { opacity: 0; transform: translateY(-38px) scale(0.8); }
+                }
+            `;
+            document.head.appendChild(s);
         }
 
     });

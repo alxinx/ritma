@@ -1,6 +1,7 @@
 import express from "express";
 import downloadRateLimiter from '../middlewares/downloadRateLimiter.js';
-import { dashboard, getGeneros, searchMultimedia, mediafile, toggleWishlist, requestDownloadToken, verifyAndDownload, checkDownloadBan, requestStreamToken, streamVideo, streamPreview } from '../controllers/clientControllers.js';
+import upload from '../middlewares/upload.js';
+import { dashboard, getGeneros, searchMultimedia, mediafile, toggleWishlist, requestDownloadToken, verifyAndDownload, checkDownloadBan, requestStreamToken, streamVideo, streamPreview, biblioteca, searchBiblioteca, getArtistasBiblioteca, wishlistPage, searchWishlist, removeFromWishlist, settingsPage, updateProfile, updatePassword, uploadAvatar } from '../controllers/clientControllers.js';
 
 const routes = express.Router();
 
@@ -24,5 +25,21 @@ routes.get("/api/download/:token", verifyAndDownload);
 routes.post("/json/multimedia/:idMultimedia/request-stream", requestStreamToken);
 routes.get("/api/video/stream/:idMultimedia", streamVideo);
 routes.get("/api/preview/:idMultimedia", streamPreview);
+
+// Biblioteca
+routes.get("/biblioteca", biblioteca);
+routes.get("/json/biblioteca/search", searchBiblioteca);
+routes.get("/json/biblioteca/artistas", getArtistasBiblioteca);
+
+// Wishlist page
+routes.get("/wishlist", wishlistPage);
+routes.get("/json/wishlist/search", searchWishlist);
+routes.delete("/json/wishlist/:idMultimedia", removeFromWishlist);
+
+// Settings
+routes.get("/settings", settingsPage);
+routes.put("/json/settings/profile", updateProfile);
+routes.put("/json/settings/password", updatePassword);
+routes.post("/json/settings/avatar", upload.single('avatar'), uploadAvatar);
 
 export default routes

@@ -1,0 +1,179 @@
+extends base.pug
+
+block content
+    script.
+        window.__SETTINGS__ = {
+            csrfToken: "#{csrfToken}",
+            R2_PUBLIC_URL: "#{R2_PUBLIC_URL}",
+            imagenActual: "#{imagenActual || ''}",
+            nombreUsuario: "#{usuario.nombreUsuario || ''}",
+            apellidoUsuario: "#{usuario.apellidoUsuario || ''}",
+            emailUsuario: "#{usuario.emailUsuario || ''}",
+            whatsapp: "#{aspirante ? aspirante.whatsappAspirante : ''}",
+            instagram: "#{aspirante ? aspirante.instagramAspirante : ''}",
+            tiktok: "#{aspirante ? aspirante.tiktokAspirante : ''}"
+        };
+    script(src="/js/clientSettings.js")
+
+    div(class="max-w-5xl mx-auto space-y-6")
+
+        //- Header card
+        div(class="relative overflow-hidden rounded-2xl p-6" style="background: linear-gradient(135deg, rgba(201,218,43,0.06) 0%, rgba(0,0,0,0.9) 60%); border: 1px solid rgba(201,218,43,0.10);")
+            div(class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent")
+            div(class="flex items-center gap-4")
+                span(class="material-symbols-outlined text-primary text-4xl") settings
+                div
+                    h1(class="text-2xl font-display font-black uppercase tracking-tight text-white") Account Settings
+                    p(class="text-white/30 text-xs font-mono uppercase tracking-widest mt-1") Configuración de perfil
+
+        //- Main content: 65/35 layout
+        div(class="flex flex-col lg:flex-row gap-6")
+
+            //- LEFT: Form (65%)
+            div(class="lg:w-[65%] space-y-6")
+
+                //- Personal Info Card
+                div(class="rounded-2xl p-6 space-y-5" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);")
+                    //- Row 1: Nombre, Apellido
+                    div(class="grid grid-cols-1 sm:grid-cols-2 gap-4")
+                        div
+                            label(class="block text-[10px] uppercase tracking-widest text-white/30 font-mono mb-2") Nombre *
+                            input#inp-nombre(
+                                type="text"
+                                value=usuario.nombreUsuario
+                                maxlength="100"
+                                class="w-full px-4 py-3 bg-white/4 border border-white/10 rounded-xl text-white text-sm font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
+                            )
+                        div
+                            label(class="block text-[10px] uppercase tracking-widest text-white/30 font-mono mb-2") Apellido *
+                            input#inp-apellido(
+                                type="text"
+                                value=usuario.apellidoUsuario || ''
+                                maxlength="100"
+                                class="w-full px-4 py-3 bg-white/4 border border-white/10 rounded-xl text-white text-sm font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
+                            )
+
+                    //- Row 2: WhatsApp
+                    div
+                        label(class="block text-[10px] uppercase tracking-widest text-white/30 font-mono mb-2")
+                            span(class="material-symbols-outlined text-sm align-middle mr-1") chat
+                            | WhatsApp *
+                        input#inp-whatsapp(
+                            type="text"
+                            value=(aspirante ? aspirante.whatsappAspirante : '')
+                            maxlength="30"
+                            placeholder="+1 (555) 012-3456"
+                            class="w-full px-4 py-3 bg-white/4 border border-white/10 rounded-xl text-white text-sm font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
+                        )
+
+                    //- Row 3: Instagram + TikTok (misma fila)
+                    div(class="grid grid-cols-2 gap-4")
+                        div
+                            label(class="block text-[10px] uppercase tracking-widest text-white/30 font-mono mb-2")
+                                span(class="text-sm align-middle mr-1") IG
+                                | Instagram
+                            input#inp-instagram(
+                                type="text"
+                                value=(aspirante ? aspirante.instagramAspirante : '')
+                                maxlength="100"
+                                placeholder="@usuario"
+                                class="w-full px-4 py-3 bg-white/4 border border-white/10 rounded-xl text-white text-sm font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
+                            )
+                        div
+                            label(class="block text-[10px] uppercase tracking-widest text-white/30 font-mono mb-2")
+                                span(class="text-sm align-middle mr-1") TT
+                                | TikTok
+                            input#inp-tiktok(
+                                type="text"
+                                value=(aspirante ? aspirante.tiktokAspirante : '')
+                                maxlength="100"
+                                placeholder="@usuario"
+                                class="w-full px-4 py-3 bg-white/4 border border-white/10 rounded-xl text-white text-sm font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
+                            )
+
+                    //- Actions row
+                    div(class="flex items-center justify-between pt-4 border-t border-white/5")
+                        button#btn-change-password(type="button" class="flex items-center gap-2 text-primary/70 hover:text-primary text-sm font-medium transition-colors cursor-pointer")
+                            span(class="material-symbols-outlined text-lg") lock_reset
+                            | Cambiar Password
+
+                        div(class="flex items-center gap-3")
+                            button#btn-discard(type="button" class="px-5 py-2.5 text-white/40 hover:text-white text-sm font-medium transition-colors cursor-pointer") Resetear
+                            button#btn-save(type="button" class="px-6 py-2.5 bg-primary text-black text-sm font-bold rounded-xl hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed")
+                                | Guardar Cambios
+
+                //- Password Card (hidden by default)
+                div#password-card(class="hidden rounded-2xl p-6 space-y-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(201,218,43,0.10);")
+                    div(class="flex items-center justify-between mb-2")
+                        h3(class="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2")
+                            span(class="material-symbols-outlined text-primary text-lg") lock
+                            | Cambiar Contraseña
+                        button#btn-cancel-password(type="button" class="text-white/30 hover:text-white transition-colors cursor-pointer")
+                            span(class="material-symbols-outlined text-lg") close
+
+                    div(class="grid grid-cols-1 sm:grid-cols-2 gap-4")
+                        div
+                            label(class="block text-[10px] uppercase tracking-widest text-white/30 font-mono mb-2") Nueva Contraseña
+                            input#inp-password(
+                                type="password"
+                                maxlength="100"
+                                placeholder="Mínimo 6 caracteres"
+                                class="w-full px-4 py-3 bg-white/4 border border-white/10 rounded-xl text-white text-sm font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
+                            )
+                        div
+                            label(class="block text-[10px] uppercase tracking-widest text-white/30 font-mono mb-2") Confirmar Contraseña
+                            input#inp-confirm-password(
+                                type="password"
+                                maxlength="100"
+                                placeholder="Repite la contraseña"
+                                class="w-full px-4 py-3 bg-white/4 border border-white/10 rounded-xl text-white text-sm font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
+                            )
+
+                    div#password-error(class="hidden text-red-400 text-xs font-mono")
+
+                    div(class="flex justify-end")
+                        button#btn-save-password(type="button" class="px-6 py-2.5 bg-primary text-black text-sm font-bold rounded-xl hover:bg-primary/90 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed")
+                            | Actualizar Contraseña
+
+            //- RIGHT: Profile Card (35%)
+            div(class="lg:w-[35%]")
+                div(class="rounded-2xl overflow-hidden sticky top-24" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);")
+                    //- Image area
+                    div(class="relative group")
+                        div#avatar-container(class="aspect-square bg-white/5 overflow-hidden")
+                            if imagenActual
+                                img#avatar-img(
+                                    src=`${R2_PUBLIC_URL}/images/users/${imagenActual}`
+                                    alt="Perfil"
+                                    class="w-full h-full object-cover"
+                                )
+                            else
+                                img#avatar-img(
+                                    src="/img/generico.webp"
+                                    alt="Perfil"
+                                    class="w-full h-full object-cover"
+                                )
+
+                        //- Edit overlay
+                        label(class="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer")
+                            input#inp-avatar(
+                                type="file"
+                                accept=".jpg,.jpeg,.png"
+                                class="hidden"
+                            )
+                            div(class="flex flex-col items-center gap-2 text-white")
+                                span(class="material-symbols-outlined text-3xl") edit
+                                span(class="text-xs font-mono uppercase tracking-widest") Cambiar foto
+
+                        //- Upload spinner (hidden)
+                        div#avatar-spinner(class="absolute inset-0 flex items-center justify-center bg-black/70 hidden")
+                            div(class="flex flex-col items-center gap-3")
+                                div(class="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin")
+                                span(class="text-white/60 text-xs font-mono") Procesando...
+
+                    //- User info below image
+                    div(class="p-5 text-center")
+                        p(class="text-[10px] text-primary/60 uppercase tracking-widest font-mono mb-1") Verified Entity
+                        h2(class="text-lg font-display font-black uppercase text-white tracking-tight")
+                            | #{usuario.nombreUsuario} #{usuario.apellidoUsuario || ''}
+                        p(class="text-white/30 text-xs font-mono uppercase mt-1") #{usuario.permisos}

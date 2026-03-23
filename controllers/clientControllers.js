@@ -1,12 +1,16 @@
-import { Usuarios, Multimedia, Artistas, Album, Generos, HistorialDescargas, RitmaCoins, Wishlist, MultimediaGeneros } from '../models/index.js';
+import { Usuarios, Multimedia, Artistas, Album, Generos, HistorialDescargas, RitmaCoins, Wishlist, MultimediaGeneros, Aspirantes } from '../models/index.js';
 import { Op, fn, col, literal } from 'sequelize';
 import db from '../config/bd.js';
 import s3Client from "../config/r2.js";
 import redisClient from "../config/redis.js";
-import { GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, HeadObjectCommand, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { pipeline } from 'stream/promises';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
+import sharp from 'sharp';
+import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs';
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -179,7 +183,7 @@ async function getTopSemanal(desde) {
               AND m.estado = 'ENABLE'
             GROUP BY m.idMultimedia, m.nombreComposicion, m.tipoAsset, a.nombreArtista
             ORDER BY totalDescargas DESC
-            LIMIT 10
+            LIMIT 5
         `, { replacements: { desde } });
 
         return rows.map(r => ({
@@ -335,18 +339,30 @@ const searchMultimedia = async (req, res) => {
             distinct: true
         });
 
-        const creditosDisponibles = await RitmaCoins.sum('cantidadActual', { where: { idUsuario } }) || 0;
+        const [creditosDisponibles, descargasUsuario] = await Promise.all([
+            RitmaCoins.sum('cantidadActual', { where: { idUsuario } }).then(v => v || 0),
+            HistorialDescargas.findAll({
+                where: { idUsuario },
+                attributes: ['idMultimedia'],
+                raw: true
+            })
+        ]);
+        const idsComprados = new Set(descargasUsuario.map(d => d.idMultimedia));
 
-        const data = rows.map(m => ({
-            idMultimedia: m.idMultimedia,
-            nombreComposicion: m.nombreComposicion,
-            artista: m.ARTISTA ? m.ARTISTA.nombreArtista : '—',
-            tipoAsset: m.tipoAsset,
-            formato: (m.formato || '').toUpperCase(),
-            costoCreditos: m.costoCreditos || 0,
-            bpm: m.bpm || null,
-            puedeDescargar: creditosDisponibles >= (m.costoCreditos || 0)
-        }));
+        const data = rows.map(m => {
+            const yaComprado = idsComprados.has(m.idMultimedia);
+            return {
+                idMultimedia: m.idMultimedia,
+                nombreComposicion: m.nombreComposicion,
+                artista: m.ARTISTA ? m.ARTISTA.nombreArtista : '—',
+                tipoAsset: m.tipoAsset,
+                formato: (m.formato || '').toUpperCase(),
+                costoCreditos: m.costoCreditos || 0,
+                bpm: m.bpm || null,
+                yaComprado,
+                puedeDescargar: yaComprado || creditosDisponibles >= (m.costoCreditos || 0)
+            };
+        });
 
         res.json({
             ok: true,
@@ -729,6 +745,531 @@ const streamPreview = async (req, res) => {
     }
 };
 
+// ==========================================
+// BIBLIOTECA — Página principal
+// ==========================================
+const biblioteca = async (req, res) => {
+    try {
+        const idUsuario = req.usuario.idUsuario;
+
+        // Creditos y total descargas
+        const creditosDisponibles = await RitmaCoins.sum('cantidadActual', { where: { idUsuario } }) || 0;
+        const totalDescargas = await HistorialDescargas.count({ where: { idUsuario } });
+
+        // Generos presentes en las descargas del usuario (para pills de filtro)
+        const [generosBiblioteca] = await db.query(`
+            SELECT DISTINCT g.genero_id, g.nombre
+            FROM HISTORIAL_DESCARGAS_MULTIMEDIA h
+            JOIN MULTIMEDIA m ON m.idMultimedia = h.idMultimedia
+            JOIN MULTIMEDIA_GENEROS mg ON mg.idMultimedia = m.idMultimedia
+            JOIN GENEROS g ON g.genero_id = mg.idGenero
+            WHERE h.idUsuario = :idUsuario AND m.estado = 'ENABLE'
+            ORDER BY g.nombre
+        `, { replacements: { idUsuario } });
+
+        // Artistas del usuario (para el JS: pasamos el R2_PUBLIC_URL al template)
+        const [artistasBiblioteca] = await db.query(`
+            SELECT a.idArtista, a.nombreArtista, a.cover, COUNT(DISTINCT m.idMultimedia) as total
+            FROM HISTORIAL_DESCARGAS_MULTIMEDIA h
+            JOIN MULTIMEDIA m ON m.idMultimedia = h.idMultimedia
+            LEFT JOIN ARTISTAS a ON a.idArtista = m.idArtista
+            WHERE h.idUsuario = :idUsuario AND m.estado = 'ENABLE' AND a.idArtista IS NOT NULL
+            GROUP BY a.idArtista, a.nombreArtista, a.cover
+            ORDER BY total DESC
+        `, { replacements: { idUsuario } });
+
+        return res.status(200).render('../views/client/biblioteca', {
+            tituloPagina: 'Mi Biblioteca',
+            subtitulo: 'Mis descargas',
+            active: 'biblioteca',
+            csrfToken: req.csrfToken(),
+            creditosDisponibles,
+            totalDescargas,
+            generosBiblioteca,
+            artistasBiblioteca,
+            R2_PUBLIC_URL,
+            notificaciones: 0
+        });
+
+    } catch (error) {
+        console.error('Error biblioteca:', error);
+        return res.redirect('/ritmaap/');
+    }
+};
+
+// ==========================================
+// BIBLIOTECA — Búsqueda paginada dentro de las descargas del usuario
+// ==========================================
+const searchBiblioteca = async (req, res) => {
+    try {
+        const idUsuario = req.usuario.idUsuario;
+        const limit = parseInt(process.env.MAX_ROWS_FOR_PAGE) || 10;
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const offset = (page - 1) * limit;
+
+        // Sanitizar inputs
+        const rawSearch = (req.query.search || '').trim();
+        const search = rawSearch.replace(/[^\w\sáéíóúñÁÉÍÓÚÑüÜ.\-]/gi, '').substring(0, 100);
+        const generoId = parseInt(req.query.genero) || null;
+        const idArtista = (req.query.idArtista || '').trim().replace(/[^a-f0-9\-]/gi, '').substring(0, 36) || null;
+
+        // Condiciones adicionales SQL
+        let whereClauses = ['h.idUsuario = :idUsuario', 'm.estado = \'ENABLE\''];
+        const replacements = { idUsuario, limit, offset };
+
+        if (search) {
+            whereClauses.push('(m.nombreComposicion LIKE :search OR a.nombreArtista LIKE :search)');
+            replacements.search = `%${search}%`;
+        }
+        if (idArtista) {
+            whereClauses.push('m.idArtista = :idArtista');
+            replacements.idArtista = idArtista;
+        }
+        if (generoId) {
+            whereClauses.push(`m.idMultimedia IN (
+                SELECT idMultimedia FROM MULTIMEDIA_GENEROS WHERE idGenero = :generoId
+            )`);
+            replacements.generoId = generoId;
+        }
+
+        const whereSQL = whereClauses.join(' AND ');
+
+        const [rows] = await db.query(`
+            SELECT
+                m.idMultimedia,
+                m.nombreComposicion,
+                m.tipoAsset,
+                m.formato,
+                m.costoCreditos,
+                m.bpm,
+                a.idArtista,
+                a.nombreArtista AS artista,
+                MAX(h.fechaDescarga) AS fechaDescarga
+            FROM HISTORIAL_DESCARGAS_MULTIMEDIA h
+            JOIN MULTIMEDIA m ON m.idMultimedia = h.idMultimedia
+            LEFT JOIN ARTISTAS a ON a.idArtista = m.idArtista
+            WHERE ${whereSQL}
+            GROUP BY m.idMultimedia, m.nombreComposicion, m.tipoAsset, m.formato, m.costoCreditos, m.bpm, a.idArtista, a.nombreArtista
+            ORDER BY fechaDescarga DESC
+            LIMIT :limit OFFSET :offset
+        `, { replacements });
+
+        const [[{ total }]] = await db.query(`
+            SELECT COUNT(DISTINCT m.idMultimedia) AS total
+            FROM HISTORIAL_DESCARGAS_MULTIMEDIA h
+            JOIN MULTIMEDIA m ON m.idMultimedia = h.idMultimedia
+            LEFT JOIN ARTISTAS a ON a.idArtista = m.idArtista
+            WHERE ${whereSQL}
+        `, { replacements });
+
+        const data = rows.map(r => ({
+            idMultimedia: r.idMultimedia,
+            nombreComposicion: r.nombreComposicion,
+            tipoAsset: r.tipoAsset,
+            formato: (r.formato || '').toUpperCase(),
+            costoCreditos: r.costoCreditos || 0,
+            bpm: r.bpm || null,
+            artista: r.artista || '—',
+            fechaDescarga: r.fechaDescarga
+        }));
+
+        res.json({
+            ok: true,
+            data,
+            total: parseInt(total),
+            page,
+            totalPages: Math.ceil(parseInt(total) / limit)
+        });
+
+    } catch (error) {
+        console.error('Error searchBiblioteca:', error);
+        res.status(500).json({ ok: false, msg: 'Error en la búsqueda de biblioteca' });
+    }
+};
+
+// ==========================================
+// BIBLIOTECA — Artistas de las descargas del usuario
+// ==========================================
+const getArtistasBiblioteca = async (req, res) => {
+    try {
+        const idUsuario = req.usuario.idUsuario;
+
+        const [rows] = await db.query(`
+            SELECT a.idArtista, a.nombreArtista, a.cover, COUNT(DISTINCT m.idMultimedia) AS total
+            FROM HISTORIAL_DESCARGAS_MULTIMEDIA h
+            JOIN MULTIMEDIA m ON m.idMultimedia = h.idMultimedia
+            LEFT JOIN ARTISTAS a ON a.idArtista = m.idArtista
+            WHERE h.idUsuario = :idUsuario AND m.estado = 'ENABLE' AND a.idArtista IS NOT NULL
+            GROUP BY a.idArtista, a.nombreArtista, a.cover
+            ORDER BY total DESC
+        `, { replacements: { idUsuario } });
+
+        res.json({ ok: true, data: rows });
+    } catch (error) {
+        console.error('Error getArtistasBiblioteca:', error);
+        res.status(500).json({ ok: false, msg: 'Error al obtener artistas' });
+    }
+};
+
+// ==========================================
+// WISHLIST — Página principal
+// ==========================================
+const wishlistPage = async (req, res) => {
+    try {
+        const idUsuario = req.usuario.idUsuario;
+
+        const creditosDisponibles = await RitmaCoins.sum('cantidadActual', { where: { idUsuario } }) || 0;
+
+        return res.status(200).render('../views/client/wishlist', {
+            tituloPagina: 'Mi Wishlist',
+            subtitulo: 'Archivos guardados',
+            active: 'wishlist',
+            csrfToken: req.csrfToken(),
+            creditosDisponibles,
+            R2_PUBLIC_URL,
+            notificaciones: 0
+        });
+
+    } catch (error) {
+        console.error('Error wishlistPage:', error);
+        return res.redirect('/ritmaap/');
+    }
+};
+
+// ==========================================
+// WISHLIST — Búsqueda/listado JSON (para cargar el grid)
+// ==========================================
+const searchWishlist = async (req, res) => {
+    try {
+        const idUsuario = req.usuario.idUsuario;
+
+        const rawSearch = (req.query.search || '').trim();
+        const search = rawSearch.replace(/[^\w\sáéíóúñÁÉÍÓÚÑüÜ.\-]/gi, '').substring(0, 100);
+
+        let whereClauses = ['w.idUsuario = :idUsuario', "w.estado = 'en lista'", "m.estado = 'ENABLE'"];
+        const replacements = { idUsuario };
+
+        if (search) {
+            whereClauses.push('(m.nombreComposicion LIKE :search OR a.nombreArtista LIKE :search)');
+            replacements.search = `%${search}%`;
+        }
+
+        const whereSQL = whereClauses.join(' AND ');
+
+        const [rows] = await db.query(`
+            SELECT
+                w.idWishlist,
+                m.idMultimedia,
+                m.nombreComposicion,
+                m.tipoAsset,
+                m.formato,
+                m.costoCreditos,
+                m.bpm,
+                m.keyPreview,
+                a.idArtista,
+                a.nombreArtista AS artista,
+                a.cover AS artistaCover,
+                al.cover AS albumCover,
+                w.fechaCreacion
+            FROM WISHLIST w
+            JOIN MULTIMEDIA m ON m.idMultimedia = w.idMultimedia
+            LEFT JOIN ARTISTAS a ON a.idArtista = m.idArtista
+            LEFT JOIN ALBUM al ON al.idAlbum = m.idAlbum
+            WHERE ${whereSQL}
+            ORDER BY w.fechaCreacion DESC
+        `, { replacements });
+
+        // Verificar cuales ya compro el usuario
+        const idsMultimedia = rows.map(r => r.idMultimedia);
+        let comprados = new Set();
+        if (idsMultimedia.length > 0) {
+            const [compradosRows] = await db.query(`
+                SELECT DISTINCT idMultimedia FROM HISTORIAL_DESCARGAS_MULTIMEDIA
+                WHERE idUsuario = :idUsuario AND idMultimedia IN (:ids)
+            `, { replacements: { idUsuario, ids: idsMultimedia } });
+            comprados = new Set(compradosRows.map(r => r.idMultimedia));
+        }
+
+        const data = rows.map(r => {
+            // Cover: album → artista → generico
+            let coverUrl = '/img/coverGenerico.webp';
+            if (r.albumCover) {
+                coverUrl = `${R2_PUBLIC_URL}/${r.albumCover}`;
+            } else if (r.artistaCover) {
+                coverUrl = `${R2_PUBLIC_URL}/images/artistas/${r.artistaCover}`;
+            }
+
+            return {
+                idWishlist: r.idWishlist,
+                idMultimedia: r.idMultimedia,
+                nombreComposicion: r.nombreComposicion,
+                tipoAsset: r.tipoAsset,
+                formato: (r.formato || '').toUpperCase(),
+                costoCreditos: r.costoCreditos || 0,
+                bpm: r.bpm || null,
+                artista: r.artista || '—',
+                coverUrl,
+                hasPreview: !!r.keyPreview,
+                yaComprado: comprados.has(r.idMultimedia),
+                fechaCreacion: r.fechaCreacion
+            };
+        });
+
+        res.json({ ok: true, data, total: data.length });
+
+    } catch (error) {
+        console.error('Error searchWishlist:', error);
+        res.status(500).json({ ok: false, msg: 'Error al buscar en wishlist' });
+    }
+};
+
+// ==========================================
+// WISHLIST — Eliminar item (DELETE)
+// ==========================================
+const removeFromWishlist = async (req, res) => {
+    try {
+        const { idMultimedia } = req.params;
+        const idUsuario = req.usuario.idUsuario;
+
+        const deleted = await Wishlist.destroy({
+            where: { idMultimedia, idUsuario, estado: 'en lista' }
+        });
+
+        if (deleted === 0) {
+            return res.status(404).json({ ok: false, msg: 'No se encontró en tu wishlist' });
+        }
+
+        res.json({ ok: true });
+    } catch (error) {
+        console.error('Error removeFromWishlist:', error);
+        res.status(500).json({ ok: false, msg: 'Error al eliminar de wishlist' });
+    }
+};
+
+// ==========================================
+// SETTINGS — Página principal
+// ==========================================
+const settingsPage = async (req, res) => {
+    try {
+        const usuario = req.usuario;
+
+        // Buscar aspirante vinculado por email
+        const aspirante = await Aspirantes.findOne({
+            where: { emailAspirante: usuario.emailUsuario }
+        });
+
+        const imagenActual = aspirante?.imagen || null;
+
+        return res.status(200).render('../views/client/settings', {
+            tituloPagina: 'Settings',
+            subtitulo: 'Configuración de cuenta',
+            active: 'settings',
+            csrfToken: req.csrfToken(),
+            creditosDisponibles: await RitmaCoins.sum('cantidadActual', { where: { idUsuario: usuario.idUsuario } }) || 0,
+            aspirante,
+            imagenActual,
+            R2_PUBLIC_URL,
+            notificaciones: 0
+        });
+
+    } catch (error) {
+        console.error('Error settingsPage:', error);
+        return res.redirect('/ritmaap/');
+    }
+};
+
+// ==========================================
+// SETTINGS — Actualizar perfil (PUT)
+// ==========================================
+const updateProfile = async (req, res) => {
+    try {
+        const usuario = req.usuario;
+        let { nombre, apellido, whatsapp, instagram, tiktok } = req.body;
+
+        // Sanitización server-side
+        const sanitize = (str) => (str || '').replace(/[<>"'`;\\]/g, '').trim();
+        nombre = sanitize(nombre).substring(0, 100);
+        apellido = sanitize(apellido).substring(0, 100);
+        whatsapp = sanitize(whatsapp).substring(0, 30);
+        instagram = sanitize(instagram).substring(0, 100);
+        tiktok = sanitize(tiktok).substring(0, 100);
+
+        // Validaciones
+        if (!nombre || !apellido) {
+            return res.status(400).json({ ok: false, msg: 'Nombre y Apellido son obligatorios.' });
+        }
+        if (!whatsapp) {
+            return res.status(400).json({ ok: false, msg: 'WhatsApp es obligatorio.' });
+        }
+        if (!instagram && !tiktok) {
+            return res.status(400).json({ ok: false, msg: 'Debes tener al menos Instagram o TikTok.' });
+        }
+
+        // Transacción para actualizar ambas tablas
+        const t = await db.transaction();
+
+        try {
+            // Actualizar USUARIOS
+            await Usuarios.update({
+                nombreUsuario: nombre,
+                apellidoUsuario: apellido
+            }, {
+                where: { idUsuario: usuario.idUsuario },
+                transaction: t,
+                individualHooks: false // No disparar hook de password
+            });
+
+            // Actualizar ASPIRANTES
+            await Aspirantes.update({
+                nombreAspirante: nombre,
+                apellidoAspirante: apellido,
+                whatsappAspirante: whatsapp,
+                instagramAspirante: instagram || null,
+                tiktokAspirante: tiktok || null
+            }, {
+                where: { emailAspirante: usuario.emailUsuario },
+                transaction: t
+            });
+
+            await t.commit();
+
+            res.json({ ok: true });
+
+        } catch (innerErr) {
+            await t.rollback();
+            throw innerErr;
+        }
+
+    } catch (error) {
+        console.error('Error updateProfile:', error);
+        res.status(500).json({ ok: false, msg: 'Error al actualizar el perfil.' });
+    }
+};
+
+// ==========================================
+// SETTINGS — Cambiar contraseña (PUT)
+// ==========================================
+const updatePassword = async (req, res) => {
+    try {
+        const usuario = req.usuario;
+        const { password, confirmPassword } = req.body;
+
+        // Validaciones
+        if (!password || password.length < 6) {
+            return res.status(400).json({ ok: false, msg: 'La contraseña debe tener al menos 6 caracteres.' });
+        }
+        if (password !== confirmPassword) {
+            return res.status(400).json({ ok: false, msg: 'Las contraseñas no coinciden.' });
+        }
+
+        // Verificar que la nueva contraseña no sea igual a la actual
+        const usuarioFull = await Usuarios.findByPk(usuario.idUsuario);
+        const esIgual = await bcrypt.compare(password, usuarioFull.password);
+        if (esIgual) {
+            return res.status(400).json({ ok: false, msg: 'La nueva contraseña no puede ser igual a la actual.' });
+        }
+
+        // Actualizar (el hook beforeUpdate de Sequelize se encargará del hashing)
+        usuarioFull.password = password;
+        await usuarioFull.save();
+
+        res.json({ ok: true });
+
+    } catch (error) {
+        console.error('Error updatePassword:', error);
+        res.status(500).json({ ok: false, msg: 'Error al cambiar la contraseña.' });
+    }
+};
+
+// ==========================================
+// SETTINGS — Subir avatar (POST, multipart)
+// ==========================================
+const uploadAvatar = async (req, res) => {
+    try {
+        const usuario = req.usuario;
+
+        if (!req.file) {
+            return res.status(400).json({ ok: false, msg: 'No se recibió ningún archivo.' });
+        }
+
+        const file = req.file;
+
+        // Validar MIME real (no solo extensión)
+        const allowedMimes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!allowedMimes.includes(file.mimetype)) {
+            // Eliminar archivo temporal
+            if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+            return res.status(400).json({ ok: false, msg: 'Solo se permiten archivos .jpg y .png' });
+        }
+
+        // Validar tamaño (2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+            return res.status(400).json({ ok: false, msg: 'El tamaño máximo es 2MB.' });
+        }
+
+        // Procesar con Sharp: 500x500 → webp
+        const nuevoNombre = `${uuidv4()}.webp`;
+        const outputPath = `upload/${nuevoNombre}`;
+
+        await sharp(file.path)
+            .resize(500, 500, { fit: 'cover', position: 'center' })
+            .webp({ quality: 80 })
+            .toFile(outputPath);
+
+        // Eliminar archivo original
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+
+        // Leer el archivo procesado para subirlo a R2
+        const fileBuffer = fs.readFileSync(outputPath);
+        const r2Key = `images/users/${nuevoNombre}`;
+
+        await s3Client.send(new PutObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: r2Key,
+            Body: fileBuffer,
+            ContentType: 'image/webp'
+        }));
+
+        // Eliminar archivo local procesado
+        if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+
+        // Buscar aspirante y obtener imagen anterior para borrarla de R2
+        const aspirante = await Aspirantes.findOne({
+            where: { emailAspirante: usuario.emailUsuario }
+        });
+
+        if (aspirante && aspirante.imagen) {
+            // Intentar borrar imagen anterior de R2
+            try {
+                await s3Client.send(new DeleteObjectCommand({
+                    Bucket: process.env.R2_BUCKET_NAME,
+                    Key: `images/users/${aspirante.imagen}`
+                }));
+            } catch (delErr) {
+                console.warn('No se pudo borrar imagen anterior de R2:', delErr.message);
+            }
+        }
+
+        // Actualizar campo imagen en ASPIRANTES
+        await Aspirantes.update(
+            { imagen: nuevoNombre },
+            { where: { emailAspirante: usuario.emailUsuario } }
+        );
+
+        const imageUrl = `${R2_PUBLIC_URL}/images/users/${nuevoNombre}`;
+        res.json({ ok: true, imageUrl });
+
+    } catch (error) {
+        console.error('Error uploadAvatar:', error);
+        // Limpiar archivos temporales
+        if (req.file && fs.existsSync(req.file.path)) {
+            try { fs.unlinkSync(req.file.path); } catch (_) {}
+        }
+        res.status(500).json({ ok: false, msg: 'Error al subir la imagen.' });
+    }
+};
+
 export {
     dashboard,
     getGeneros,
@@ -740,5 +1281,15 @@ export {
     checkDownloadBan,
     requestStreamToken,
     streamVideo,
-    streamPreview
+    streamPreview,
+    biblioteca,
+    searchBiblioteca,
+    getArtistasBiblioteca,
+    wishlistPage,
+    searchWishlist,
+    removeFromWishlist,
+    settingsPage,
+    updateProfile,
+    updatePassword,
+    uploadAvatar
 }

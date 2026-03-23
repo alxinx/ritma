@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
-import {Usuarios} from '../models/index.js';
+import {Usuarios, Aspirantes} from '../models/index.js';
 import redisClient from '../config/redis.js';
 import {generarJwt} from '../helpers/genToken.js';
 dotenv.config();
@@ -34,6 +34,9 @@ const rutaProtegida = async (req, res, next)=>{
             return res.redirect('/app/?suspended=1');
         }
 
+        // Adjuntar imagen de perfil desde ASPIRANTES
+        await attachUserImage(usuario, res);
+
         // Disponibles para controladores y vistas
         req.usuario = usuario;
         req.rol = usuario.permisos;
@@ -55,6 +58,7 @@ const rutaProtegida = async (req, res, next)=>{
                         res.clearCookie('_token').clearCookie('_refresh');
                         return res.redirect('/');
                     }
+                    await attachUserImage(usuario, res);
                     req.usuario = usuario;
                     req.rol = usuario.permisos;
                     res.locals.usuario = usuario;
@@ -70,6 +74,23 @@ const rutaProtegida = async (req, res, next)=>{
         console.error('Error en protegerRuta:', e.message);
         res.clearCookie('_token').clearCookie('_refresh');
         return res.redirect('/');
+    }
+}
+
+/**
+ * Adjunta la imagen de perfil desde ASPIRANTES al objeto usuario
+ * para que esté disponible en las vistas (headerUser.pug)
+ */
+async function attachUserImage(usuario, res) {
+    try {
+        const aspirante = await Aspirantes.findOne({
+            where: { emailAspirante: usuario.emailUsuario },
+            attributes: ['imagen']
+        });
+        // Pasar como variable separada a las vistas (Sequelize no permite props arbitrarias)
+        res.locals.userImagen = aspirante?.imagen || null;
+    } catch (_) {
+        res.locals.userImagen = null;
     }
 }
 

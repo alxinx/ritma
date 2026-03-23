@@ -15,6 +15,14 @@ const RitmaCoins = db.define('RITMA_COINS', {
             key: 'idUsuario'
         }
     },
+    idPack: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+            model: 'PACKS_CREDITOS',
+            key: 'idPack'
+        }
+    },
     cantidadComprada: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -27,8 +35,8 @@ const RitmaCoins = db.define('RITMA_COINS', {
         defaultValue: 0,
         validate: { min: 0 }
     },
-    valorDescarga: {
-        type: DataTypes.INTEGER,
+    valorPack: {
+        type: DataTypes.DOUBLE,
         allowNull: false,
         defaultValue: 0,
         validate: { min: 0 }
