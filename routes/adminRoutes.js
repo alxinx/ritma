@@ -1,6 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
-import upload from '../middlewares/upload.js';
+import upload, { validarMagicBytes } from '../middlewares/upload.js';
 import procesarImagenes from '../middlewares/imageProcessor.js'
 import validarErrores  from '../middlewares/validarErrores.js'
 import {checkUploadMultimedia, checkUploadMultiArtist} from '../middlewares/validationFields.js';
@@ -29,7 +29,7 @@ routes.get("/multimedia", multimediaPanel)
 );
         routes.post("/uploadboard/validate", validateUpload);
 routes.post("/uploadboard/multi", checkUploadMultiArtist, validarErrores, postUploadMultiArtist);
-routes.get("/live-upload-monitor", upload.any(), liveUploadMonitor)
+routes.get("/live-upload-monitor", upload.any(), validarMagicBytes, liveUploadMonitor)
 
 
 

@@ -1,6 +1,6 @@
 import express from "express";
 import downloadRateLimiter from '../middlewares/downloadRateLimiter.js';
-import upload from '../middlewares/upload.js';
+import upload, { validarMagicBytes } from '../middlewares/upload.js';
 import { dashboard, getGeneros, searchMultimedia, mediafile, toggleWishlist, requestDownloadToken, verifyAndDownload, checkDownloadBan, requestStreamToken, streamVideo, streamPreview, biblioteca, searchBiblioteca, getArtistasBiblioteca, wishlistPage, searchWishlist, removeFromWishlist, settingsPage, updateProfile, updatePassword, uploadAvatar, favoritosPage, getFavoritos, addFavorito, removeFavorito, toggleFavorito, creditosPage, getMisCompras, getMisTransacciones } from '../controllers/clientControllers.js';
 
 const routes = express.Router();
@@ -52,6 +52,6 @@ routes.get("/json/creditos/transacciones", getMisTransacciones);
 routes.get("/settings", settingsPage);
 routes.put("/json/settings/profile", updateProfile);
 routes.put("/json/settings/password", updatePassword);
-routes.post("/json/settings/avatar", upload.single('avatar'), uploadAvatar);
+routes.post("/json/settings/avatar", upload.single('avatar'), validarMagicBytes, uploadAvatar);
 
 export default routes

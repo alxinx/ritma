@@ -32,8 +32,11 @@ const accesoRateLimiter = async (req, res, next) => {
 
         next();
     } catch (err) {
-        console.error('[RTM-ACCESO-RATE-LIMITER] Redis no disponible:', err.message);
-        next();
+        // Fail closed: bloqueamos silenciosamente igual que cuando se excede el límite.
+        console.error('[RTM-ACCESO-RATE-LIMITER] Redis no disponible, bloqueando por seguridad:', err.message);
+        return res.status(200).render('../views/layout/accesoAfter', {
+            tituloPagina: 'RITMA | La Plataforma #1 para DJs'
+        });
     }
 };
 

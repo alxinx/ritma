@@ -37,9 +37,13 @@ const loginRateLimiter = async (req, res, next) => {
 
         next();
     } catch (err) {
-        // Fail open: si Redis no está disponible, no bloqueamos el login
-        console.error('[RTM-RATE-LIMITER] Redis no disponible, omitiendo límite:', err.message);
-        next();
+        // Fail closed: si Redis no está disponible, bloqueamos por precaución.
+        // Evita que un atacante sature Redis para saltar el rate limit de login.
+        console.error('[RTM-RATE-LIMITER] Redis no disponible, bloqueando por seguridad:', err.message);
+        return res.status(503).render('./auth/login', {
+            tituloPagina: 'Login',
+            mensaje: '⚠️ Servicio temporalmente no disponible. Intenta en unos instantes.'
+        });
     }
 };
 

@@ -21,3 +21,7 @@ upload/
 logs/
 *.log
 .DS_Store
+
+# --- Redis ---
+dump.rdb
+*.rdb

@@ -59,7 +59,7 @@ app.use(cookieParser());
 ====================== */
 const csrfProtection = csrf({ cookie: true });
 app.use((req, res, next) => {
-  if (req.path.startsWith('/app/dash/api/upload/sign') || req.path.startsWith('/app/dash/sse/')) return next();
+  if (req.path.startsWith('/app/dash/api/upload/sign') || req.path.startsWith('/app/dash/sse/') || req.path.startsWith('/admin/queues')) return next();
   try {
     csrfProtection(req, res, () => {
       res.locals.csrfToken = req.csrfToken();
@@ -79,7 +79,7 @@ app.use("/app/dash", rutaProtegida, verificarRol('ADMIN'), adminRoutes);
 app.use("/ritmaap/", rutaProtegida, verificarRol('USUARIO'), clientRoutes);
 
 
-app.use('/admin/queues', serverAdapter.getRouter());
+app.use('/admin/queues', rutaProtegida, verificarRol('ADMIN'), serverAdapter.getRouter());
 
 
 /* ======================

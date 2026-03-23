@@ -128,8 +128,14 @@ const downloadRateLimiter = async (req, res, next) => {
         next();
 
     } catch (err) {
-        console.error('[RTM-DL-RATE-LIMITER] Redis error:', err.message);
-        next(); // Fail open
+        // Fail closed: si Redis no está disponible, bloqueamos la descarga.
+        // Es preferible un error temporal a permitir descargas ilimitadas.
+        console.error('[RTM-DL-RATE-LIMITER] Redis no disponible, bloqueando por seguridad:', err.message);
+        return res.status(503).json({
+            ok: false,
+            blocked: true,
+            msg: 'Servicio temporalmente no disponible. Intenta en unos instantes.'
+        });
     }
 };
 
