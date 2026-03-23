@@ -1662,7 +1662,9 @@ const getUserDownloads = async (req, res) => {
             where: { idUsuario },
             include: [{
                 model: Multimedia,
+                as: 'multimedia',
                 attributes: ['idMultimedia', 'nombreComposicion', 'formato', 'tipoAsset'],
+                required: false,
                 include: [{ model: Artistas, attributes: ['nombreArtista'] }]
             }],
             order: [['fechaDescarga', 'DESC']],
@@ -1682,6 +1684,7 @@ const getUserDownloads = async (req, res) => {
                 creditos: d.creditos || 0
             };
         });
+
 
         res.json({
             ok: true,

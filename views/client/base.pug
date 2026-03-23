@@ -21,3 +21,6 @@ block contenedor
             include layout/footer.pug
 
     script(src="/js/clientPanel.js")
+
+    //- Slot para modales que necesitan z-index global (fuera del stacking context del layout)
+    block modals

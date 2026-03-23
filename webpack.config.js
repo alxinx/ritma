@@ -17,6 +17,8 @@ export default {
         clientWishlist : './src/js/clientWishlist.js',
         clientSettings : './src/js/clientSettings.js',
         adminCreditos : './src/js/adminCreditos.js',
+        clientFavoritos : './src/js/clientFavoritos.js',
+        clientCreditos : './src/js/clientCreditos.js'
 
     },
     output : {

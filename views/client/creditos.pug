@@ -1,0 +1,371 @@
+extends base.pug
+
+block content
+    //- Config JS
+    script.
+        window.__CREDITOS__ = {
+            csrfToken: "#{csrfToken}",
+            creditosDisponibles: #{creditosDisponibles || 0},
+            creditosGastados: #{creditosGastados || 0},
+            packs: !{JSON.stringify(packs.map(p => ({ idPack: p.idPack, nombrePack: p.nombrePack, nroCreditos: p.nroCreditos, valorPack: p.valorPack, descuento: p.descuento })))},
+        };
+    script(src="/js/clientCreditos.js")
+
+    div(class="space-y-6")
+
+        //- ==========================================
+        //- HEADER
+        //- ==========================================
+        div(class="relative overflow-hidden rounded-2xl p-6" style="background: linear-gradient(135deg, rgba(201,218,43,0.06) 0%, rgba(0,0,0,0.9) 60%); border: 1px solid rgba(201,218,43,0.10);")
+            div(class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent")
+            div(class="flex items-center justify-between gap-4")
+                div(class="flex items-center gap-4")
+                    span(class="material-symbols-outlined text-primary text-4xl") credit_card_heart
+                    div
+                        h1(class="text-2xl font-display font-black uppercase tracking-tight text-white") Mis Créditos
+                        p(class="text-white/30 text-xs font-mono uppercase tracking-widest mt-1") Gestiona tu saldo y compras
+
+                button#btn-abrir-modal-header(
+                    class="flex items-center gap-2.5 px-5 py-3 rounded-xl font-display font-black text-sm uppercase tracking-widest transition-all hover:brightness-110 active:scale-[0.98] shrink-0"
+                    style="background: linear-gradient(135deg, #C9DA2B 0%, #b8c820 100%); color: #000;"
+                )
+                    span(class="material-symbols-outlined" style="font-size:18px; color:#000;") bolt
+                    | Recargar Créditos
+
+        //- ==========================================
+        //- STATS — 3 tarjetas superiores
+        //- ==========================================
+        div(class="grid gap-4" style="grid-template-columns: repeat(3, 1fr);")
+
+            //- Créditos disponibles
+            div(class="rounded-xl p-5 flex items-center gap-4" style="background: rgba(201,218,43,0.06); border: 1px solid rgba(201,218,43,0.15);")
+                div(class="size-12 rounded-xl flex items-center justify-center shrink-0" style="background: rgba(201,218,43,0.12);")
+                    span(class="material-symbols-outlined text-primary text-2xl") savings
+                div
+                    p(class="text-white/30 text-[10px] font-mono uppercase tracking-widest") Créditos Disponibles
+                    p(class="text-3xl font-display font-black text-primary leading-none mt-1") #{creditosDisponibles.toLocaleString('es-CO')}
+                    p(class="text-white/20 text-[9px] font-mono uppercase mt-1") R$ Ritma Coins
+
+            //- Créditos gastados
+            div(class="rounded-xl p-5 flex items-center gap-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);")
+                div(class="size-12 rounded-xl flex items-center justify-center shrink-0" style="background: rgba(239,68,68,0.10);")
+                    span(class="material-symbols-outlined text-red-400 text-2xl") trending_down
+                div
+                    p(class="text-white/30 text-[10px] font-mono uppercase tracking-widest") Créditos Gastados
+                    p(class="text-3xl font-display font-black text-white leading-none mt-1") #{creditosGastados.toLocaleString('es-CO')}
+                    p(class="text-white/20 text-[9px] font-mono uppercase mt-1") En descargas
+
+            //- Últimas descargas
+            div(class="rounded-xl p-5" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);")
+                p(class="text-white/30 text-[10px] font-mono uppercase tracking-widest mb-3") Últimas Descargas
+                if ultimasDescargas && ultimasDescargas.length > 0
+                    div(class="space-y-2")
+                        each d in ultimasDescargas
+                            div(class="flex items-center justify-between gap-2")
+                                div(class="flex items-center gap-2 min-w-0")
+                                    span(class=`material-symbols-outlined text-sm ${d.multimedia && d.multimedia.tipoAsset === 'VIDEO' ? 'text-purple-400' : 'text-green-400'}`) #{d.multimedia && d.multimedia.tipoAsset === 'VIDEO' ? 'videocam' : 'music_note'}
+                                    p(class="text-xs text-white/70 truncate") #{d.multimedia ? d.multimedia.nombreComposicion : '—'}
+                                if d.multimedia
+                                    a(href=`/ritmaap/profile/mediafile/${d.multimedia.idMultimedia}` class="shrink-0 text-white/20 hover:text-primary transition-colors" title="Ver perfil")
+                                        span(class="material-symbols-outlined text-sm") arrow_outward
+                else
+                    p(class="text-white/15 text-xs font-mono") Sin descargas aún
+
+        //- ==========================================
+        //- COLUMNAS 50/50 — Compras / Transacciones
+        //- ==========================================
+        div(class="grid gap-4" style="grid-template-columns: 1fr 1fr;")
+
+            //- MIS COMPRAS
+            div(class="rounded-xl overflow-hidden" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);")
+                div(class="px-5 pt-5 pb-3 border-b border-white/5")
+                    h3(class="font-display font-black text-sm uppercase tracking-wider text-white flex items-center gap-2")
+                        span(class="material-symbols-outlined text-primary text-base") receipt_long
+                        | Mis Compras
+                    p#compras-count(class="text-white/20 text-[10px] font-mono mt-1") Cargando...
+
+                //- Skeleton compras
+                div#compras-skeleton(class="p-4 space-y-3")
+                    each i in [1,2,3,4]
+                        div(class="animate-pulse flex items-center gap-3 py-2")
+                            div(class="h-3 bg-white/5 rounded w-1/3")
+                            div(class="h-3 bg-white/5 rounded w-1/4 ml-auto")
+
+                //- Tabla compras
+                div#compras-wrapper(class="hidden")
+                    table(class="w-full text-sm")
+                        thead
+                            tr(class="border-b border-white/5")
+                                th(class="px-4 py-2 text-left text-[9px] font-bold uppercase tracking-widest text-white/30") Pack
+                                th(class="px-4 py-2 text-center text-[9px] font-bold uppercase tracking-widest text-white/30") Créditos
+                                th(class="px-4 py-2 text-center text-[9px] font-bold uppercase tracking-widest text-white/30") Disponibles
+                                th(class="px-4 py-2 text-right text-[9px] font-bold uppercase tracking-widest text-white/30") Valor
+                        tbody#compras-tbody
+
+                //- Paginación compras
+                div#compras-pages(class="hidden px-4 py-3 border-t border-white/5 flex items-center justify-between")
+                    span#compras-info(class="text-[9px] text-white/20 font-mono")
+                    div#compras-btns(class="flex gap-1")
+
+                //- Empty compras
+                div#compras-empty(class="hidden py-10 text-center")
+                    span(class="material-symbols-outlined text-4xl text-white/5 mb-2 block") receipt
+                    p(class="text-white/15 text-[10px] font-mono uppercase") Sin compras aún
+
+            //- MIS TRANSACCIONES
+            div(class="rounded-xl overflow-hidden" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);")
+                div(class="px-5 pt-5 pb-3 border-b border-white/5")
+                    h3(class="font-display font-black text-sm uppercase tracking-wider text-white flex items-center gap-2")
+                        span(class="material-symbols-outlined text-primary text-base") swap_horiz
+                        | Mis Transacciones
+                    p#trans-count(class="text-white/20 text-[10px] font-mono mt-1") Cargando...
+
+                //- Skeleton transacciones
+                div#trans-skeleton(class="p-4 space-y-3")
+                    each i in [1,2,3,4]
+                        div(class="animate-pulse flex items-center gap-3 py-2")
+                            div(class="h-3 bg-white/5 rounded w-1/4")
+                            div(class="h-3 bg-white/5 rounded w-1/3")
+                            div(class="h-3 bg-white/5 rounded w-1/6 ml-auto")
+
+                //- Tabla transacciones
+                div#trans-wrapper(class="hidden")
+                    table(class="w-full text-sm")
+                        thead
+                            tr(class="border-b border-white/5")
+                                th(class="px-4 py-2 text-left text-[9px] font-bold uppercase tracking-widest text-white/30") Fecha
+                                th(class="px-4 py-2 text-left text-[9px] font-bold uppercase tracking-widest text-white/30") Multimedia
+                                th(class="px-4 py-2 text-center text-[9px] font-bold uppercase tracking-widest text-white/30") Costo
+                                th(class="px-4 py-2 text-center text-[9px] font-bold uppercase tracking-widest text-white/30") Ver
+                        tbody#trans-tbody
+
+                //- Paginación transacciones
+                div#trans-pages(class="hidden px-4 py-3 border-t border-white/5 flex items-center justify-between")
+                    span#trans-info(class="text-[9px] text-white/20 font-mono")
+                    div#trans-btns(class="flex gap-1")
+
+                //- Empty transacciones
+                div#trans-empty(class="hidden py-10 text-center")
+                    span(class="material-symbols-outlined text-4xl text-white/5 mb-2 block") swap_horiz
+                    p(class="text-white/15 text-[10px] font-mono uppercase") Sin transacciones aún
+
+        //- ==========================================
+        //- COLUMNAS 30/70 — Poder de compra / Recarga
+        //- ==========================================
+        div(class="grid gap-4" style="grid-template-columns: 30fr 70fr;")
+
+            //- PODER DE COMPRA (30%)
+            div(class="rounded-xl p-5" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);")
+                div(class="flex items-center gap-2 mb-4")
+                    span(class="material-symbols-outlined text-primary text-lg") bolt
+                    h3(class="font-display font-black text-sm uppercase tracking-wider text-white") Poder de Compra
+                p(class="text-white/20 text-[9px] font-mono uppercase tracking-widest mb-5") Con tus créditos actuales
+
+                div(class="space-y-4")
+                    div(class="rounded-lg p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);")
+                        div(class="flex items-center gap-3 mb-2")
+                            span(class="material-symbols-outlined text-purple-400 text-xl") videocam
+                            p(class="text-white/40 text-xs uppercase tracking-widest font-mono") Videos
+                        p(class="text-4xl font-display font-black text-white/20 text-center py-3") —
+                        p(class="text-[9px] text-white/15 font-mono text-center uppercase") Próximamente
+
+                    div(class="rounded-lg p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);")
+                        div(class="flex items-center gap-3 mb-2")
+                            span(class="material-symbols-outlined text-green-400 text-xl") music_note
+                            p(class="text-white/40 text-xs uppercase tracking-widest font-mono") Audios
+                        p(class="text-4xl font-display font-black text-white/20 text-center py-3") —
+                        p(class="text-[9px] text-white/15 font-mono text-center uppercase") Próximamente
+
+            //- TARJETA DE RECARGA (70%)
+            div(class="rounded-xl p-5" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);")
+                div(class="flex items-center justify-between mb-5")
+                    div(class="flex items-center gap-2")
+                        span(class="material-symbols-outlined text-primary text-lg") add_card
+                        h3(class="font-display font-black text-sm uppercase tracking-wider text-white") Recargar Créditos
+                    span(class="text-[9px] text-white/20 font-mono uppercase") Selecciona un paquete
+
+                //- Pills de packs
+                div(class="flex flex-wrap gap-3 mb-6")
+                    if packs && packs.length > 0
+                        each pack in packs
+                            button(
+                                class="pack-pill px-5 py-2 rounded-full border text-sm font-display font-bold uppercase tracking-wider transition-all"
+                                style="border-color: rgba(255,255,255,0.10); color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.03);"
+                                data-id=pack.idPack
+                                data-nombre=pack.nombrePack
+                                data-creditos=pack.nroCreditos
+                                data-valor=pack.valorPack
+                                data-descuento=pack.descuento
+                            ) #{pack.nroCreditos.toLocaleString('es-CO')} R$
+                    else
+                        p(class="text-white/20 text-xs font-mono") No hay paquetes disponibles
+
+                //- Display del pack seleccionado
+                div#pack-display(class="hidden rounded-xl p-6 mb-5" style="background: rgba(201,218,43,0.04); border: 1px solid rgba(201,218,43,0.15);")
+                    div(class="flex items-end justify-between")
+                        div
+                            p#pack-nombre(class="text-white/40 text-[10px] font-mono uppercase tracking-widest mb-1") —
+                            p(class="text-white/20 text-xs font-mono") Créditos incluidos
+                            p#pack-creditos(class="text-6xl font-display font-black text-primary leading-none mt-1") 0
+                            p(class="text-white/20 text-xs font-mono mt-1") Ritma Coins
+                        div(class="text-right")
+                            p(class="text-white/20 text-[10px] font-mono uppercase") Valor
+                            p#pack-valor(class="text-2xl font-display font-black text-white") $0
+                            p#pack-descuento(class="hidden text-xs text-green-400 font-mono mt-1 text-right") —
+
+                //- Botón recarga rápida
+                button#btn-recarga(
+                    class="w-full py-4 rounded-xl font-display font-black text-sm uppercase tracking-widest transition-all hover:brightness-110 active:scale-[0.98]"
+                    style="background: linear-gradient(135deg, #C9DA2B 0%, #a8b822 100%); color: #000;"
+                )
+                    span(class="material-symbols-outlined mr-2 align-middle") bolt
+                    | Recargar Créditos
+
+    //- ==========================================
+    //- MODAL BOLD — Pago con Bold
+    //- ==========================================
+    //- overlay que permite scroll en móvil
+    div#modal-bold(class="fixed inset-0 z-[3000] flex items-start md:items-center justify-center bg-black/70 hidden overflow-y-auto" style="padding: 1rem; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);")
+        div(class="relative w-full max-w-4xl rounded-2xl overflow-hidden flex flex-col md:flex-row my-auto" style="background: #0e0e10; border: 1px solid rgba(255,255,255,0.07);")
+
+            //- ── PANEL IZQUIERDO — selección de pack
+            div(class="flex flex-col shrink-0" style="background: #0a0a0c; border-bottom: 1px solid rgba(255,255,255,0.06); width: 100%;" id="modal-left-panel")
+                //- border-bottom en móvil, border-right en desktop
+                style.
+                    @media (min-width: 768px) {
+                        #modal-left-panel {
+                            width: 30% !important;
+                            border-bottom: none !important;
+                            border-right: 1px solid rgba(255,255,255,0.06) !important;
+                        }
+                        #modal-bold > div {
+                            flex-direction: row !important;
+                        }
+                        #modal-bold {
+                            padding-left: 20% !important;
+                            padding-right: 20% !important;
+                        }
+                    }
+
+                div(class="p-6 md:p-8 flex flex-col")
+
+                    //- Volver
+                    div#btn-cerrar-bold(class="flex items-center gap-2 mb-6 cursor-pointer group w-fit")
+                        span(class="material-symbols-outlined text-sm text-white/25 group-hover:text-white transition-colors") arrow_back
+                        span(class="text-[10px] font-mono uppercase tracking-widest text-white/25 group-hover:text-white transition-colors") Back to Dashboard
+
+                    h2(class="font-display font-black text-xl md:text-2xl uppercase tracking-tight text-white leading-tight mb-1") Recarga de Créditos
+                    p(class="text-white/25 text-xs font-mono mb-5") Selecciona cuántos créditos vas a disfrutar
+
+                    //- Pack cards — en móvil grid 2 cols, en desktop lista
+                    div(class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-3")
+                        if packs && packs.length > 0
+                            each pack in packs
+                                - const valorFinal = pack.descuento > 0 ? pack.valorPack * (1 - pack.descuento / 100) : pack.valorPack
+                                div(
+                                    class="modal-pack-card relative rounded-xl px-4 py-3.5 cursor-pointer transition-all"
+                                    style="border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02);"
+                                    data-id=pack.idPack
+                                    data-nombre=pack.nombrePack
+                                    data-creditos=pack.nroCreditos
+                                    data-valor=pack.valorPack
+                                    data-descuento=pack.descuento || 0
+                                )
+                                    span(class="pack-selected-badge hidden absolute -top-2.5 right-3 px-2.5 py-0.5 text-[8px] font-black uppercase tracking-widest rounded-full text-black" style="background:#C9DA2B;") El que seleccionaste
+                                    div(class="flex items-center justify-between gap-2")
+                                        div(class="min-w-0")
+                                            p(class="modal-pack-nombre font-display font-bold text-sm text-white truncate") #{pack.nombrePack}
+                                            p(class="text-[10px] font-mono uppercase tracking-widest mt-0.5 text-white/30") #{pack.nroCreditos.toLocaleString('es-CO')} créditos
+                                        div(class="text-right shrink-0")
+                                            p(class="modal-pack-valor font-display font-bold text-lg text-white") $#{valorFinal.toLocaleString('es-CO')}
+                                            p(class="text-[9px] font-mono uppercase text-white/25") COP
+                                    if pack.descuento > 0
+                                        span(class="mt-1.5 inline-block px-2 py-0.5 text-[8px] font-bold uppercase rounded text-green-400" style="background: rgba(34,197,94,0.10);") #{pack.descuento}% descuento
+                        else
+                            p(class="text-white/20 text-xs font-mono") No hay paquetes disponibles
+
+                //- Footer teal
+                div(class="px-6 md:px-8 py-3.5 flex items-center gap-2" style="background: rgba(0,188,160,0.08); border-top: 1px solid rgba(0,188,160,0.15);")
+                    span(class="material-symbols-outlined text-teal-400 text-sm") info
+                    p(class="text-[10px] font-mono uppercase tracking-widest" style="color: #4dd0c4;") Los créditos nunca expiran
+
+            //- ── PANEL DERECHO — formulario de pago
+            div(class="flex-1 flex flex-col p-6 md:p-8")
+
+                //- Header
+                div(class="flex items-start justify-between mb-5 md:mb-7")
+                    div
+                        h3(class="font-display font-black text-base md:text-xl uppercase tracking-tight text-white leading-tight") Paga tranquilo,
+                        h3(class="font-display font-black text-base md:text-xl uppercase tracking-tight text-white leading-tight") usamos encriptación avanzada
+                    div(class="flex items-center gap-2 pt-1 shrink-0")
+                        span(class="material-symbols-outlined text-white/20 text-xl") credit_card
+                        span(class="material-symbols-outlined text-white/20 text-xl") lock
+
+                //- Campos de tarjeta
+                div(class="space-y-4")
+                    div
+                        label(class="block text-[9px] font-bold uppercase tracking-widest text-white/30 mb-1.5") Cardholder Name
+                        input#card-name-input(
+                            type="text"
+                            placeholder="ALEX MERCER"
+                            autocomplete="cc-name"
+                            class="w-full px-4 py-3 rounded-xl text-sm font-mono text-white placeholder:text-white/15 focus:outline-none transition-all"
+                            style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);"
+                        )
+                    div
+                        label(class="block text-[9px] font-bold uppercase tracking-widest text-white/30 mb-1.5") Card Number
+                        div(class="relative")
+                            input#card-number-input(
+                                type="text"
+                                placeholder="0000 0000 0000 0000"
+                                maxlength="19"
+                                autocomplete="cc-number"
+                                class="w-full px-4 py-3 pr-20 rounded-xl text-sm font-mono text-white placeholder:text-white/15 focus:outline-none transition-all"
+                                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);"
+                            )
+                            div(class="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1.5")
+                                div(class="w-7 h-5 rounded" style="background: rgba(255,255,255,0.07);")
+                                div(class="w-7 h-5 rounded" style="background: rgba(255,255,255,0.07);")
+                    div(class="grid grid-cols-2 gap-3")
+                        div
+                            label(class="block text-[9px] font-bold uppercase tracking-widest text-white/30 mb-1.5") Expiration Date
+                            input#card-exp-input(
+                                type="text"
+                                placeholder="MM / YY"
+                                maxlength="7"
+                                autocomplete="cc-exp"
+                                class="w-full px-4 py-3 rounded-xl text-sm font-mono text-white placeholder:text-white/15 focus:outline-none transition-all"
+                                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);"
+                            )
+                        div
+                            label(class="block text-[9px] font-bold uppercase tracking-widest text-white/30 mb-1.5") CVV
+                            input(
+                                type="password"
+                                placeholder="***"
+                                maxlength="4"
+                                autocomplete="cc-csc"
+                                class="w-full px-4 py-3 rounded-xl text-sm font-mono text-white placeholder:text-white/15 focus:outline-none transition-all"
+                                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);"
+                            )
+
+                //- Total + Pagar
+                div(class="mt-5 pt-5" style="border-top: 1px solid rgba(255,255,255,0.06);")
+                    div(class="flex items-end justify-between mb-5")
+                        div
+                            p(class="text-[9px] font-mono uppercase tracking-widest text-white/30 mb-1") Total to pay
+                            p#bold-total-valor(class="text-2xl md:text-3xl font-display font-black text-white leading-none") $0 COP
+                        div(class="text-right")
+                            p#bold-total-creditos(class="text-sm font-mono font-bold text-primary") +0 CRÉDITOS
+                            p(class="text-[9px] font-mono text-white/20 uppercase mt-0.5") Instant Activation
+                            span#bold-descuento(class="hidden mt-1 block text-[9px] font-bold text-green-400 uppercase")
+
+                    button#btn-pagar-bold(
+                        class="w-full py-4 rounded-2xl font-display font-black text-sm uppercase tracking-widest transition-all hover:brightness-110 active:scale-[0.98]"
+                        style="background: linear-gradient(135deg, #C9DA2B 0%, #b8c620 100%); color: #000;"
+                    )
+                        span(class="material-symbols-outlined mr-2 align-middle" style="color:#000; font-size:18px;") bolt
+                        | Procesar Pago
+
+                    //- TODO: Bold SDK — reemplaza este botón con <bold-button> cuando esté listo
+
+                    p(class="text-white/10 text-[8px] font-mono text-center mt-3 uppercase tracking-widest") Encrypted by Ritma Security V.2 • All Transactions Are Final

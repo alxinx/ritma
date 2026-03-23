@@ -118,10 +118,17 @@ main(class="pt-4 pb-20 relative w-full")
                 span(class="material-symbols-outlined text-lg" style="color:#000") credit_card_heart
                 span(style="color:#000") Comprar Creditos
 
-            //- Boton Wishlist
-            button(id="btn-wishlist" class=`btn-small ${enWishlist ? 'btn-danger' : 'btn-ghost'} w-full mt-4`)
-              span(class="material-symbols-outlined") #{enWishlist ? 'bookmark_remove' : 'bookmark_add'}
-              h5 #{enWishlist ? 'Quitar de Wishlist' : 'Agregar a Wishlist'}
+            if yaComprado
+              button(id="btn-favorito" class=`btn-small ${enFavoritos ? 'btn-danger' : 'btn-ghost'} w-full mt-4`)
+                span(class="material-symbols-outlined") #{enFavoritos ? 'heart_minus' : 'favorite'}
+                h5 #{enFavoritos ? 'Quitar de Favoritos' : 'Agregar a Favoritos'}
+            else
+              button(id="btn-wishlist" class=`btn-small ${enWishlist ? 'btn-danger' : 'btn-ghost'} w-full mt-4`)
+                span(class="material-symbols-outlined") #{enWishlist ? 'bookmark_remove' : 'bookmark_add'}
+                h5 #{enWishlist ? 'Quitar de Wishlist' : 'Agregar a Wishlist'}
+              button(id="btn-favorito" class=`btn-small ${enFavoritos ? 'btn-danger' : 'btn-ghost'} w-full mt-4`)
+                span(class="material-symbols-outlined") #{enFavoritos ? 'heart_minus' : 'favorite'}
+                h5 #{enFavoritos ? 'Quitar de Favoritos' : 'Agregar a Favoritos'}
 
     //- ==========================================
     //- TAMBIEN PUEDE INTERESARTE
