@@ -244,25 +244,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const valor = `$${Number(p.valorPack).toLocaleString('es-CO')}`;
 
             return `
-                <div class="flex items-center justify-between p-4 rounded-2xl border transition-all ${isActive ? 'border-white/5 hover:border-primary/20' : 'border-red-500/10 opacity-50'}" style="background: rgba(255,255,255,0.02);">
+                <div class="flex items-center justify-between p-3 rounded-2xl border transition-all ${isActive ? 'border-white/5 hover:border-primary/20' : 'border-red-500/10 opacity-50'}" style="background: rgba(255,255,255,0.02);">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2">
-                            <span class="text-sm font-bold text-white truncate">${escapeHtml(p.nombrePack)}</span>
-                            ${p.descuento > 0 ? `<span class="text-[9px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">-${p.descuento}%</span>` : ''}
-                            ${!isActive ? '<span class="text-[9px] font-bold bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded-full">SUSPENDIDO</span>' : ''}
+                            <span class="text-xs font-bold text-white truncate">${escapeHtml(p.nombrePack)}</span>
+                            ${p.descuento > 0 ? `<span class="text-[8px] font-bold bg-primary/10 text-primary px-1 py-0.5 rounded-full">-${p.descuento}%</span>` : ''}
+                            ${!isActive ? '<span class="text-[8px] font-bold bg-red-500/10 text-red-400 px-1 py-0.5 rounded-full">OFF</span>' : ''}
                         </div>
-                        <div class="flex items-center gap-3 mt-1">
+                        <div class="flex items-center gap-2 mt-0.5">
                             <span class="text-[10px] text-white/30 font-mono">${valor}</span>
                             <span class="text-white/10">·</span>
                             <span class="text-[10px] text-primary/60 font-mono font-bold">${p.nroCreditos} créditos</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-1.5 ml-3">
-                        <button onclick="window.__editPack__('${p.idPack}', '${escapeHtml(p.nombrePack)}', ${p.valorPack}, ${p.nroCreditos}, ${p.descuento})" class="size-7 flex items-center justify-center rounded-lg bg-white/4 border border-white/10 text-white/40 hover:text-primary hover:border-primary/30 transition-all cursor-pointer" title="Editar">
-                            <span class="material-symbols-outlined text-sm">edit</span>
+                    <div class="flex items-center gap-1 ml-2">
+                        <button onclick="window.__editPack__('${p.idPack}', '${escapeHtml(p.nombrePack)}', ${p.valorPack}, ${p.nroCreditos}, ${p.descuento})" class="btn-small btn-ghost !py-1 !px-2 !border-white/10 !text-white/40 hover:!text-primary hover:!border-primary/30 cursor-pointer" title="Editar">
+                            <span class="material-symbols-outlined text-xs">edit</span>
                         </button>
-                        <button onclick="window.__togglePack__('${p.idPack}', '${isActive ? 'disable' : 'enable'}')" class="size-7 flex items-center justify-center rounded-lg bg-white/4 border border-white/10 ${isActive ? 'text-white/40 hover:text-red-400 hover:border-red-500/30' : 'text-red-400 hover:text-primary hover:border-primary/30'} transition-all cursor-pointer" title="${isActive ? 'Suspender' : 'Activar'}">
-                            <span class="material-symbols-outlined text-sm">${isActive ? 'pause_circle' : 'play_circle'}</span>
+                        <button onclick="window.__togglePack__('${p.idPack}', '${isActive ? 'disable' : 'enable'}')" class="btn-small btn-ghost !py-1 !px-2 !border-white/10 ${isActive ? '!text-white/40 hover:!text-red-400 hover:!border-red-500/30' : '!text-red-400 hover:!text-primary hover:!border-primary/30'} cursor-pointer" title="${isActive ? 'Suspender' : 'Activar'}">
+                            <span class="material-symbols-outlined text-xs">${isActive ? 'pause_circle' : 'play_circle'}</span>
                         </button>
                     </div>
                 </div>`;
