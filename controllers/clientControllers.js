@@ -1,4 +1,4 @@
-import { Usuarios, Multimedia, Artistas, Album, Generos, HistorialDescargas, RitmaCoins, Wishlist, Favoritos, MultimediaGeneros, Aspirantes } from '../models/index.js';
+import { Usuarios, Multimedia, Artistas, Album, Generos, HistorialDescargas, RitmaCoins, PacksCreditos, Wishlist, Favoritos, MultimediaGeneros, Aspirantes } from '../models/index.js';
 import { Op, fn, col, literal } from 'sequelize';
 import db from '../config/bd.js';
 import s3Client from "../config/r2.js";
@@ -1483,6 +1483,157 @@ const toggleFavorito = async (req, res) => {
     }
 };
 
+// ==========================================
+// CREDITOS (USUARIO) — Página principal
+// ==========================================
+const creditosPage = async (req, res) => {
+    try {
+        const idUsuario = req.usuario.idUsuario;
+
+        const [creditosDisponibles, creditosGastados, ultimasDescargas, packs] = await Promise.all([
+            RitmaCoins.sum('cantidadActual', { where: { idUsuario } }).then(v => v || 0),
+            HistorialDescargas.sum('creditos', { where: { idUsuario } }).then(v => v || 0),
+            HistorialDescargas.findAll({
+                where: { idUsuario },
+                include: [{
+                    model: Multimedia,
+                    as: 'multimedia',
+                    attributes: ['idMultimedia', 'nombreComposicion', 'tipoAsset'],
+                    required: false
+                }],
+                order: [['fechaDescarga', 'DESC']],
+                limit: 3
+            }),
+            PacksCreditos.findAll({
+                where: { estado: 'enable' },
+                order: [['nroCreditos', 'ASC']],
+                limit: 4
+            })
+        ]);
+
+        return res.render('../views/client/creditos', {
+            tituloPagina: 'Mis Créditos',
+            active: 'creditos',
+            csrfToken: req.csrfToken(),
+            creditosDisponibles,
+            creditosGastados,
+            ultimasDescargas,
+            packs,
+            R2_PUBLIC_URL
+        });
+    } catch (error) {
+        console.error('Error creditosPage:', error);
+        return res.render('../views/client/creditos', {
+            tituloPagina: 'Mis Créditos',
+            active: 'creditos',
+            csrfToken: req.csrfToken(),
+            creditosDisponibles: 0,
+            creditosGastados: 0,
+            ultimasDescargas: [],
+            packs: []
+        });
+    }
+};
+
+// ==========================================
+// CREDITOS — JSON: Mis Compras (paginado)
+// ==========================================
+const getMisCompras = async (req, res) => {
+    try {
+        const idUsuario = req.usuario.idUsuario;
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = 10;
+        const offset = (page - 1) * limit;
+
+        const { count, rows } = await RitmaCoins.findAndCountAll({
+            where: { idUsuario },
+            include: [{
+                model: PacksCreditos,
+                attributes: ['nombrePack', 'valorPack', 'nroCreditos', 'descuento'],
+                required: false
+            }],
+            order: [['fechaCompra', 'DESC']],
+            limit,
+            offset
+        });
+
+        const data = rows.map(r => {
+            const pack = r.PACKS_CREDITO;
+            return {
+                idRitma: r.idRitma,
+                nombrePack: pack ? pack.nombrePack : 'Recarga manual',
+                valorPack: pack ? pack.valorPack : r.valorPack,
+                nroCreditos: pack ? pack.nroCreditos : r.cantidadComprada,
+                descuento: pack ? pack.descuento : 0,
+                cantidadComprada: r.cantidadComprada,
+                cantidadActual: r.cantidadActual,
+                fechaCompra: r.fechaCompra
+            };
+        });
+
+        res.json({
+            ok: true,
+            data,
+            total: count,
+            page,
+            totalPages: Math.ceil(count / limit),
+            hasMore: offset + rows.length < count
+        });
+    } catch (error) {
+        console.error('Error getMisCompras:', error);
+        res.status(500).json({ ok: false, msg: 'Error al obtener compras' });
+    }
+};
+
+// ==========================================
+// CREDITOS — JSON: Mis Transacciones (paginado)
+// ==========================================
+const getMisTransacciones = async (req, res) => {
+    try {
+        const idUsuario = req.usuario.idUsuario;
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = 10;
+        const offset = (page - 1) * limit;
+
+        const { count, rows } = await HistorialDescargas.findAndCountAll({
+            where: { idUsuario },
+            include: [{
+                model: Multimedia,
+                as: 'multimedia',
+                attributes: ['idMultimedia', 'nombreComposicion', 'tipoAsset'],
+                required: false
+            }],
+            order: [['fechaDescarga', 'DESC']],
+            limit,
+            offset
+        });
+
+        const data = rows.map(r => ({
+            idDescarga: r.idDescarga,
+            fechaDescarga: r.fechaDescarga,
+            creditos: r.creditos,
+            idMultimedia: r.idMultimedia,
+            multimedia: r.multimedia ? {
+                idMultimedia: r.multimedia.idMultimedia,
+                nombreComposicion: r.multimedia.nombreComposicion,
+                tipoAsset: r.multimedia.tipoAsset
+            } : null
+        }));
+
+        res.json({
+            ok: true,
+            data,
+            total: count,
+            page,
+            totalPages: Math.ceil(count / limit),
+            hasMore: offset + rows.length < count
+        });
+    } catch (error) {
+        console.error('Error getMisTransacciones:', error);
+        res.status(500).json({ ok: false, msg: 'Error al obtener transacciones' });
+    }
+};
+
 export {
     dashboard,
     getGeneros,
@@ -1509,5 +1660,8 @@ export {
     getFavoritos,
     addFavorito,
     removeFavorito,
-    toggleFavorito
+    toggleFavorito,
+    creditosPage,
+    getMisCompras,
+    getMisTransacciones
 }

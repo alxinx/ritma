@@ -14,7 +14,7 @@ import Swal from 'sweetalert2';
         const empty = document.getElementById('favoritos-empty');
         const loader = document.getElementById('favoritos-loader');
         const countEl = document.getElementById('favoritos-count');
-
+ 
         let currentPage = 1;
         let hasMore = false;
         let isLoading = false;

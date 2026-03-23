@@ -1662,7 +1662,9 @@ const getUserDownloads = async (req, res) => {
             where: { idUsuario },
             include: [{
                 model: Multimedia,
+                as: 'multimedia',
                 attributes: ['idMultimedia', 'nombreComposicion', 'formato', 'tipoAsset'],
+                required: false,
                 include: [{ model: Artistas, attributes: ['nombreArtista'] }]
             }],
             order: [['fechaDescarga', 'DESC']],
@@ -1672,10 +1674,10 @@ const getUserDownloads = async (req, res) => {
 
         const data = rows.map(d => ({
             idDescarga: d.idDescarga,
-            nombreComposicion: d.MULTIMEDIA?.nombreComposicion || '—',
-            artista: d.MULTIMEDIA?.ARTISTA?.nombreArtista || '—',
-            formato: d.MULTIMEDIA?.formato?.toUpperCase() || '—',
-            tipoAsset: d.MULTIMEDIA?.tipoAsset || 'AUDIO',
+            nombreComposicion: d.multimedia?.nombreComposicion || '—',
+            artista: d.multimedia?.ARTISTA?.nombreArtista || '—',
+            formato: d.multimedia?.formato?.toUpperCase() || '—',
+            tipoAsset: d.multimedia?.tipoAsset || 'AUDIO',
             fechaDescarga: d.fechaDescarga,
             creditos: d.creditos || 0
         }));

@@ -44,7 +44,7 @@ Generos.belongsToMany(Artistas, { through: 'ARTISTA_GENEROS', foreignKey: 'idGen
 
 // --- 3. HISTORIAL DE DESCARGAS ---
 Multimedia.hasMany(HistorialDescargas, { foreignKey: 'idMultimedia' });
-HistorialDescargas.belongsTo(Multimedia, { foreignKey: 'idMultimedia' });
+HistorialDescargas.belongsTo(Multimedia, { foreignKey: 'idMultimedia', as: 'multimedia' });
 Usuarios.hasMany(HistorialDescargas, { foreignKey: 'idUsuario' });
 HistorialDescargas.belongsTo(Usuarios, { foreignKey: 'idUsuario' });
 
