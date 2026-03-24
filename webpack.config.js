@@ -7,6 +7,9 @@ export default {
         controlPanel : './src/js/controlPanel.js',
         multimediaPanels : './src/js/multimediaPanels.js',
         monitorUpload : './src/js/monitorUpload.js',
+        clientPanel : './src/js/clientPanel.js',
+        clientMediafile : './src/js/clientMediafile.js',
+        clientFavoritos : './src/js/clientFavoritos.js',
 
     },
     output : {

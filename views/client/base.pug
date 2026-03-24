@@ -2,20 +2,22 @@ include ../layout/head.pug
 include ../components/mixins/form-field.pug
 include ../components/mixins/layouts.pug
 block contenedor
-    // ================================================
-    // NAVBAR
-    // ================================================
-//include ./navBar.pug
-main(class="flex-1 max-w-7xl mx-auto px-6 py-16 md:py-24")
-    //==============================================
-    // SECCIONES 
-    // ================================================
-    
-        
+    meta(name="csrf-token" content=csrfToken)
 
+    div(class="flex min-h-screen")
 
-    // ================================================
-    // FOOTER (PENDIENTE)
-    //include ./footer.pug
-    // ================================================
-    // footer
+        //- SIDEBAR
+        include layout/sidebar.pug
+
+        main(class="flex-1 ml-[60px] lg:ml-72 min-h-screen")
+            //- HEADER
+            include layout/headerUser.pug
+
+            //- BODY
+            div(class="mx-auto p-4 pb-32")
+                block content
+
+            //- FOOTER
+            include layout/footer.pug
+
+    script(src="/js/clientPanel.js")

@@ -1,21 +1,210 @@
-include ../layout/head.pug
-include ../components/mixins/form-field.pug
-include ../components/mixins/layouts.pug
-block contenedor
-    // ================================================
-    // NAVBAR
-    // ================================================
-//include ./navBar.pug
-main(class="flex-1 max-w-7xl mx-auto px-6 py-16 md:py-24")
-    //==============================================
-    // SECCIONES 
-    // ================================================
-    
-        
+extends base.pug
 
+block content
+    //- ==========================================
+    //- 2 COLUMNAS: 70% izq / 30% der
+    //- ==========================================
+    div(class="flex flex-col lg:flex-row gap-6")
 
-    // ================================================
-    // FOOTER (PENDIENTE)
-    //include ./footer.pug
-    // ================================================
-    // footer
+        //- ==========================================
+        //- COLUMNA IZQUIERDA (70%)
+        //- ==========================================
+        div(class="w-full lg:w-[70%] space-y-6")
+
+            //- WELCOME CARD — Estilo terminal/cyberpunk
+            div(class="relative overflow-hidden rounded-2xl p-8 lg:p-10" style="background: linear-gradient(135deg, rgba(201,218,43,0.08) 0%, rgba(0,0,0,0.9) 40%, rgba(10,10,12,0.95) 100%); border: 1px solid rgba(201,218,43,0.12);")
+                //- Linea decorativa superior
+                div(class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent")
+                //- Pixel noise pattern
+                div(class="absolute inset-0 pixel-pattern opacity-3")
+
+                div(class="relative z-10")
+                    p(class="text-[10px] font-mono text-primary/60 uppercase tracking-[0.3em] mb-3") SYSTEM ONLINE // NODE 04
+                    h1(class="text-3xl lg:text-5xl font-display font-black text-white leading-tight tracking-tight")
+                        | WELCOME BACK,
+                        span(class="text-primary italic ml-2") #{usuario.nombreUsuario.toUpperCase()}
+                    p(class="text-white/40 text-sm mt-4 max-w-xl leading-relaxed") Tus activos digitales estan sincronizados. Continua tu pulso creativo donde lo dejaste.
+
+                //- Stats inline dentro del welcome
+                div(class="relative z-10 flex flex-wrap gap-6 mt-8 pt-6 border-t border-white/5")
+                    div(class="flex items-center gap-2")
+                        span(class="material-symbols-outlined text-primary text-lg") credit_card_heart
+                        span(class="text-xl font-display font-extrabold text-white") #{creditosDisponibles || 0}
+                        span(class="text-[9px] font-mono text-white/30 uppercase") R$ disponibles
+                    div(class="flex items-center gap-2")
+                        span(class="material-symbols-outlined text-primary text-lg") cloud_download
+                        span(class="text-xl font-display font-extrabold text-white") #{totalDescargas || 0}
+                        span(class="text-[9px] font-mono text-white/30 uppercase") descargas
+                    div(class="flex items-center gap-2")
+                        span(class="material-symbols-outlined text-primary text-lg") bookmark
+                        span(class="text-xl font-display font-extrabold text-white") #{wishlistCount || 0}
+                        span(class="text-[9px] font-mono text-white/30 uppercase") en wishlist
+
+            //- ==========================================
+            //- SEARCH BAR
+            //- ==========================================
+            div(class="relative")
+                div(class="relative group")
+                    span(class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-2xl text-primary/60 group-focus-within:text-primary transition-colors") search
+                    input#searchGlobal(
+                        type="text"
+                        placeholder=""
+                        autocomplete="off"
+                        class="w-full pl-14 pr-6 py-5 bg-white/4 border border-white/10 rounded-2xl text-white text-base font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 focus:bg-white/6 focus:shadow-[0_0_30px_rgba(201,218,43,0.08)] transition-all"
+                    )
+
+            //- ==========================================
+            //- FILTROS
+            //- ==========================================
+            div(class="flex flex-wrap gap-4 items-end")
+
+                //- Filtro tipo (Audio / Video / Todos)
+                div(class="space-y-1")
+                    label(class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest block") Tipo
+                    div(class="flex rounded-lg overflow-hidden border border-white/10")
+                        button(class="filter-type active px-4 py-2 text-[10px] font-bold uppercase tracking-widest bg-primary/15 text-primary border-r border-white/10 transition-all" data-type="all") Todos
+                        button(class="filter-type px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 border-r border-white/10 transition-all" data-type="audio") Audio
+                        button(class="filter-type px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 transition-all" data-type="video") Video
+
+                //- Filtro genero
+                div(class="space-y-1")
+                    label(class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest block") Genero
+                    button#btn-abrir-generos-search(type="button" class="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold uppercase tracking-widest text-white/50 hover:text-primary hover:border-primary/30 transition-all")
+                        span(class="material-symbols-outlined text-sm") filter_list
+                        | Seleccionar
+
+                //- Filtro BPM (Double Range)
+                div(class="flex items-end min-w-[200px]")
+                    div(class="w-full space-y-1")
+                        div(class="flex items-center justify-between")
+                            label(class="text-[10px] font-mono font-bold text-primary uppercase tracking-widest") BPM
+                            span#bpm-range-label(class="text-[10px] font-mono font-bold text-white/50") 20 — 200
+                        div(class="bpm-range-slider relative w-full" data-min="20" data-max="200")
+                            div(id="bpm-tooltip" class="bpm-tooltip hidden")
+                                span(id="bpm-tooltip-text" class="text-[11px] font-mono font-bold text-black")
+                            div(class="bpm-track")
+                                div(id="bpm-track-fill" class="bpm-track-fill")
+                            input(type="range" id="bpmMin" min="20" max="200" value="20" class="bpm-thumb bpm-thumb-min")
+                            input(type="range" id="bpmMax" min="20" max="200" value="200" class="bpm-thumb bpm-thumb-max")
+
+            //- Pills de generos seleccionados
+            div#contenedor-pills-generos-search(class="flex flex-wrap gap-2")
+            input(type="hidden" id="generosSeleccionadosSearch" value="")
+
+            //- ==========================================
+            //- RESULTADOS DE BUSQUEDA
+            //- ==========================================
+            div#search-results(class="modular-card p-6")
+                //- Empty state (visible por defecto)
+                div#search-empty(class="text-center py-16")
+                    span(class="material-symbols-outlined text-6xl text-white/5 mb-4 block") manage_search
+                    h3(class="text-lg font-display font-bold text-white/15 mb-2") Explora el catalogo
+                    p(class="text-white/20 text-xs font-mono uppercase tracking-widest max-w-md mx-auto") Digita el nombre de un artista o una cancion para comenzar tu busqueda
+
+                //- Loading spinner
+                div#search-loading(class="text-center py-16 hidden")
+                    div(class="inline-block size-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin mb-4")
+                    p(class="text-white/20 text-xs font-mono uppercase tracking-widest") Buscando...
+
+                //- Tabla de resultados
+                div#search-table-wrapper(class="hidden")
+                    table(class="w-full text-left")
+                        thead
+                            tr(class="border-b border-white/10")
+                                th(class="px-4 py-3 text-[9px] font-mono text-primary uppercase" style="width:25%") Artista
+                                th(class="px-4 py-3 text-[9px] font-mono text-primary uppercase" style="width:35%") Composicion
+                                th(class="px-4 py-3 text-[9px] font-mono text-primary uppercase" style="width:12%") Formato
+                                th(class="px-4 py-3 text-[9px] font-mono text-primary uppercase" style="width:12%") Costo
+                                th(class="px-4 py-3 text-[9px] font-mono text-primary uppercase text-center" style="width:16%") Acciones
+                        tbody#search-tbody
+
+                    //- Paginacion
+                    div(class="flex items-center justify-between mt-4 pt-4 border-t border-white/5")
+                        span#search-total(class="text-[10px] font-mono text-white/30")
+                        div#search-pages(class="flex gap-1")
+
+        //- ==========================================
+        //- COLUMNA DERECHA (30%)
+        //- ==========================================
+        div(class="w-full lg:w-[30%] space-y-6")
+
+            //- RECOMENDADOS PARA TI
+            div(class="rounded-2xl border border-white/10 overflow-hidden" style="background: rgba(255,255,255,0.03);")
+                div(class="flex items-center justify-between px-5 py-4 bg-primary")
+                    h3(class="text-[11px] font-bold uppercase tracking-widest text-black") Recomendados para ti
+                    span(class="material-symbols-outlined text-black/60 text-lg") auto_awesome
+
+                div(class="p-5 space-y-2")
+                    if recomendados && recomendados.length > 0
+                        each r in recomendados
+                            a(href=`/ritmaap/profile/mediafile/${r.idMultimedia}` class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:border-primary/20 hover:bg-white/3 transition-all cursor-pointer group")
+                                //- Icono tipo
+                                div(class="size-9 rounded-lg bg-white/5 flex items-center justify-center shrink-0")
+                                    if r.tipoAsset === 'VIDEO'
+                                        span(class="material-symbols-outlined text-purple-400 text-lg") videocam
+                                    else
+                                        span(class="material-symbols-outlined text-green-400 text-lg") music_note
+                                div(class="flex-1 min-w-0")
+                                    p(class="text-xs font-bold text-white truncate group-hover:text-primary transition-colors") #{r.nombreComposicion}
+                                    div(class="flex items-center gap-2 mt-0.5")
+                                        span(class="text-[9px] text-white/30 font-mono truncate") #{r.ARTISTA ? r.ARTISTA.nombreArtista : '—'}
+                                        if r.bpm
+                                            span(class="text-[8px] font-mono text-primary/50 font-bold shrink-0") #{r.bpm} BPM
+                                //- Acciones
+                                div(class="flex items-center gap-1 shrink-0")
+                                    span(class="text-[9px] font-mono text-primary font-bold mr-1") #{r.costoCreditos} R$
+                                    span(class="p-1 text-white/20 group-hover:text-primary transition-colors" title="Ver")
+                                        span(class="material-symbols-outlined text-[16px]") visibility
+                    else
+                        each i in [1,2,3,4,5]
+                            div(class="flex items-center gap-3 p-3 rounded-xl border border-white/5 animate-pulse")
+                                div(class="size-9 rounded-lg bg-white/5")
+                                div(class="flex-1 space-y-2")
+                                    div(class="h-3 bg-white/5 rounded w-3/4")
+                                    div(class="h-2 bg-white/3 rounded w-1/2")
+
+            //- TOP DESCARGAS DE LA SEMANA
+            div(class="rounded-2xl border border-white/10 overflow-hidden" style="background: rgba(255,255,255,0.03);")
+                div(class="flex items-center justify-between px-5 py-4 bg-primary")
+                    h3(class="text-[11px] font-bold uppercase tracking-widest text-black") Top Descargas
+                    span(class="text-[9px] font-mono text-black/60 font-bold uppercase") Esta semana
+
+                div(class="p-5 space-y-2")
+                    if topSemanal && topSemanal.length > 0
+                        each t, idx in topSemanal
+                            a(href=`/ritmaap/profile/mediafile/${t.idMultimedia}` class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:border-primary/20 hover:bg-white/3 transition-all group")
+                                //- Ranking number
+                                span(class=`text-lg font-display font-black w-7 text-center ${idx < 3 ? 'text-primary' : 'text-white/15'}`) #{(idx + 1).toString().padStart(2, '0')}
+                                //- Icono tipo
+                                div(class="size-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0")
+                                    if t.tipoAsset === 'VIDEO'
+                                        span(class="material-symbols-outlined text-purple-400 text-sm") videocam
+                                    else
+                                        span(class="material-symbols-outlined text-green-400 text-sm") music_note
+                                div(class="flex-1 min-w-0")
+                                    p(class="text-xs font-bold text-white truncate group-hover:text-primary transition-colors") #{t.nombreComposicion}
+                                    p(class="text-[9px] text-white/30 truncate font-mono")
+                                        if t.Artista
+                                            | #{t.Artista.nombreArtista}
+                                //- Acciones
+                                div(class="flex items-center gap-1 shrink-0")
+                                    span(class="text-[9px] font-mono text-white/30 mr-1") #{t.totalDescargas} DL
+                                    span(class="p-1 text-white/20 group-hover:text-primary transition-colors" title="Ver")
+                                        span(class="material-symbols-outlined text-[16px]") visibility
+                    else
+                        div(class="text-center py-8")
+                            span(class="material-symbols-outlined text-3xl text-white/5 mb-2 block") trending_up
+                            p(class="text-white/15 text-[10px] font-mono uppercase") Sin datos esta semana
+
+    //- ==========================================
+    //- MODAL DE GENEROS (reutilizable)
+    //- ==========================================
+    div(id="modal-generos-search" class="fixed inset-0 z-[3000] flex items-center justify-center bg-black/80 hidden")
+        div(class="glass-card w-full max-w-2xl p-8 rounded-3xl border border-white/10")
+            h3(class="text-primary tracking-widest font-display text-center mb-4") Selecciona los generos
+            div(class="relative mb-6")
+                input#busqueda-genero-search(type="text" placeholder="BUSCAR GENERO..." class="ritma-input-field w-full text-xs px-4 py-3")
+            div(id="lista-generos-search" class="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-2 custom-scrollbar")
+            div(class="flex justify-end gap-4 mt-8")
+                button(type="button" id="btn-cerrar-generos-search" class="px-6 py-2 text-xs font-bold uppercase text-gray-400 hover:text-white") Cancelar
+                button(type="button" id="btn-aceptar-generos-search" class="px-6 py-2 bg-primary text-black text-xs font-bold uppercase rounded-lg hover:brightness-110") Aceptar
