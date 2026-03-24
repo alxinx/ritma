@@ -16,6 +16,7 @@ import pageRoutes from "./routes/pageRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import clientRoutes from "./routes/clientRoutes.js";
 import loginRoutes from "./routes/loginRoutes.js";
+import webhookRoutes from "./routes/webhookRoutes.js";
 import './workers/multimediaWorker.js';
 
 
@@ -50,6 +51,12 @@ app.use(securityHeaders);
    MIDDLEWARES BASE
 ====================== */
 app.use(express.static("public"));
+
+// Webhooks externos — sin CSRF
+// POST recibe raw body para verificación de firma; GET renderiza página de estado
+app.post('/webhooks/bold', express.raw({ type: 'application/json' }));
+app.use('/webhooks', webhookRoutes);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -59,7 +66,7 @@ app.use(cookieParser());
 ====================== */
 const csrfProtection = csrf({ cookie: true });
 app.use((req, res, next) => {
-  if (req.path.startsWith('/app/dash/api/upload/sign') || req.path.startsWith('/app/dash/sse/') || req.path.startsWith('/admin/queues')) return next();
+  if (req.path.startsWith('/app/dash/api/upload/sign') || req.path.startsWith('/app/dash/sse/') || req.path.startsWith('/admin/queues') || req.path.startsWith('/webhooks')) return next();
   try {
     csrfProtection(req, res, () => {
       res.locals.csrfToken = req.csrfToken();

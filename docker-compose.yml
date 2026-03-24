@@ -19,7 +19,7 @@ services:
   db:
     image: mysql:8
     restart: always
-    command: --lower_case_table_names=1  
+    command: --lower_case_table_names=1
     environment:
       - MYSQL_DATABASE=ritma
       - MYSQL_ROOT_PASSWORD=ritmapass

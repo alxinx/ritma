@@ -178,11 +178,13 @@ import Swal from 'sweetalert2';
                 ? pack.valor * (1 - pack.descuento / 100)
                 : pack.valor;
 
+            const elNombre = document.getElementById('bold-pack-nombre');
             const elTotal = document.getElementById('bold-total-valor');
             const elCreditos = document.getElementById('bold-total-creditos');
             const elDescuento = document.getElementById('bold-descuento');
 
-            if (elTotal) elTotal.textContent = `$${valorFinal.toLocaleString('es-CO')} COP`;
+            if (elNombre) elNombre.textContent = pack.nombre;
+            if (elTotal) elTotal.textContent = `$${valorFinal.toLocaleString('es-CO')}`;
             if (elCreditos) elCreditos.textContent = `+${pack.creditos.toLocaleString('es-CO')} CRÉDITOS`;
             if (elDescuento) {
                 if (pack.descuento > 0) {
@@ -195,44 +197,44 @@ import Swal from 'sweetalert2';
         }
 
         // ==========================================
-        // BOTÓN PROCESAR PAGO — Bold placeholder
+        // BOTÓN PROCESAR PAGO — Bold
         // ==========================================
-        document.getElementById('btn-pagar-bold')?.addEventListener('click', () => {
-            if (!packSeleccionado) return;
+        document.getElementById('btn-pagar-bold')?.addEventListener('click', async () => {
+            if (!packSeleccionado) {
+                Swal.fire({ icon: 'warning', title: 'Selecciona un pack', text: 'Elige un paquete de créditos antes de continuar.', background: '#0a0a0c', color: '#fff' });
+                return;
+            }
 
-            // TODO: Bold integration
-            // 1. POST /ritmaap/json/creditos/bold/create-payment con { idPack }
-            // 2. Backend crea el payment link en Bold API
-            // 3. Redirigir a data.paymentUrl o abrir iframe
-            Swal.fire({
-                icon: 'info',
-                title: 'Bold en configuración',
-                html: `El módulo de pago <strong>Bold</strong> está siendo configurado.<br>Próximamente podrás recargar aquí.`,
-                background: '#0a0a0c',
-                color: '#fff',
-                confirmButtonText: 'Entendido'
-            });
+            const btn = document.getElementById('btn-pagar-bold');
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+
+            try {
+                const res = await fetch('/ritmaap/json/creditos/bold/create-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'CSRF-Token': csrfToken },
+                    body: JSON.stringify({ idPack: packSeleccionado.idPack })
+                });
+                const data = await res.json();
+
+                if (!data.ok || !data.paymentUrl) {
+                    Swal.fire({ icon: 'error', title: 'Error al crear el pago', text: data.msg || 'Intenta de nuevo.', background: '#0a0a0c', color: '#fff' });
+                    return;
+                }
+
+                // Abrir Bold checkout en nueva pestaña
+                window.open(data.paymentUrl, '_blank');
+
+            } catch (err) {
+                console.error('createBoldPayment error:', err);
+                Swal.fire({ icon: 'error', title: 'Error de conexión', text: 'No se pudo conectar con el servidor de pagos.', background: '#0a0a0c', color: '#fff' });
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
         });
 
-        // ==========================================
-        // FORMATEO — Campo número de tarjeta
-        // ==========================================
-        const cardInput = document.getElementById('card-number-input');
-        if (cardInput) {
-            cardInput.addEventListener('input', (e) => {
-                let val = e.target.value.replace(/\D/g, '').substring(0, 16);
-                e.target.value = val.replace(/(.{4})/g, '$1 ').trim();
-            });
-        }
-
-        const expInput = document.getElementById('card-exp-input');
-        if (expInput) {
-            expInput.addEventListener('input', (e) => {
-                let val = e.target.value.replace(/\D/g, '').substring(0, 4);
-                if (val.length >= 2) val = val.substring(0, 2) + ' / ' + val.substring(2);
-                e.target.value = val;
-            });
-        }
+        // Bold redirige al usuario a /webhooks/bold con el estado del pago
 
         // ==========================================
         // CARGAR MIS COMPRAS (async paginado)

@@ -289,83 +289,52 @@ block content
                     span(class="material-symbols-outlined text-teal-400 text-sm") info
                     p(class="text-[10px] font-mono uppercase tracking-widest" style="color: #4dd0c4;") Los créditos nunca expiran
 
-            //- ── PANEL DERECHO — formulario de pago
-            div(class="flex-1 flex flex-col p-6 md:p-8")
+            //- ── PANEL DERECHO — resumen + pago Bold
+            div(class="flex-1 flex flex-col p-6 md:p-8 justify-between")
 
                 //- Header
-                div(class="flex items-start justify-between mb-5 md:mb-7")
+                div(class="flex items-start justify-between mb-6")
                     div
                         h3(class="font-display font-black text-base md:text-xl uppercase tracking-tight text-white leading-tight") Paga tranquilo,
                         h3(class="font-display font-black text-base md:text-xl uppercase tracking-tight text-white leading-tight") usamos encriptación avanzada
                     div(class="flex items-center gap-2 pt-1 shrink-0")
-                        span(class="material-symbols-outlined text-white/20 text-xl") credit_card
+                        span(class="material-symbols-outlined text-white/20 text-xl") verified_user
                         span(class="material-symbols-outlined text-white/20 text-xl") lock
 
-                //- Campos de tarjeta
-                div(class="space-y-4")
-                    div
-                        label(class="block text-[9px] font-bold uppercase tracking-widest text-white/30 mb-1.5") Cardholder Name
-                        input#card-name-input(
-                            type="text"
-                            placeholder="ALEX MERCER"
-                            autocomplete="cc-name"
-                            class="w-full px-4 py-3 rounded-xl text-sm font-mono text-white placeholder:text-white/15 focus:outline-none transition-all"
-                            style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);"
-                        )
-                    div
-                        label(class="block text-[9px] font-bold uppercase tracking-widest text-white/30 mb-1.5") Card Number
-                        div(class="relative")
-                            input#card-number-input(
-                                type="text"
-                                placeholder="0000 0000 0000 0000"
-                                maxlength="19"
-                                autocomplete="cc-number"
-                                class="w-full px-4 py-3 pr-20 rounded-xl text-sm font-mono text-white placeholder:text-white/15 focus:outline-none transition-all"
-                                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);"
-                            )
-                            div(class="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1.5")
-                                div(class="w-7 h-5 rounded" style="background: rgba(255,255,255,0.07);")
-                                div(class="w-7 h-5 rounded" style="background: rgba(255,255,255,0.07);")
-                    div(class="grid grid-cols-2 gap-3")
-                        div
-                            label(class="block text-[9px] font-bold uppercase tracking-widest text-white/30 mb-1.5") Expiration Date
-                            input#card-exp-input(
-                                type="text"
-                                placeholder="MM / YY"
-                                maxlength="7"
-                                autocomplete="cc-exp"
-                                class="w-full px-4 py-3 rounded-xl text-sm font-mono text-white placeholder:text-white/15 focus:outline-none transition-all"
-                                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);"
-                            )
-                        div
-                            label(class="block text-[9px] font-bold uppercase tracking-widest text-white/30 mb-1.5") CVV
-                            input(
-                                type="password"
-                                placeholder="***"
-                                maxlength="4"
-                                autocomplete="cc-csc"
-                                class="w-full px-4 py-3 rounded-xl text-sm font-mono text-white placeholder:text-white/15 focus:outline-none transition-all"
-                                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);"
-                            )
+                //- Resumen del pack seleccionado
+                div(class="flex-1 flex flex-col justify-center")
+                    div#bold-resumen(class="rounded-xl p-6 mb-5" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);")
+                        p(class="text-[9px] font-mono uppercase tracking-widest text-white/30 mb-4") Resumen de tu compra
+                        div(class="flex items-end justify-between")
+                            div
+                                p#bold-pack-nombre(class="font-display font-bold text-lg text-white") Selecciona un pack
+                                p#bold-total-creditos(class="text-sm font-mono font-bold text-primary mt-1") +0 CRÉDITOS
+                                span#bold-descuento(class="hidden mt-1 inline-block text-[9px] font-bold text-green-400 uppercase")
+                            div(class="text-right")
+                                p(class="text-[9px] font-mono uppercase tracking-widest text-white/30 mb-1") Total a pagar
+                                p#bold-total-valor(class="text-3xl font-display font-black text-white leading-none") —
+                                p(class="text-[9px] font-mono text-white/20 uppercase mt-0.5") COP
 
-                //- Total + Pagar
-                div(class="mt-5 pt-5" style="border-top: 1px solid rgba(255,255,255,0.06);")
-                    div(class="flex items-end justify-between mb-5")
+                    //- Info de redirección
+                    div(class="flex items-center gap-3 rounded-xl px-5 py-3 mb-5" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);")
+                        span(class="material-symbols-outlined text-white/20") open_in_new
                         div
-                            p(class="text-[9px] font-mono uppercase tracking-widest text-white/30 mb-1") Total to pay
-                            p#bold-total-valor(class="text-2xl md:text-3xl font-display font-black text-white leading-none") $0 COP
-                        div(class="text-right")
-                            p#bold-total-creditos(class="text-sm font-mono font-bold text-primary") +0 CRÉDITOS
-                            p(class="text-[9px] font-mono text-white/20 uppercase mt-0.5") Instant Activation
-                            span#bold-descuento(class="hidden mt-1 block text-[9px] font-bold text-green-400 uppercase")
+                            p(class="text-xs text-white/50") Serás redirigido a Bold para completar el pago
+                            p(class="text-[9px] text-white/20 font-mono mt-0.5") Tarjeta de crédito, PSE, Nequi, Bancolombia
 
+                    //- Métodos de pago aceptados
+                    div(class="flex items-center gap-4 justify-center mb-5")
+                        each metodo in ['credit_card', 'account_balance', 'payments', 'currency_exchange']
+                            div(class="flex items-center justify-center size-10 rounded-lg" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);")
+                                span(class="material-symbols-outlined text-white/25 text-lg") #{metodo}
+
+                //- Botón Pagar + footer
+                div
                     button#btn-pagar-bold(
                         class="w-full py-4 rounded-2xl font-display font-black text-sm uppercase tracking-widest transition-all hover:brightness-110 active:scale-[0.98]"
                         style="background: linear-gradient(135deg, #C9DA2B 0%, #b8c620 100%); color: #000;"
                     )
                         span(class="material-symbols-outlined mr-2 align-middle" style="color:#000; font-size:18px;") bolt
-                        | Procesar Pago
+                        | Pagar con Bold
 
-                    //- TODO: Bold SDK — reemplaza este botón con <bold-button> cuando esté listo
-
-                    p(class="text-white/10 text-[8px] font-mono text-center mt-3 uppercase tracking-widest") Encrypted by Ritma Security V.2 • All Transactions Are Final
+                    p(class="text-white/10 text-[8px] font-mono text-center mt-3 uppercase tracking-widest") Procesado por Bold • Transacciones seguras y encriptadas

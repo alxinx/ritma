@@ -1,0 +1,29 @@
+# Dependencias — se instalan dentro del contenedor, no se copian del host
+node_modules/
+
+# Variables de entorno — se inyectan vía docker-compose env_file / environment
+.env
+
+# Git
+.git/
+.gitignore
+
+# Redis dump — no forma parte del build
+dump.rdb
+*.rdb
+
+# Temporales de procesamiento multimedia
+temp_processing/
+upload/
+
+# macOS
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/

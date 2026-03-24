@@ -2,6 +2,7 @@ import express from "express";
 import downloadRateLimiter from '../middlewares/downloadRateLimiter.js';
 import upload, { validarMagicBytes } from '../middlewares/upload.js';
 import { dashboard, getGeneros, searchMultimedia, mediafile, toggleWishlist, requestDownloadToken, verifyAndDownload, checkDownloadBan, requestStreamToken, streamVideo, streamPreview, biblioteca, searchBiblioteca, getArtistasBiblioteca, wishlistPage, searchWishlist, removeFromWishlist, settingsPage, updateProfile, updatePassword, uploadAvatar, favoritosPage, getFavoritos, addFavorito, removeFavorito, toggleFavorito, creditosPage, getMisCompras, getMisTransacciones } from '../controllers/clientControllers.js';
+import { createBoldPayment } from '../controllers/boldController.js';
 
 const routes = express.Router();
 
@@ -47,6 +48,7 @@ routes.post("/json/favoritos/:idMultimedia/toggle", toggleFavorito);
 routes.get("/creditos", creditosPage);
 routes.get("/json/creditos/compras", getMisCompras);
 routes.get("/json/creditos/transacciones", getMisTransacciones);
+routes.post("/json/creditos/bold/create-payment", createBoldPayment);
 
 // Settings
 routes.get("/settings", settingsPage);

@@ -1,0 +1,110 @@
+doctype html
+html(class="dark" lang="es")
+    head
+        meta(charset="utf-8")
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        link(rel="shortcut-icon" href="/img/favicon.ico")
+        link(rel="stylesheet" href="/css/output.css")
+        title Estado del Pago — Ritma
+        link(rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Roboto:wght@400;500&display=swap")
+        link(rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap")
+
+    body(class="min-h-screen flex items-center justify-center font-body bg-background-dark text-white p-6")
+        div(class="w-full max-w-md")
+
+            //- ===================== APROBADO =====================
+            if status === 'APPROVED'
+                div(class="rounded-2xl p-8 text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(34,197,94,0.15);")
+                    div(class="size-20 mx-auto rounded-full flex items-center justify-center mb-5" style="background: rgba(34,197,94,0.08);")
+                        span(class="material-symbols-outlined text-green-400" style="font-size: 48px; font-variation-settings: 'FILL' 1;") check_circle
+                    h1(class="text-xl font-display font-black uppercase tracking-tight text-white mb-2") Pago Exitoso
+                    p(class="text-white/40 text-sm mb-5") Tu compra ha sido procesada correctamente
+
+                    if reference
+                        p(class="text-[10px] font-mono text-white/15 mb-5") REF: #{reference}
+
+                    if nombrePack
+                        div(class="rounded-xl p-5 mb-5" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);")
+                            div(class="flex items-center justify-between mb-1")
+                                p(class="text-white/40 text-[10px] font-mono uppercase tracking-widest") Pack adquirido
+                                p(class="text-white/80 text-sm font-bold") #{nombrePack}
+                            div(class="flex items-center justify-between")
+                                p(class="text-white/40 text-[10px] font-mono uppercase tracking-widest") Créditos
+                                p(class="text-primary text-lg font-display font-black") +#{nroCreditos}
+                                    span(class="text-white/30 text-xs ml-1") R$
+
+                    div(class="rounded-xl p-4 mb-6" style="background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.10);")
+                        div(class="flex items-center justify-center gap-2")
+                            span(class="material-symbols-outlined text-green-400 text-sm") verified
+                            p(class="text-green-400 text-xs font-bold uppercase") Créditos acreditados
+                        p(class="text-white/25 text-[10px] font-mono mt-1") Activación inmediata en tu cuenta
+
+                    a(href="/ritmaap/creditos" class="block w-full py-3.5 rounded-xl font-display font-black text-sm uppercase tracking-widest text-center text-black transition-all hover:brightness-110" style="background: linear-gradient(135deg, #C9DA2B 0%, #b8c620 100%);") Ir a Mis Créditos
+
+            //- ===================== PENDIENTE =====================
+            else if status === 'PENDING'
+                div(class="rounded-2xl p-8 text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(251,191,36,0.15);")
+                    div(class="size-20 mx-auto rounded-full flex items-center justify-center mb-5" style="background: rgba(251,191,36,0.08);")
+                        span(class="material-symbols-outlined text-yellow-400" style="font-size: 48px;") schedule
+                    h1(class="text-xl font-display font-black uppercase tracking-tight text-white mb-2") Pago Pendiente
+                    p(class="text-white/40 text-sm mb-5") Tu pago está siendo procesado por el banco
+
+                    if reference
+                        p(class="text-[10px] font-mono text-white/15 mb-5") REF: #{reference}
+
+                    div(class="rounded-xl p-4 mb-6" style="background: rgba(251,191,36,0.05); border: 1px solid rgba(251,191,36,0.10);")
+                        div(class="flex items-center justify-center gap-2")
+                            span(class="material-symbols-outlined text-yellow-400 text-sm") hourglass_top
+                            p(class="text-yellow-400 text-xs font-bold uppercase") Esperando confirmación
+                        p(class="text-white/25 text-[10px] font-mono mt-1") Tus créditos se acreditarán cuando el banco confirme
+
+                    a(href="/ritmaap/creditos" class="block w-full py-3.5 rounded-xl font-display font-black text-sm uppercase tracking-widest text-center text-black transition-all hover:brightness-110" style="background: linear-gradient(135deg, #C9DA2B 0%, #b8c620 100%);") Ir a Mis Créditos
+
+            //- ===================== RECHAZADO =====================
+            else if status === 'REJECTED' || status === 'DECLINED'
+                div(class="rounded-2xl p-8 text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(239,68,68,0.15);")
+                    div(class="size-20 mx-auto rounded-full flex items-center justify-center mb-5" style="background: rgba(239,68,68,0.08);")
+                        span(class="material-symbols-outlined text-red-400" style="font-size: 48px; font-variation-settings: 'FILL' 1;") cancel
+                    h1(class="text-xl font-display font-black uppercase tracking-tight text-white mb-2") Pago Rechazado
+                    p(class="text-white/40 text-sm mb-5") La transacción no pudo ser procesada
+
+                    if reference
+                        p(class="text-[10px] font-mono text-white/15 mb-5") REF: #{reference}
+
+                    div(class="rounded-xl p-4 mb-6" style="background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.10);")
+                        div(class="flex items-center justify-center gap-2")
+                            span(class="material-symbols-outlined text-red-400 text-sm") info
+                            p(class="text-red-400 text-xs font-bold uppercase") Verifica tu medio de pago
+                        p(class="text-white/25 text-[10px] font-mono mt-1") No se realizó ningún cobro a tu cuenta
+
+                    a(href="/ritmaap/creditos" class="block w-full py-3.5 rounded-xl font-display font-black text-sm uppercase tracking-widest text-center text-black mb-3 transition-all hover:brightness-110" style="background: linear-gradient(135deg, #C9DA2B 0%, #b8c620 100%);") Reintentar
+                    a(href="/ritmaap/" class="block text-white/25 text-xs hover:text-white/50 transition-colors mt-3") Volver al inicio
+
+            //- ===================== ERROR =====================
+            else if status === 'ERROR'
+                div(class="rounded-2xl p-8 text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(239,68,68,0.15);")
+                    div(class="size-20 mx-auto rounded-full flex items-center justify-center mb-5" style="background: rgba(239,68,68,0.08);")
+                        span(class="material-symbols-outlined text-red-400" style="font-size: 48px;") error
+                    h1(class="text-xl font-display font-black uppercase tracking-tight text-white mb-2") Error en el Pago
+                    p(class="text-white/40 text-sm mb-5") Ocurrió un error inesperado
+
+                    if reference
+                        p(class="text-[10px] font-mono text-white/15 mb-5") REF: #{reference}
+
+                    div(class="rounded-xl p-4 mb-6" style="background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.10);")
+                        p(class="text-red-400 text-xs font-bold uppercase") Si el cobro fue realizado, contacta a soporte
+
+                    a(href="/ritmaap/creditos" class="block w-full py-3.5 rounded-xl font-display font-black text-sm uppercase tracking-widest text-center text-black transition-all hover:brightness-110" style="background: linear-gradient(135deg, #C9DA2B 0%, #b8c620 100%);") Ir a Mis Créditos
+
+            //- ===================== SIN ESTADO =====================
+            else
+                div(class="rounded-2xl p-8 text-center" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);")
+                    div(class="size-20 mx-auto rounded-full flex items-center justify-center mb-5" style="background: rgba(255,255,255,0.04);")
+                        span(class="material-symbols-outlined text-white/25" style="font-size: 48px;") credit_card
+                    h1(class="text-xl font-display font-black uppercase tracking-tight text-white mb-2") Estado del Pago
+                    p(class="text-white/40 text-sm mb-5") No hay información de transacción disponible
+
+                    a(href="/ritmaap/creditos" class="block w-full py-3.5 rounded-xl font-display font-black text-sm uppercase tracking-widest text-center text-black transition-all hover:brightness-110" style="background: linear-gradient(135deg, #C9DA2B 0%, #b8c620 100%);") Ir a Mis Créditos
+
+            //- Footer
+            p(class="text-white/10 text-[8px] font-mono text-center mt-6 uppercase tracking-widest") Procesado por Bold
