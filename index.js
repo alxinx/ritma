@@ -28,6 +28,7 @@ createBullBoard({
   serverAdapter
 });
 
+import { boldWebhook, boldStatusPage } from './controllers/boldController.js';
 import { rutaProtegida, verificarRol } from "./middlewares/authMiddleware.js";
 
 dotenv.config();
@@ -74,6 +75,11 @@ app.use("/ritmaap/", rutaProtegida, verificarRol('USUARIO'), clientRoutes);
 
 
 app.use('/admin/queues', serverAdapter.getRouter());
+
+// Webhook Bold — POST recibe raw body para verificar firma HMAC
+app.post('/webhooks/bold', express.raw({ type: '*/*' }), boldWebhook);
+// Redirect Bold — página de estado después del pago
+app.get('/webhooks/bold', boldStatusPage);
 
 
 /* ======================

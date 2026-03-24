@@ -10,6 +10,7 @@ export default {
         clientPanel : './src/js/clientPanel.js',
         clientMediafile : './src/js/clientMediafile.js',
         clientFavoritos : './src/js/clientFavoritos.js',
+        clientCreditos : './src/js/clientCreditos.js',
 
     },
     output : {
