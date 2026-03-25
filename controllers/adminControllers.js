@@ -2121,17 +2121,36 @@ const creditsPanel = async (req, res) => {
 
 const getCreditsHistory = async (req, res) => {
     try {
-        let { page, limit, search } = req.query;
+        let { page, limit, search, desde, hasta } = req.query;
         page = Math.max(1, parseInt(page) || 1);
-        limit = Math.min(50, Math.max(1, parseInt(limit) || 15));
+        limit = Math.min(50, Math.max(1, parseInt(limit) || parseInt(process.env.MAX_ROWS_FOR_PAGE) || 10));
         const offset = (page - 1) * limit;
 
         // Sanitizar búsqueda
         const searchTerm = (search || '').replace(/[^\w\s@.\-áéíóúñ]/gi, '').trim();
 
         const whereClause = {};
-        let includeWhere = {};
 
+        // Filtro de fechas
+        if (desde && hasta) {
+            const desdeFecha = new Date(desde);
+            const hastaFecha = new Date(hasta);
+            if (!isNaN(desdeFecha) && !isNaN(hastaFecha)) {
+                hastaFecha.setHours(23, 59, 59, 999);
+                whereClause.fechaCompra = { [Op.between]: [desdeFecha, hastaFecha] };
+            }
+        } else if (desde) {
+            const desdeFecha = new Date(desde);
+            if (!isNaN(desdeFecha)) whereClause.fechaCompra = { [Op.gte]: desdeFecha };
+        } else if (hasta) {
+            const hastaFecha = new Date(hasta);
+            if (!isNaN(hastaFecha)) {
+                hastaFecha.setHours(23, 59, 59, 999);
+                whereClause.fechaCompra = { [Op.lte]: hastaFecha };
+            }
+        }
+
+        let includeWhere = {};
         if (searchTerm) {
             includeWhere = {
                 [Op.or]: [
@@ -2168,8 +2187,6 @@ const getCreditsHistory = async (req, res) => {
                 : 'N/A',
             email: r.USUARIO?.emailUsuario || 'N/A',
             pack: r.PACKS_CREDITO?.nombrePack || 'Manual',
-            cantidadComprada: r.cantidadComprada,
-            cantidadActual: r.cantidadActual,
             valorPack: r.valorPack,
             fechaCompra: r.fechaCompra
         }));
@@ -2193,21 +2210,21 @@ const getCreditsHistory = async (req, res) => {
 
 const getCreditsChart = async (req, res) => {
     try {
-        const hace3m = new Date();
-        hace3m.setMonth(hace3m.getMonth() - 3);
+        const hace30d = new Date();
+        hace30d.setDate(hace30d.getDate() - 30);
 
         const [resultados] = await db.query(`
             SELECT
-                DATE_FORMAT(fechaCompra, '%Y-%m') AS mes,
+                DATE_FORMAT(fechaCompra, '%d %b') AS dia,
+                DATE_FORMAT(fechaCompra, '%Y-%m-%d') AS fecha,
                 SUM(valorPack) AS totalVentas,
                 COUNT(*) AS totalTransacciones
             FROM RITMA_COINS
             WHERE fechaCompra >= :desde
-            GROUP BY mes
-            ORDER BY mes ASC
+            GROUP BY fecha, dia
+            ORDER BY fecha ASC
         `, {
-            replacements: { desde: hace3m.toISOString().split('T')[0] },
-            type: db.QueryTypes ? undefined : undefined
+            replacements: { desde: hace30d.toISOString().split('T')[0] }
         });
 
         res.json({ ok: true, data: resultados });
@@ -2227,12 +2244,20 @@ const exportCreditsExcel = async (req, res) => {
         const whereClause = {};
 
         if (desde && hasta) {
-            // Sanitizar fechas
             const desdeFecha = new Date(desde);
             const hastaFecha = new Date(hasta);
             if (!isNaN(desdeFecha) && !isNaN(hastaFecha)) {
                 hastaFecha.setHours(23, 59, 59, 999);
                 whereClause.fechaCompra = { [Op.between]: [desdeFecha, hastaFecha] };
+            }
+        } else if (desde) {
+            const desdeFecha = new Date(desde);
+            if (!isNaN(desdeFecha)) whereClause.fechaCompra = { [Op.gte]: desdeFecha };
+        } else if (hasta) {
+            const hastaFecha = new Date(hasta);
+            if (!isNaN(hastaFecha)) {
+                hastaFecha.setHours(23, 59, 59, 999);
+                whereClause.fechaCompra = { [Op.lte]: hastaFecha };
             }
         }
 
@@ -2246,24 +2271,59 @@ const exportCreditsExcel = async (req, res) => {
             limit: 10000
         });
 
-        // Generar CSV
-        const header = 'ID,Usuario,Email,Pack,Creditos Comprados,Creditos Actuales,Valor Pack,Fecha Compra\n';
-        const csvRows = rows.map(r => {
-            const nombre = r.USUARIO ? `${r.USUARIO.nombreUsuario} ${r.USUARIO.apellidoUsuario || ''}` : 'N/A';
+        // Generar XLS (formato Excel XML Spreadsheet)
+        let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+        xml += '<?mso-application progid="Excel.Sheet"?>\n';
+        xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n';
+        xml += ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n';
+        xml += '<Styles>\n';
+        xml += '  <Style ss:ID="header"><Font ss:Bold="1" ss:Size="11"/><Interior ss:Color="#C9DA2B" ss:Pattern="Solid"/></Style>\n';
+        xml += '  <Style ss:ID="date"><NumberFormat ss:Format="yyyy-mm-dd"/></Style>\n';
+        xml += '  <Style ss:ID="money"><NumberFormat ss:Format="#,##0"/></Style>\n';
+        xml += '</Styles>\n';
+        xml += '<Worksheet ss:Name="Transacciones">\n<Table>\n';
+
+        // Columnas
+        xml += '  <Column ss:Width="180"/><Column ss:Width="220"/><Column ss:Width="140"/><Column ss:Width="120"/><Column ss:Width="120"/>\n';
+
+        // Header
+        xml += '  <Row ss:StyleID="header">\n';
+        ['Nombre', 'Email', 'Pack', 'Valor', 'Fecha'].forEach(h => {
+            xml += `    <Cell><Data ss:Type="String">${h}</Data></Cell>\n`;
+        });
+        xml += '  </Row>\n';
+
+        // Data rows
+        rows.forEach(r => {
+            const nombre = r.USUARIO ? `${r.USUARIO.nombreUsuario} ${r.USUARIO.apellidoUsuario || ''}`.trim() : 'N/A';
             const email = r.USUARIO?.emailUsuario || 'N/A';
             const pack = r.PACKS_CREDITO?.nombrePack || 'Manual';
+            const valor = r.valorPack || 0;
             const fecha = r.fechaCompra ? new Date(r.fechaCompra).toISOString().split('T')[0] : '';
-            return `${r.idRitma},"${nombre}","${email}","${pack}",${r.cantidadComprada},${r.cantidadActual},${r.valorPack},"${fecha}"`;
-        }).join('\n');
 
-        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename="creditos_${Date.now()}.csv"`);
-        res.send('\uFEFF' + header + csvRows);
+            xml += '  <Row>\n';
+            xml += `    <Cell><Data ss:Type="String">${escapeXml(nombre)}</Data></Cell>\n`;
+            xml += `    <Cell><Data ss:Type="String">${escapeXml(email)}</Data></Cell>\n`;
+            xml += `    <Cell><Data ss:Type="String">${escapeXml(pack)}</Data></Cell>\n`;
+            xml += `    <Cell ss:StyleID="money"><Data ss:Type="Number">${valor}</Data></Cell>\n`;
+            xml += `    <Cell ss:StyleID="date"><Data ss:Type="String">${fecha}</Data></Cell>\n`;
+            xml += '  </Row>\n';
+        });
+
+        xml += '</Table>\n</Worksheet>\n</Workbook>';
+
+        res.setHeader('Content-Type', 'application/vnd.ms-excel');
+        res.setHeader('Content-Disposition', `attachment; filename="creditos_${Date.now()}.xls"`);
+        res.send(xml);
     } catch (error) {
         console.error('Error exportCreditsExcel:', error);
         res.status(500).json({ ok: false, msg: 'Error al exportar' });
     }
 };
+
+function escapeXml(str) {
+    return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 // ==========================================
 // MÓDULO CRÉDITOS — CRUD Packs

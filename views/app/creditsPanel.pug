@@ -46,69 +46,76 @@ block contenedor
                     div(class="lg:col-span-8 space-y-8")
 
                         //- Card: Historial de transacciones
-                        div(class="glass-card rounded-3xl p-8 relative overflow-hidden")
+                        div(class="glass-card rounded-3xl relative overflow-hidden")
+                            //- Banner header
+                            div(class="bg-primary px-8 py-4 flex items-center justify-between relative z-20")
+                                h3(class="text-sm font-display font-black uppercase tracking-widest text-black") Historial de Transacciones
+                                span(class="material-symbols-outlined text-black/30 text-xl") receipt_long
                             div(class="absolute inset-0 pixel-pattern opacity-5")
-                            div(class="relative z-10")
-                                //- Header con buscador y export
-                                div(class="flex items-center justify-between mb-6")
-                                    h3(class="text-sm font-display font-black uppercase tracking-widest") Historial de Transacciones
-                                    div(class="flex items-center gap-3")
-                                        //- Buscador con debounce
-                                        div(class="relative group")
-                                            span(class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg text-white/20 group-focus-within:text-primary transition-colors") search
-                                            input#credits-search(
-                                                type="text"
-                                                placeholder="Buscar email o nombre..."
-                                                autocomplete="off"
-                                                class="w-56 pl-10 pr-4 py-2.5 bg-white/4 border border-white/10 rounded-xl text-white text-xs font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
-                                            )
-                                        //- Botón exportar
-                                        button#btn-export(type="button" class="flex items-center gap-2 px-4 py-2.5 bg-white/4 border border-white/10 rounded-xl text-white/60 hover:text-primary hover:border-primary/30 transition-all text-xs font-bold uppercase tracking-widest cursor-pointer")
-                                            span(class="material-symbols-outlined text-base") download
-                                            | Excel
+                            div(class="relative z-10 p-8")
+                                //- Barra: buscador + fechas + excel
+                                div(class="flex items-center gap-2 mb-5" style="grid-template-columns: 40% 25% 25% 10%;")
+                                    div(class="relative group" style="width: 40%;")
+                                        span(class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg text-white/20 group-focus-within:text-primary transition-colors") search
+                                        input#credits-search(
+                                            type="text"
+                                            placeholder="Buscar email o nombre..."
+                                            autocomplete="off"
+                                            class="w-full pl-10 pr-4 py-2 bg-white/4 border border-white/10 rounded-xl text-white text-xs font-medium placeholder:text-white/20 focus:outline-none focus:border-primary/40 transition-all"
+                                        )
+                                    input#filter-desde(
+                                        type="date"
+                                        class="px-3 py-2 bg-white/4 border border-white/10 rounded-xl text-xs font-mono focus:outline-none focus:border-primary/40 transition-all"
+                                        style="color-scheme: dark; color: rgba(255,255,255,0.5); width: 25%;"
+                                        title="Desde"
+                                    )
+                                    input#filter-hasta(
+                                        type="date"
+                                        class="px-3 py-2 bg-white/4 border border-white/10 rounded-xl text-xs font-mono focus:outline-none focus:border-primary/40 transition-all"
+                                        style="color-scheme: dark; color: rgba(255,255,255,0.5); width: 25%;"
+                                        title="Hasta"
+                                    )
+                                    button#btn-export(type="button" style="width: 10%;" class="flex items-center justify-center gap-1.5 px-2 py-2 bg-white/4 border border-white/10 rounded-xl text-white/50 hover:text-primary hover:border-primary/30 transition-all text-[10px] font-bold uppercase tracking-widest cursor-pointer shrink-0")
+                                        span(class="material-symbols-outlined text-sm") download
+                                        | XLS
 
-                                //- Tabla
-                                div(class="overflow-x-auto")
+                                //- Tabla con max-height
+                                div(class="overflow-y-auto" style="max-height: 600px; scrollbar-width: thin; scrollbar-color: rgba(201,218,43,0.2) transparent;")
                                     table(class="w-full text-left")
-                                        thead
+                                        thead(class="sticky top-0 z-10" style="background: rgba(18,18,20,1);")
                                             tr(class="border-b border-white/5")
-                                                th(class="pb-3 text-[9px] font-bold text-white/30 uppercase tracking-widest") Usuario
-                                                th(class="pb-3 text-[9px] font-bold text-white/30 uppercase tracking-widest") Pack
-                                                th(class="pb-3 text-[9px] font-bold text-white/30 uppercase tracking-widest text-center") Comprados
-                                                th(class="pb-3 text-[9px] font-bold text-white/30 uppercase tracking-widest text-center") Disponibles
-                                                th(class="pb-3 text-[9px] font-bold text-white/30 uppercase tracking-widest text-right") Valor
-                                                th(class="pb-3 text-[9px] font-bold text-white/30 uppercase tracking-widest text-right") Fecha
+                                                th(class="pb-3 pt-1 text-[9px] font-bold text-white/30 uppercase tracking-widest") Usuario
+                                                th(class="pb-3 pt-1 text-[9px] font-bold text-white/30 uppercase tracking-widest") Pack
+                                                th(class="pb-3 pt-1 text-[9px] font-bold text-white/30 uppercase tracking-widest text-right") Valor
+                                                th(class="pb-3 pt-1 text-[9px] font-bold text-white/30 uppercase tracking-widest text-right") Fecha
                                         tbody#credits-tbody
                                             //- Skeleton loader
-                                            each i in [1,2,3,4,5,6,7,8]
+                                            each i in [1,2,3,4,5,6]
                                                 tr(class="border-b border-white/3 animate-pulse")
                                                     td(class="py-3")
                                                         div(class="h-4 bg-white/5 rounded w-32")
                                                     td(class="py-3")
                                                         div(class="h-4 bg-white/5 rounded w-20")
-                                                    td(class="py-3 text-center")
-                                                        div(class="h-4 bg-white/5 rounded w-12 mx-auto")
-                                                    td(class="py-3 text-center")
-                                                        div(class="h-4 bg-white/5 rounded w-12 mx-auto")
                                                     td(class="py-3 text-right")
                                                         div(class="h-4 bg-white/5 rounded w-16 ml-auto")
                                                     td(class="py-3 text-right")
                                                         div(class="h-4 bg-white/5 rounded w-20 ml-auto")
 
                                 //- Paginación
-                                div#credits-pagination(class="flex items-center justify-between mt-6")
+                                div#credits-pagination(class="flex items-center justify-between mt-4")
                                     span#credits-info(class="text-[10px] text-white/30 font-mono")
                                     div(class="flex items-center gap-2")
                                         button#credits-prev(type="button" class="px-3 py-1.5 bg-white/4 border border-white/10 rounded-lg text-white/40 hover:text-primary hover:border-primary/30 text-xs transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer") Anterior
                                         button#credits-next(type="button" class="px-3 py-1.5 bg-white/4 border border-white/10 rounded-lg text-white/40 hover:text-primary hover:border-primary/30 text-xs transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer") Siguiente
 
-                        //- Card: Chart ventas trimestrales
-                        div(class="glass-card rounded-3xl p-8 relative overflow-hidden")
+                        //- Card: Ventas últimos 30 días
+                        div(class="glass-card rounded-3xl relative overflow-hidden")
+                            //- Banner header
+                            div(class="bg-primary px-8 py-4 flex items-center justify-between relative z-20")
+                                h3(class="text-sm font-display font-black uppercase tracking-widest text-black") Ventas &Uacute;ltimos 30 D&iacute;as
+                                span(class="material-symbols-outlined text-black/30 text-xl") bar_chart
                             div(class="absolute inset-0 pixel-pattern opacity-5")
-                            div(class="relative z-10")
-                                div(class="flex items-center justify-between mb-6")
-                                    h3(class="text-sm font-display font-black uppercase tracking-widest") Ventas &Uacute;ltimo Trimestre
-                                    span(class="text-[9px] font-bold bg-white/5 text-white/40 px-3 py-1 rounded-full border border-white/10 uppercase tracking-widest") bar_chart
+                            div(class="relative z-10 p-8")
                                 div(class="h-64")
                                     canvas#credits-chart
 
@@ -118,10 +125,13 @@ block contenedor
                     div(class="lg:col-span-4 space-y-6")
 
                         //- Formulario Crear/Editar Pack
-                        div(class="glass-card rounded-3xl p-6 relative overflow-hidden")
+                        div(class="glass-card rounded-3xl relative overflow-hidden")
+                            //- Banner header
+                            div(class="bg-primary px-6 py-4 flex items-center justify-between relative z-20")
+                                h3#pack-form-title(class="text-sm font-display font-black uppercase tracking-widest text-black") Nuevo Pack
+                                span(class="material-symbols-outlined text-black/30 text-xl") add_circle
                             div(class="absolute inset-0 pixel-pattern opacity-5")
-                            div(class="relative z-10")
-                                h3#pack-form-title(class="text-sm font-display font-black uppercase tracking-widest mb-5") Nuevo Pack
+                            div(class="relative z-10 p-6")
                                 input#pack-edit-id(type="hidden" value="")
 
                                 div(class="space-y-4")
@@ -169,10 +179,13 @@ block contenedor
                                             | Cancelar
 
                         //- Card: Listado de Packs
-                        div(class="glass-card rounded-3xl p-6 relative overflow-hidden")
+                        div(class="glass-card rounded-3xl relative overflow-hidden")
+                            //- Banner header
+                            div(class="bg-primary px-6 py-4 flex items-center justify-between relative z-20")
+                                h3(class="text-sm font-display font-black uppercase tracking-widest text-black") Packs Existentes
+                                span(class="material-symbols-outlined text-black/30 text-xl") inventory_2
                             div(class="absolute inset-0 pixel-pattern opacity-5")
-                            div(class="relative z-10")
-                                h3(class="text-sm font-display font-black uppercase tracking-widest mb-5") Packs Existentes
+                            div(class="relative z-10 p-6")
                                 div#packs-list(class="space-y-2 max-h-[500px] overflow-y-auto pr-1" style="scrollbar-width: thin; scrollbar-color: rgba(201,218,43,0.2) transparent;")
                                     //- Skeleton
                                     each i in [1,2,3]
@@ -185,36 +198,6 @@ block contenedor
                                                 div(class="h-6 w-8 bg-white/5 rounded")
 
             include layout/footer.pug
-
-    //- Modal de Exportación (FUERA del flex/main para z-index correcto)
-    div#modal-export(class="fixed inset-0 z-[9999] flex items-center justify-center hidden" style="background: rgba(0,0,0,0.92);")
-        div(class="rounded-3xl p-8 w-full max-w-md relative" style="background: rgba(10,10,10,1); border: 1px solid rgba(201,218,43,0.15); box-shadow: 0 25px 50px rgba(0,0,0,0.8);")
-            button#modal-export-close(type="button" class="absolute top-4 right-4 text-white/30 hover:text-white transition-colors cursor-pointer")
-                span(class="material-symbols-outlined") close
-
-            h3(class="text-sm font-display font-black uppercase tracking-widest mb-6") Exportar Transacciones
-
-            div(class="space-y-4")
-                div(class="grid grid-cols-2 gap-3")
-                    div
-                        label(class="block text-[9px] uppercase tracking-widest text-white/30 font-mono mb-1.5") Fecha Inicio
-                        input#export-desde(
-                            type="date"
-                            class="w-full px-4 py-2.5 border border-white/10 rounded-xl text-sm font-medium focus:outline-none focus:border-primary/40 transition-all"
-                            style="color-scheme: dark; color: #fff; background: #1a1a1a;"
-                        )
-                    div
-                        label(class="block text-[9px] uppercase tracking-widest text-white/30 font-mono mb-1.5") Fecha Fin
-                        input#export-hasta(
-                            type="date"
-                            class="w-full px-4 py-2.5 border border-white/10 rounded-xl text-sm font-medium focus:outline-none focus:border-primary/40 transition-all"
-                            style="color-scheme: dark; color: #fff; background: #1a1a1a;"
-                        )
-                p(class="text-[10px] text-white/20 font-mono") Si deja ambos campos vac&iacute;os se exportar&aacute;n todas las transacciones.
-
-                button#btn-do-export(type="button" class="w-full px-4 py-3 bg-primary text-black text-sm font-bold rounded-xl hover:bg-primary/90 transition-all cursor-pointer")
-                    span(class="material-symbols-outlined text-base align-middle mr-1") download
-                    | Descargar CSV
 
     script(src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js")
     script.

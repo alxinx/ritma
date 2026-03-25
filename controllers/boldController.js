@@ -109,8 +109,12 @@ export const createBoldPayment = async (req, res) => {
 // =============================================
 export const boldWebhook = async (req, res) => {
     try {
+        console.log('──── Bold WEBHOOK POST recibido ────');
+        console.log('Content-Type:', req.headers['content-type']);
+        console.log('Body es Buffer:', Buffer.isBuffer(req.body));
+
         // req.body es Buffer (express.raw) — parseamos a string para firma y a objeto para lógica
-        const rawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : JSON.stringify(req.body);
+        const rawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
         let payload;
         try {
             payload = JSON.parse(rawBody);
@@ -234,6 +238,9 @@ export const boldWebhook = async (req, res) => {
 // Query params: bold-order-id, bold-tx-status
 // =============================================
 export const boldStatusPage = async (req, res) => {
+    console.log('──── Bold STATUS PAGE ────');
+    console.log('Query params:', JSON.stringify(req.query));
+
     const rawStatus = req.query['bold-tx-status'] || req.query.bold_tx_status || req.query.status || '';
     const status = rawStatus.toUpperCase();
     const reference = req.query['bold-order-id'] || req.query.bold_order_id || req.query.reference || '';

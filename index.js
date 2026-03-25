@@ -53,8 +53,8 @@ app.use(securityHeaders);
 app.use(express.static("public"));
 
 // Webhooks externos — sin CSRF
-// POST recibe raw body para verificación de firma; GET renderiza página de estado
-app.post('/webhooks/bold', express.raw({ type: 'application/json' }));
+// raw body solo para POST (verificación de firma HMAC), GET pasa limpio
+app.post('/webhooks/bold', express.raw({ type: '*/*' }));
 app.use('/webhooks', webhookRoutes);
 
 app.use(express.json());

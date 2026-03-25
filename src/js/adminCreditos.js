@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ELEMENTOS
     // =============================================
     const searchInput = document.getElementById('credits-search');
+    const filterDesde = document.getElementById('filter-desde');
+    const filterHasta = document.getElementById('filter-hasta');
     const tbody = document.getElementById('credits-tbody');
     const prevBtn = document.getElementById('credits-prev');
     const nextBtn = document.getElementById('credits-next');
@@ -24,13 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSavePack = document.getElementById('btn-save-pack');
     const btnCancelEdit = document.getElementById('btn-cancel-edit');
 
-    // Export modal
-    const modalExport = document.getElementById('modal-export');
-    const modalExportClose = document.getElementById('modal-export-close');
-    const btnDoExport = document.getElementById('btn-do-export');
-    const exportDesde = document.getElementById('export-desde');
-    const exportHasta = document.getElementById('export-hasta');
-
     let currentPage = 1;
     let debounceTimer = null;
 
@@ -41,6 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadCreditsHistory(page = 1, search = '') {
         try {
             const params = new URLSearchParams({ page, limit: 15, search });
+            if (filterDesde && filterDesde.value) params.set('desde', filterDesde.value);
+            if (filterHasta && filterHasta.value) params.set('hasta', filterHasta.value);
+
             const res = await fetch(`/app/dash/json/credits/history?${params}`);
             const data = await res.json();
 
@@ -58,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!rows.length) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="py-10 text-center">
+                    <td colspan="4" class="py-10 text-center">
                         <span class="text-white/20 text-sm font-mono">No se encontraron transacciones</span>
                     </td>
                 </tr>`;
@@ -68,8 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
         tbody.innerHTML = rows.map(r => {
             const fecha = r.fechaCompra ? new Date(r.fechaCompra).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
             const valor = r.valorPack ? `$${Number(r.valorPack).toLocaleString('es-CO')}` : '$0';
-            const usados = r.cantidadComprada - r.cantidadActual;
-            const pct = r.cantidadComprada > 0 ? Math.round((r.cantidadActual / r.cantidadComprada) * 100) : 0;
 
             return `
                 <tr class="border-b border-white/3 hover:bg-white/2 transition-colors">
@@ -81,17 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                     <td class="py-3">
                         <span class="text-xs font-bold bg-white/5 text-white/60 px-2 py-1 rounded-lg border border-white/10">${escapeHtml(r.pack)}</span>
-                    </td>
-                    <td class="py-3 text-center">
-                        <span class="text-sm font-bold text-white">${r.cantidadComprada}</span>
-                    </td>
-                    <td class="py-3 text-center">
-                        <div class="flex flex-col items-center gap-1">
-                            <span class="text-sm font-bold ${r.cantidadActual > 0 ? 'text-primary' : 'text-white/30'}">${r.cantidadActual}</span>
-                            <div class="w-12 h-1 bg-white/5 rounded-full overflow-hidden">
-                                <div class="h-full bg-primary/60 rounded-full" style="width: ${pct}%"></div>
-                            </div>
-                        </div>
                     </td>
                     <td class="py-3 text-right">
                         <span class="text-sm font-mono text-white/60">${valor}</span>
@@ -118,6 +103,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 400);
     });
 
+    // Filtros de fecha
+    if (filterDesde) filterDesde.addEventListener('change', () => {
+        currentPage = 1;
+        loadCreditsHistory(1, searchInput.value.trim());
+    });
+    if (filterHasta) filterHasta.addEventListener('change', () => {
+        currentPage = 1;
+        loadCreditsHistory(1, searchInput.value.trim());
+    });
+
     prevBtn.addEventListener('click', () => {
         if (currentPage > 1) loadCreditsHistory(currentPage - 1, searchInput.value.trim());
     });
@@ -126,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =============================================
-    // CHART — Ventas trimestre (Chart.js)
+    // CHART — Ventas últimos 30 días (barras por día)
     // =============================================
 
     async function loadChart() {
@@ -138,13 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const ctx = document.getElementById('credits-chart');
             if (!ctx) return;
 
-            const labels = data.data.map(d => {
-                const [y, m] = d.mes.split('-');
-                const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-                return `${meses[parseInt(m) - 1]} ${y}`;
-            });
+            const labels = data.data.map(d => d.dia);
             const ventas = data.data.map(d => d.totalVentas || 0);
-            const transacciones = data.data.map(d => d.totalTransacciones || 0);
 
             new Chart(ctx, {
                 type: 'bar',
@@ -157,15 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             backgroundColor: 'rgba(201, 218, 43, 0.3)',
                             borderColor: 'rgba(201, 218, 43, 0.8)',
                             borderWidth: 1,
-                            borderRadius: 8
-                        },
-                        {
-                            label: 'Transacciones',
-                            data: transacciones,
-                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                            borderColor: 'rgba(255, 255, 255, 0.15)',
-                            borderWidth: 1,
-                            borderRadius: 8
+                            borderRadius: 4,
+                            barPercentage: 0.7
                         }
                     ]
                 },
@@ -175,15 +158,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     plugins: {
                         legend: {
                             labels: { color: 'rgba(255,255,255,0.4)', font: { size: 10, family: 'monospace' } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `$${ctx.parsed.y.toLocaleString('es-CO')} COP`
+                            }
                         }
                     },
                     scales: {
                         x: {
-                            ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 10 } },
+                            ticks: {
+                                color: 'rgba(255,255,255,0.3)',
+                                font: { size: 9 },
+                                maxRotation: 45,
+                                maxTicksLimit: 15
+                            },
                             grid: { color: 'rgba(255,255,255,0.03)' }
                         },
                         y: {
-                            ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 10 } },
+                            ticks: {
+                                color: 'rgba(255,255,255,0.3)',
+                                font: { size: 10 },
+                                callback: (v) => `$${(v / 1000).toFixed(0)}k`
+                            },
                             grid: { color: 'rgba(255,255,255,0.03)' }
                         }
                     }
@@ -195,22 +192,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =============================================
-    // EXPORT MODAL
+    // EXPORT — Descarga directa XLS (usa filtros de fecha inline)
     // =============================================
 
-    btnExport.addEventListener('click', () => modalExport.classList.remove('hidden'));
-    modalExportClose.addEventListener('click', () => modalExport.classList.add('hidden'));
-    modalExport.addEventListener('click', (e) => {
-        if (e.target === modalExport) modalExport.classList.add('hidden');
-    });
-
-    btnDoExport.addEventListener('click', () => {
-        const desde = exportDesde.value;
-        const hasta = exportHasta.value;
+    btnExport.addEventListener('click', () => {
+        const desde = filterDesde?.value || '';
+        const hasta = filterHasta?.value || '';
         let url = '/app/dash/json/credits/export';
-        if (desde && hasta) url += `?desde=${desde}&hasta=${hasta}`;
+        const params = new URLSearchParams();
+        if (desde) params.set('desde', desde);
+        if (hasta) params.set('hasta', hasta);
+        if (params.toString()) url += `?${params}`;
         window.open(url, '_blank');
-        modalExport.classList.add('hidden');
     });
 
     // =============================================
@@ -360,7 +353,6 @@ document.addEventListener('DOMContentLoaded', () => {
         packFormTitle.textContent = 'Editar Pack';
         btnCancelEdit.classList.remove('hidden');
         validatePackForm();
-        // Scroll to form
         packNombre.focus();
     };
 

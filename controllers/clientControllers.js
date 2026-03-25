@@ -1542,7 +1542,7 @@ const getMisCompras = async (req, res) => {
     try {
         const idUsuario = req.usuario.idUsuario;
         const page = Math.max(1, parseInt(req.query.page) || 1);
-        const limit = 10;
+        const limit = parseInt(process.env.MAX_ROWS_FOR_PAGE) || 10;
         const offset = (page - 1) * limit;
 
         const { count, rows } = await RitmaCoins.findAndCountAll({
@@ -1592,7 +1592,7 @@ const getMisTransacciones = async (req, res) => {
     try {
         const idUsuario = req.usuario.idUsuario;
         const page = Math.max(1, parseInt(req.query.page) || 1);
-        const limit = 10;
+        const limit = parseInt(process.env.MAX_ROWS_FOR_PAGE) || 10;
         const offset = (page - 1) * limit;
 
         const { count, rows } = await HistorialDescargas.findAndCountAll({
