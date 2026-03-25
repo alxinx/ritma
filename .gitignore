@@ -10,7 +10,6 @@ mysql_data/
 
 # --- Multimedia y Temporales (Crucial para Ritma) ---
 # Ignoramos las carpetas donde FFmpeg procesará los archivos antes de subirlos a R2
-public/img/
 public/test/
 public/upload/
 public/temp/
