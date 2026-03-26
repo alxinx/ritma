@@ -434,9 +434,16 @@ const toggleWishlist = async (req, res) => {
 // — Verifica creditos y propiedad antes de generar token
 // ==========================================
 const requestDownloadToken = async (req, res) => {
+    const { idMultimedia } = req.params;
+    const idUsuario = req.usuario.idUsuario;
+    const lockKey = `download:lock:${idUsuario}`;
+
     try {
-        const { idMultimedia } = req.params;
-        const idUsuario = req.usuario.idUsuario;
+        // ── Mutex por usuario: evita race condition con pestañas paralelas ──
+        const lockAcquired = await redisClient.set(lockKey, '1', { NX: true, EX: 10 });
+        if (!lockAcquired) {
+            return res.status(429).json({ ok: false, msg: 'Otra descarga está en proceso, espera un momento.' });
+        }
 
         const multimedia = await Multimedia.findByPk(idMultimedia);
         if (!multimedia) return res.status(404).json({ ok: false, msg: 'Multimedia no encontrado' });
@@ -450,11 +457,11 @@ const requestDownloadToken = async (req, res) => {
         const yaComprado = !!descargaExistente;
 
         if (!yaComprado) {
-            // Verificar creditos suficientes
+            // Verificar creditos suficientes (DENTRO del lock)
             const creditosDisponibles = await RitmaCoins.sum('cantidadActual', { where: { idUsuario } }) || 0;
 
             if (creditosDisponibles < (multimedia.costoCreditos || 0)) {
-                return res.status(403).json({ ok: false, msg: 'No tienes suficientes creditos para descargar este archivo.' });
+                return res.status(403).json({ ok: false, msg: 'No tienes suficientes créditos para descargar este archivo.' });
             }
 
             // Descontar creditos — ir descontando de las compras mas antiguas
@@ -499,6 +506,9 @@ const requestDownloadToken = async (req, res) => {
     } catch (error) {
         console.error('Error requestDownloadToken client:', error);
         res.status(500).json({ ok: false, msg: 'Error al generar token de descarga' });
+    } finally {
+        // Siempre liberar el lock
+        await redisClient.del(lockKey).catch(() => {});
     }
 };
 
